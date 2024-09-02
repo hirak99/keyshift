@@ -6,17 +6,15 @@
 // - Implement context switching.
 // - Implement json config parsing.
 
-#include <linux/input-event-codes.h>
+#include <stdio.h>
 
 #include <algorithm>
 #include <functional>
-#include <iostream>
 #include <stack>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-
-#include "keycode_lookup.h"
 
 // Note: -key_code is interpreted as key realease, both as condition and as an
 // action.
@@ -154,35 +152,3 @@ class Remapper {
   // On process(), keycodes are emitted via this callback.
   std::function<void(int, int)> emit_keycode_;
 };
-
-int main() {
-  auto dummy_emit_fn = [](int keycode, int press) {
-    std::cout << "  " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode)
-              << std::endl;
-  };
-  Remapper remapper(dummy_emit_fn);
-
-  remapper.add_mapping("fnkeys", KEY_A, {remapper.action_key(KEY_B)});
-  remapper.add_mapping("fnkeys", -KEY_A, {remapper.action_key(-KEY_B)});
-  remapper.add_mapping("fnkeys", KEY_1, {remapper.action_key(KEY_F1)});
-  remapper.add_mapping("fnkeys", KEY_0, {remapper.action_key(KEY_F10)});
-  remapper.add_mapping("", KEY_RIGHTCTRL,
-                       {remapper.action_key(KEY_RIGHTCTRL),
-                        remapper.action_activate_mapping("fnkeys")});
-
-  auto process = [&remapper](int keycode) {
-    std::cout << (keycode > 0 ? "P " : "R ") << keyCodeToString(abs(keycode))
-              << std::endl;
-    remapper.process(keycode);
-  };
-  process(KEY_C);
-  process(-KEY_C);
-  // Should result in PCtrl RCtrl PB RB.
-  process(KEY_RIGHTCTRL);
-  process(KEY_A);
-  // process(-KEY_A);
-  process(-KEY_RIGHTCTRL);
-  process(KEY_A);
-  process(-KEY_A);
-  return 0;
-}
