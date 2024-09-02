@@ -27,7 +27,7 @@ As part of maintainability, we will keep the code readable. We will for now foll
   - E.g. CTRL when held, holds CTRL and activates mappings for some buttons.
   - Pseudocode:
 ```
-CAPSLOCK: {
+'CAPSLOCK': {
     if (next_key in [1, ..., 0]) {
         use mapping {1: F1, ..., 0: F10}
     }
@@ -42,3 +42,32 @@ CTRL: {
 ```
 - Macros: E.g. (SHIFT + CAPSLOCK) -> "H E L L O".
 
+
+Example json mapping -
+
+Here -
+- 'KEY' = tap a key, equivalent to ['^KEY', '~KEY']
+- mappings are {event: outcome(s)}
+
+```json
+{
+    "mapppings": {
+        "[default]": {
+            "^CAPSLOCK": ":activate func_keys",
+            "~CAPSLOCK": ":deactivate func_keys",
+            "^RIGHT_CTRL": [
+                "^RIGHT_CTRL",
+                [":if :next in :[func_keys]", ["~RIGHT_CTRL", ":[func_keys](:next)"]]
+            ],
+            "^LEFT_SHIFT": [
+                "^LEFT_SHIFT",
+                [":if :next is ESC", "BACKTICK"]
+            ],
+            # Snap tap.
+            "^D": ["~A", "^D"],
+            "^A": ["~D", "^A"],
+        },
+        "[func_keys]": {"1": "F1", "2": "F2"}
+    }
+}
+```
