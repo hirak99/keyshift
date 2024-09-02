@@ -22,7 +22,6 @@
 enum class ActionType {
   kKeyEvent,
   kActivateMapping,
-  kDeactivateMapping,
 };
 
 struct Action {
@@ -36,16 +35,18 @@ using ActionMap = std::unordered_map<int, std::vector<Action>>;
 
 class Remapper {
  public:
-  Remapper(std::function<void(int, int)> emit_keycode)
-      : current_mapping_(all_mappings_[0]), emit_keycode_(emit_keycode) {
+  Remapper() : current_mapping_(all_mappings_[0]) {
     // Ensure that "" is 0.
     (void)get_mapping_number("");
+  }
+
+  void SetCallback(std::function<void(int, int)> emit_keycode) {
+    emit_keycode_ = emit_keycode;
   }
 
   // Default table should have name "".
   void add_mapping(const std::string& name, int key_code,
                    const std::vector<Action>& actions) {
-    auto index_it = mapping_name_to_index_.find(name);
     auto& mapping = all_mappings_[get_mapping_number(name)];
     mapping[key_code] = actions;
   }
@@ -129,7 +130,9 @@ class Remapper {
           std::remove_if(keys_held_.begin(), keys_held_.end(),
                          [keycode](int x) { return x == keycode; }));
     }
-    emit_keycode_(keycode, press);
+    if (emit_keycode_ != nullptr) {
+      emit_keycode_(keycode, press);
+    }
   }
 
   // Do not use this directly, use get_mapping_number().
@@ -150,5 +153,5 @@ class Remapper {
   std::vector<int> keys_held_;
 
   // On process(), keycodes are emitted via this callback.
-  std::function<void(int, int)> emit_keycode_;
+  std::function<void(int, int)> emit_keycode_ = nullptr;
 };

@@ -11,14 +11,59 @@
 
 #include "keycode_lookup.h"
 
-int main() {
+// Helper functions.
+std::string Join(const std::vector<std::string>& vec) {
+  const std::string delimiter = ", ";
+  std::ostringstream oss;
+  oss << "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    if (i != 0) {
+      oss << delimiter;
+    }
+    oss << "\"" << vec[i] << "\"";
+  }
+  oss << "]";
+  return oss.str();
+}
+
+std::vector<std::string> GetOutcomes(Remapper& remapper,
+                                     std::vector<int> keycodes) {
   std::vector<std::string> outcomes;
-  auto dummy_emit_fn = [&outcomes](int keycode, int press) {
+  auto process = [&outcomes, &remapper](int keycode) {
     std::ostringstream oss;
-    oss << "  " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode);
+    oss << "> " << (keycode > 0 ? "P " : "R ") << keyCodeToString(abs(keycode));
     outcomes.push_back(oss.str());
+    remapper.process(keycode);
   };
-  Remapper remapper(dummy_emit_fn);
+
+  remapper.SetCallback([&outcomes](int keycode, int press) {
+    std::ostringstream oss;
+    oss << ". " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode);
+    outcomes.push_back(oss.str());
+  });
+
+  for (int keycode : keycodes) {
+    process(keycode);
+  }
+
+  return outcomes;
+}
+
+bool AssertEqual(std::vector<std::string> obtained,
+                 std::vector<std::string> expected) {
+  if (obtained != expected) {
+    printf("FAILED\n");
+    std::cout << "obtained: " << Join(obtained) << std::endl;
+    std::cout << "expected: " << Join(expected) << std::endl;
+    return false;
+  }
+  printf("Passed.\n");
+  return true;
+}
+
+// Tests.
+bool Test1() {
+  Remapper remapper;
 
   remapper.add_mapping("fnkeys", KEY_A, {remapper.action_key(KEY_B)});
   remapper.add_mapping("fnkeys", -KEY_A, {remapper.action_key(-KEY_B)});
@@ -28,24 +73,19 @@ int main() {
                        {remapper.action_key(KEY_RIGHTCTRL),
                         remapper.action_activate_mapping("fnkeys")});
 
-  auto process = [&outcomes, &remapper](int keycode) {
-    std::ostringstream oss;
-    oss << (keycode > 0 ? "P " : "R ") << keyCodeToString(abs(keycode));
-    remapper.process(keycode);
-    outcomes.push_back(oss.str());
-  };
-  process(KEY_C);
-  process(-KEY_C);
-  // Should result in PCtrl RCtrl PB RB.
-  process(KEY_RIGHTCTRL);
-  process(KEY_A);
-  // process(-KEY_A);
-  process(-KEY_RIGHTCTRL);
-  process(KEY_A);
-  process(-KEY_A);
+  auto outcomes = GetOutcomes(remapper, {KEY_C, -KEY_C, KEY_RIGHTCTRL, KEY_A,
+                                         -KEY_RIGHTCTRL, KEY_A, -KEY_A});
 
-  for (const std::string line : outcomes) {
-    std::cout << line << std::endl;
-  }
-  return 0;
+  std::vector<std::string> expected = {
+      "> P KEY_C",         ". P KEY_C",         "> R KEY_C", ". R KEY_C",
+      "> P KEY_RIGHTCTRL", ". P KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_B",
+      "> R KEY_RIGHTCTRL", ". R KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_A",
+      "> R KEY_A",        ". R KEY_A",
+  };
+  return AssertEqual(outcomes, expected);
+}
+
+int main() {
+  bool all_passed = Test1();
+  return all_passed ? 0 : 1;
 }
