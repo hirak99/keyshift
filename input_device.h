@@ -1,9 +1,5 @@
+// Class to create a new keyboard input device.
 //
-// Appears to work without sudo.
-// To test, run the compiled binary, and switch to some other place where a key
-// in can be registered.
-//
-// Compile with: g++
 
 #include <errno.h>
 #include <fcntl.h>
@@ -12,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-const bool kDebugLogging = true;
 
 class UinputDevice {
  public:
@@ -31,7 +25,7 @@ class UinputDevice {
     setup.id.vendor = 0x1234;
     setup.id.product = 0x5678;
     setup.id.version = 1;
-    strcpy(setup.name, "My Virtual Keyboard");
+    strcpy(setup.name, "Remapped Virtual Keyboard");
 
     // Enable the necessary event types and keys
     if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
@@ -97,24 +91,3 @@ class UinputDevice {
   // If negative, then the file isn't opened and there was some error.
   int file_descriptor_ = -1;
 };
-
-int main() {
-  UinputDevice device = UinputDevice();
-  if (!device.IsOpen()) {
-    return 1;
-  }
-
-  // Wait for a few secs after creating for tests.
-  printf("Waiting a few secs...\n");
-  sleep(3);
-
-  // Send a key press event for KEY_A
-  device.KeyPress(KEY_A);
-  sleep(1);  // Wait for a second
-
-  // Send a key release event for KEY_A
-  device.KeyRelease(KEY_A);
-  sleep(1);  // Wait for a second
-
-  return 0;
-}
