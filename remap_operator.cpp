@@ -1,8 +1,14 @@
 // This is responsible for loading and acting on remap configs.
 // I.e., this is the brain of the remapper.
+//
 // WIP.
+// TODO -
+// - Implement context switching.
+// - Implement json config parsing.
+
 #include <linux/input-event-codes.h>
 
+#include <functional>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -10,7 +16,8 @@
 
 #include "keycode_lookup.h"
 
-// Note: -key_code is interpreted as key realease, both as condition and as action.
+// Note: -key_code is interpreted as key realease, both as condition and as an
+// action.
 
 enum class ActionType {
   kKeyEvent,
@@ -26,7 +33,8 @@ struct Action {
 
 class Remapper {
  public:
-  Remapper() : current_mapping_(all_mappings_[0]) {
+  Remapper(std::function<void(int, int)> emit_keycode)
+      : current_mapping_(all_mappings_[0]), emit_keycode_(emit_keycode) {
     mapping_name_to_index_[""] = 0;
   }
 
@@ -52,9 +60,9 @@ class Remapper {
 
  private:
   void trigger(int keycode) {
-    const std::string press = (keycode > 0 ? "Press" : "Release");
+    const int press = (keycode > 0 ? 1 : 0);
     if (keycode < 0) keycode = -keycode;
-    std::cout << keyCodeToString(keycode) << " " << press << std::endl;
+    emit_keycode_(keycode, press);
   }
 
   // For use while constructing the mapping only. Not used during processing.
@@ -65,10 +73,16 @@ class Remapper {
   std::unordered_map<int, std::unordered_map<int, std::vector<Action>>>
       all_mappings_;
   std::unordered_map<int, std::vector<Action>>& current_mapping_;
+
+  std::function<void(int, int)> emit_keycode_;
 };
 
 int main() {
-  Remapper remapper;
+  auto dummy_emit_fn = [](int keycode, int press) {
+    std::cout << (press == 1 ? "Press " : "Release ")
+              << keyCodeToString(keycode) << std::endl;
+  };
+  Remapper remapper(dummy_emit_fn);
   remapper.add_mapping("", KEY_A, {Action{ActionType::kKeyEvent, KEY_B}});
   remapper.add_mapping("", -KEY_A, {Action{ActionType::kKeyEvent, -KEY_B}});
   remapper.process(KEY_B);
