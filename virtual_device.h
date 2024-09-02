@@ -1,6 +1,7 @@
 // Class to create a new keyboard input device.
 //
 
+#include <iostream>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/uinput.h>
@@ -9,9 +10,9 @@
 #include <string.h>
 #include <unistd.h>
 
-class UinputDevice {
+class VirtualDevice {
  public:
-  UinputDevice() {
+  VirtualDevice() {
     const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
       perror("Unable to open /dev/uinput");
@@ -33,10 +34,16 @@ class UinputDevice {
       close(fd);
       return;
     }
-    if (ioctl(fd, UI_SET_KEYBIT, KEY_A) < 0) {
-      perror("UI_SET_KEYBIT failed");
-      close(fd);
-      return;
+
+    // Enable the device to send all possible keys
+    // So far it looks like KEY_MICMUTE is the highest with value 248.
+    for (int keycode = KEY_ESC; keycode <= 255; ++keycode) {
+      if (ioctl(fd, UI_SET_KEYBIT, keycode) < 0) {
+        std::cerr << "Error setting key bit for keycode " << keycode
+                  << std::endl;
+        close(fd);
+        return;
+      }
     }
 
     if (ioctl(fd, UI_DEV_SETUP, &setup) < 0) {
@@ -54,7 +61,7 @@ class UinputDevice {
     file_descriptor_ = fd;
   }
 
-  ~UinputDevice() {
+  ~VirtualDevice() {
     if (!IsOpen()) return;
     // Clean up and destroy the uinput device
     if (ioctl(file_descriptor_, UI_DEV_DESTROY) < 0) {

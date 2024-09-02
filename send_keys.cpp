@@ -4,10 +4,10 @@
 //
 // Compile with: g++
 
-#include "input_device.h"
+#include "virtual_device.h"
 
 int main() {
-  UinputDevice device = UinputDevice();
+  VirtualDevice device;
   if (!device.IsOpen()) {
     return 1;
   }
@@ -17,11 +17,11 @@ int main() {
   sleep(2);
 
   // Send a key press event for KEY_A
-  device.KeyPress(KEY_A);
+  device.KeyPress(KEY_B);
   sleep(1);  // Wait for a second
 
   // Send a key release event for KEY_A
-  device.KeyRelease(KEY_A);
+  device.KeyRelease(KEY_B);
   sleep(1);  // Wait for a second
 
   return 0;

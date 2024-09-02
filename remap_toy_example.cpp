@@ -2,9 +2,12 @@
 // impossible. Always run this with `sudo timeout 20s ./<binary>`.
 #include <fcntl.h>
 #include <linux/input.h>
-#include <stdexcept>
 #include <stdio.h>
 #include <unistd.h>
+
+#include <stdexcept>
+
+#include "virtual_device.h"
 
 class InputDevice {
  public:
@@ -40,14 +43,22 @@ int main() {
   printf("Wating a sec, release all keys! ...\n");
   sleep(1);
   printf("Starting now...\n");
+
   InputDevice device(
       "/dev/input/by-id/usb-Drunkdeer_Drunkdeer_G65_US_RYMicro-event-kbd");
+  VirtualDevice out_device;
 
   struct input_event ie;
   while (read(device.get_fd(), &ie, sizeof(struct input_event)) > 0) {
     if (ie.type == EV_KEY) {
-      printf("Key %i %s\n", ie.code, ie.value ? "pressed" : "released");
+      // printf("Key %i %s\n", ie.code, ie.value ? "pressed" : "released");
+
       // Process and remap key events here
+      if (ie.value) {
+        out_device.KeyPress(ie.code);
+      } else {
+        out_device.KeyRelease(ie.code);
+      }
     }
   }
   return 0;
