@@ -1,16 +1,27 @@
+//
+// Appears to work without sudo.
+// To test, run the compiled binary, and switch to some other place where a key
+// in can be registered.
+//
+// Compile with: g++
+
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/uinput.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
-int setup_uinput() {
-    int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+const bool kDebugLogging = true;
+
+class UinputDevice {
+ public:
+  UinputDevice() {
+    const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
-        perror("Unable to open /dev/uinput");
-        return -1;
+      perror("Unable to open /dev/uinput");
+      return;
     }
 
     // Set up the uinput device
@@ -24,64 +35,86 @@ int setup_uinput() {
 
     // Enable the necessary event types and keys
     if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
-        perror("UI_SET_EVBIT failed");
-        close(fd);
-        return -1;
+      perror("UI_SET_EVBIT failed");
+      close(fd);
+      return;
     }
     if (ioctl(fd, UI_SET_KEYBIT, KEY_A) < 0) {
-        perror("UI_SET_KEYBIT failed");
-        close(fd);
-        return -1;
+      perror("UI_SET_KEYBIT failed");
+      close(fd);
+      return;
     }
 
     if (ioctl(fd, UI_DEV_SETUP, &setup) < 0) {
-        perror("UI_DEV_SETUP failed");
-        close(fd);
-        return -1;
+      perror("UI_DEV_SETUP failed");
+      close(fd);
+      return;
     }
 
     if (ioctl(fd, UI_DEV_CREATE) < 0) {
-        perror("UI_DEV_CREATE failed");
-        close(fd);
-        return -1;
+      perror("UI_DEV_CREATE failed");
+      close(fd);
+      return;
     }
 
-    return fd;
-}
+    file_descriptor_ = fd;
+  }
 
-void send_event(int fd, unsigned int type, unsigned int code, int value) {
+  ~UinputDevice() {
+    if (!IsOpen()) return;
+    // Clean up and destroy the uinput device
+    if (ioctl(file_descriptor_, UI_DEV_DESTROY) < 0) {
+      perror("UI_DEV_DESTROY failed");
+    }
+    close(file_descriptor_);
+  }
+
+  inline int IsOpen() const { return file_descriptor_ >= 0; }
+
+  void KeyPress(unsigned int code) const {
+    SendEvent(EV_KEY, code, 1);
+    SendEvent(EV_SYN, SYN_REPORT, 0);  // Synchronize
+  }
+  void KeyRelease(unsigned int code) const {
+    SendEvent(EV_KEY, code, 0);
+    SendEvent(EV_SYN, SYN_REPORT, 0);  // Synchronize
+  }
+
+ private:
+  void SendEvent(unsigned int type, unsigned int code, int value) const {
+    if (!IsOpen()) return;
     struct input_event ev;
     memset(&ev, 0, sizeof(ev));
     ev.type = type;
     ev.code = code;
     ev.value = value;
 
-    if (write(fd, &ev, sizeof(ev)) < 0) {
-        perror("write failed");
+    if (write(file_descriptor_, &ev, sizeof(ev)) < 0) {
+      perror("write failed");
     }
-}
+  }
+
+  // If negative, then the file isn't opened and there was some error.
+  int file_descriptor_ = -1;
+};
 
 int main() {
-    int uinput_fd = setup_uinput();
-    if (uinput_fd < 0) {
-        return 1;
-    }
+  UinputDevice device = UinputDevice();
+  if (!device.IsOpen()) {
+    return 1;
+  }
 
-    // Send a key press event for KEY_A
-    send_event(uinput_fd, EV_KEY, KEY_A, 1); // Key press
-    send_event(uinput_fd, EV_SYN, SYN_REPORT, 0); // Synchronize
+  // Wait for a few secs after creating for tests.
+  printf("Waiting a few secs...\n");
+  sleep(3);
 
-    sleep(1); // Wait for a second
+  // Send a key press event for KEY_A
+  device.KeyPress(KEY_A);
+  sleep(1);  // Wait for a second
 
-    // Send a key release event for KEY_A
-    send_event(uinput_fd, EV_KEY, KEY_A, 0); // Key release
-    send_event(uinput_fd, EV_SYN, SYN_REPORT, 0); // Synchronize
+  // Send a key release event for KEY_A
+  device.KeyRelease(KEY_A);
+  sleep(1);  // Wait for a second
 
-    // Clean up and destroy the uinput device
-    if (ioctl(uinput_fd, UI_DEV_DESTROY) < 0) {
-        perror("UI_DEV_DESTROY failed");
-    }
-    close(uinput_fd);
-
-    return 0;
+  return 0;
 }
