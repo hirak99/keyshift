@@ -23,8 +23,9 @@ class VirtualDevice {
     struct uinput_setup setup;
     memset(&setup, 0, sizeof(setup));
     setup.id.bustype = BUS_USB;
-    setup.id.vendor = 0x1234;
-    setup.id.product = 0x5678;
+    // Randomly generated fixed vendor and product codes for virtual keyboard.
+    setup.id.vendor = 0x549c;
+    setup.id.product = 0xb248;
     setup.id.version = 1;
     strcpy(setup.name, "Remapped Virtual Keyboard");
 

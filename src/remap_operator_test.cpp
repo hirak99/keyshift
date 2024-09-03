@@ -80,7 +80,7 @@ bool Test1() {
       "> P KEY_C",         ". P KEY_C",         "> R KEY_C", ". R KEY_C",
       "> P KEY_RIGHTCTRL", ". P KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_B",
       "> R KEY_RIGHTCTRL", ". R KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_A",
-      "> R KEY_A",        ". R KEY_A",
+      "> R KEY_A",         ". R KEY_A",
   };
   return AssertEqual(outcomes, expected);
 }
