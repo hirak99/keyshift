@@ -20,7 +20,7 @@ string Join(const vector<string>& vec) {
   const string delimiter = ", ";
   std::ostringstream oss;
   oss << "[";
-  for (size_t i = 0; i < vec.size(); ++i) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
     if (i != 0) {
       oss << delimiter;
     }
