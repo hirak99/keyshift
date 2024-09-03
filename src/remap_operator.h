@@ -15,8 +15,8 @@
 #include <utility>
 #include <vector>
 
-// Note: -key_code is interpreted as key realease, both as condition and as an
-// action.
+// Note: Negative, -key_code is interpreted as key realease, both as condition
+// and as an action.
 
 enum class ActionType {
   kKeyEvent,
