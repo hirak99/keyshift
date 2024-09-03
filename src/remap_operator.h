@@ -19,6 +19,30 @@
 // Note: Negative, -key_code is interpreted as key realease, both as condition
 // and as an action.
 
+// // Should change key_code to KeyEvent, which will contain the value.
+// struct KeyEvent {
+//   int key_code;
+//   // 1 = key press
+//   // 0 = key release
+//   // 2 = key repeat
+//   int value;
+//   bool operator==(const KeyEvent& other) {
+//     return key_code == other.key_code && value == other.value;
+//   }
+//   struct Equal {
+//     bool operator()(const KeyEvent& lhs, const KeyEvent& rhs) const {
+//       return lhs.key_code == rhs.key_code && lhs.value == rhs.value;
+//     }
+//   };
+//   struct Hash {
+//     std::size_t operator()(const KeyEvent& k) const {
+//       std::size_t h1 = std::hash<int>{}(k.key_code);
+//       std::size_t h2 = std::hash<int>{}(k.value);
+//       return h1 ^ (h2 << 1);  // Combine hash values
+//     }
+//   };
+// };
+
 enum class ActionType {
   kKeyEvent,
   kActivateMapping,
