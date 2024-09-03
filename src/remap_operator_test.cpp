@@ -3,6 +3,7 @@
 #include <linux/input-event-codes.h>
 #include <stdlib.h>
 
+#include <catch2/catch_test_macros.hpp>
 #include <functional>
 #include <iostream>
 #include <sstream>
@@ -11,9 +12,12 @@
 
 #include "keycode_lookup.h"
 
+using std::string;
+using std::vector;
+
 // Helper functions.
-std::string Join(const std::vector<std::string>& vec) {
-  const std::string delimiter = ", ";
+string Join(const vector<string>& vec) {
+  const string delimiter = ", ";
   std::ostringstream oss;
   oss << "[";
   for (size_t i = 0; i < vec.size(); ++i) {
@@ -26,14 +30,16 @@ std::string Join(const std::vector<std::string>& vec) {
   return oss.str();
 }
 
-std::vector<std::string> GetOutcomes(Remapper& remapper,
-                                     std::vector<int> keycodes) {
-  std::vector<std::string> outcomes;
-  auto process = [&outcomes, &remapper](int keycode) {
-    std::ostringstream oss;
-    oss << "In: " << (keycode > 0 ? "P " : "R ")
-        << keyCodeToString(abs(keycode));
-    outcomes.push_back(oss.str());
+vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
+                           vector<int> keycodes) {
+  vector<string> outcomes;
+  auto process = [&outcomes, &remapper, keep_incoming](int keycode) {
+    if (keep_incoming) {
+      std::ostringstream oss;
+      oss << "In: " << (keycode > 0 ? "P " : "R ")
+          << keyCodeToString(abs(keycode));
+      outcomes.push_back(oss.str());
+    }
     remapper.process(keycode);
   };
 
@@ -50,20 +56,7 @@ std::vector<std::string> GetOutcomes(Remapper& remapper,
   return outcomes;
 }
 
-bool AssertEqual(std::vector<std::string> obtained,
-                 std::vector<std::string> expected) {
-  if (obtained != expected) {
-    printf("FAILED\n");
-    std::cout << "obtained: " << Join(obtained) << std::endl;
-    std::cout << "expected: " << Join(expected) << std::endl;
-    return false;
-  }
-  printf("Passed.\n");
-  return true;
-}
-
-// Tests.
-bool Test1() {
+TEST_CASE("Test1", "[remapper]") {
   Remapper remapper;
 
   remapper.add_mapping("fnkeys", KEY_A, {remapper.action_key(KEY_B)});
@@ -74,20 +67,44 @@ bool Test1() {
                        {remapper.action_key(KEY_RIGHTCTRL),
                         remapper.action_activate_mapping("fnkeys")});
 
-  auto outcomes = GetOutcomes(remapper, {KEY_C, -KEY_C, KEY_RIGHTCTRL, KEY_A,
-                                         -KEY_RIGHTCTRL, KEY_A, -KEY_A});
+  REQUIRE(GetOutcomes(remapper, true,
+                      {KEY_C, -KEY_C, KEY_RIGHTCTRL, KEY_A, -KEY_RIGHTCTRL,
+                       KEY_A, -KEY_A}) ==
 
-  std::vector<std::string> expected = {
-      "In: P KEY_C",  "Out: P KEY_C",         "In: R KEY_C",
-      "Out: R KEY_C", "In: P KEY_RIGHTCTRL",  "Out: P KEY_RIGHTCTRL",
-      "In: P KEY_A",  "Out: P KEY_B",         "In: R KEY_RIGHTCTRL",
-      "Out: R KEY_B", "Out: R KEY_RIGHTCTRL", "In: P KEY_A",
-      "Out: P KEY_A", "In: R KEY_A",          "Out: R KEY_A",
-  };
-  return AssertEqual(outcomes, expected);
+          vector<string>{
+              "In: P KEY_C",
+              "Out: P KEY_C",
+              "In: R KEY_C",
+              "Out: R KEY_C",
+              "In: P KEY_RIGHTCTRL",
+              "Out: P KEY_RIGHTCTRL",
+              "In: P KEY_A",
+              "Out: P KEY_B",
+              "In: R KEY_RIGHTCTRL",
+              "Out: R KEY_B",
+              "Out: R KEY_RIGHTCTRL",
+              "In: P KEY_A",
+              "Out: P KEY_A",
+              "In: R KEY_A",
+              "Out: R KEY_A",
+          });
 }
 
-int main() {
-  bool all_passed = Test1();
-  return all_passed ? 0 : 1;
+TEST_CASE("Lead key", "[remapper]") {
+  Remapper remapper;
+
+  remapper.add_mapping("del", KEY_BACKSPACE, {remapper.action_key(KEY_PRINT)});
+  remapper.add_mapping("", KEY_DELETE,
+                       {remapper.action_activate_mapping("del")});
+
+  // Leave the lead key first.
+  REQUIRE(
+      GetOutcomes(remapper, false,
+                  {KEY_DELETE, KEY_BACKSPACE, -KEY_DELETE, -KEY_BACKSPACE}) ==
+      vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
+  // Leave the other key first.
+  REQUIRE(
+      GetOutcomes(remapper, false,
+                  {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE}) ==
+      vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
 }

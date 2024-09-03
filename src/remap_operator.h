@@ -172,8 +172,8 @@ class Remapper {
           keys_held_.begin(), keys_held_.end(),
           [key_code](const KeyHeld& kh) { return kh.key_code == key_code; });
       if (it == keys_held_.end()) {
-        // This key is not held.
-        perror("WARNING: Ignoring key release event as key not held.");
+        // This key is not held. This is normal, and can happen when a lead key
+        // is released if it was not set up to register a press.
         return;
       }
       keys_held_.erase(std::remove_if(
