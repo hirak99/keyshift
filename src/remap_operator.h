@@ -4,6 +4,7 @@
 // WIP.
 // TODO -
 // - Implement json config parsing.
+// - Need to handle repeats. 1 is press. 0 is release. And repeat is code 2.
 
 #include <stdio.h>
 

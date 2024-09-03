@@ -13,7 +13,7 @@ find_package(Catch2 3 REQUIRED)
 
 # Add the executable for demo_send_keys
 add_executable(demo_send_keys demo_send_keys.cpp)
-add_executable(remapper remapper.cpp)
+add_executable(keyboard_remap keyboard_remap.cpp)
 
 # Add the tests.
 enable_testing()
