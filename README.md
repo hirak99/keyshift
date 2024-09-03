@@ -18,6 +18,19 @@ That said, a part of the code may be re-usable for other operating systems. But 
 
 As part of maintainability, we will keep the code readable. We will for now follow Google style guide for c++.
 
+# Building
+
+Run the following commands to build and test -
+
+```sh
+cd src
+mkdir -p build
+cd build
+cmake ..
+make -j
+ctest
+```
+
 # Remapping Needs
 
 ## Use Cases
