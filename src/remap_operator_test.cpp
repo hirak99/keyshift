@@ -31,14 +31,15 @@ std::vector<std::string> GetOutcomes(Remapper& remapper,
   std::vector<std::string> outcomes;
   auto process = [&outcomes, &remapper](int keycode) {
     std::ostringstream oss;
-    oss << "> " << (keycode > 0 ? "P " : "R ") << keyCodeToString(abs(keycode));
+    oss << "In: " << (keycode > 0 ? "P " : "R ")
+        << keyCodeToString(abs(keycode));
     outcomes.push_back(oss.str());
     remapper.process(keycode);
   };
 
   remapper.SetCallback([&outcomes](int keycode, int press) {
     std::ostringstream oss;
-    oss << ". " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode);
+    oss << "Out: " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode);
     outcomes.push_back(oss.str());
   });
 
@@ -77,10 +78,11 @@ bool Test1() {
                                          -KEY_RIGHTCTRL, KEY_A, -KEY_A});
 
   std::vector<std::string> expected = {
-      "> P KEY_C",         ". P KEY_C",         "> R KEY_C", ". R KEY_C",
-      "> P KEY_RIGHTCTRL", ". P KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_B",
-      "> R KEY_RIGHTCTRL", ". R KEY_RIGHTCTRL", "> P KEY_A", ". P KEY_A",
-      "> R KEY_A",         ". R KEY_A",
+      "In: P KEY_C",  "Out: P KEY_C",         "In: R KEY_C",
+      "Out: R KEY_C", "In: P KEY_RIGHTCTRL",  "Out: P KEY_RIGHTCTRL",
+      "In: P KEY_A",  "Out: P KEY_B",         "In: R KEY_RIGHTCTRL",
+      "Out: R KEY_B", "Out: R KEY_RIGHTCTRL", "In: P KEY_A",
+      "Out: P KEY_A", "In: R KEY_A",          "Out: R KEY_A",
   };
   return AssertEqual(outcomes, expected);
 }

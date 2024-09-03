@@ -1,3 +1,6 @@
+#ifndef __KEYCODE_LOOKUP_H
+#define __KEYCODE_LOOKUP_H
+
 #include <linux/input-event-codes.h>
 
 #include <iostream>
@@ -267,3 +270,5 @@ std::string keyCodeToString(int key_code) {
       return "UNRECOGNIZED_KEY_CODE(" + std::to_string(key_code) + ")";
   }
 }
+
+#endif  // __KEYCODE_LOOKUP_H

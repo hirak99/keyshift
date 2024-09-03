@@ -3,7 +3,6 @@
 //
 // WIP.
 // TODO -
-// - Implement context switching.
 // - Implement json config parsing.
 
 #include <stdio.h>
@@ -75,12 +74,13 @@ class Remapper {
 
   void process(int key_code) {
     // Check if key_code is in activated mapping stack.
-    if (process_deactivation(key_code)) {
+    if (deactivate_layer(key_code)) {
       return;
     }
 
     auto it = current_mapping_.find(key_code);
     if (it == current_mapping_.end()) {
+      // Not found. Pass the key through by triggering as is and return.
       trigger(key_code);
       return;
     }
@@ -117,23 +117,55 @@ class Remapper {
     return index_it->second;
   }
 
-  bool process_deactivation(int key_code) {
+  void emit_key_code(int key_code, bool press) {
+    if (key_code < 0) {
+      perror("WARNING: Negative key_code encountered in emit_key_code.");
+      return;
+    }
+    if (emit_key_code_ != nullptr) {
+      emit_key_code_(abs(key_code), press ? 1 : 0);
+    }
+    ++emitted_count_;
+  }
+
+  // Check if any layer was activated by the current key_code, and if so,
+  // deactivate it.
+  bool deactivate_layer(int key_code) {
     if (key_code > 0) return false;
     // Note: key_code is negative from now on.
     if (active_layers_.empty()) return false;
     if (active_layers_.top().key_code != -key_code) return false;
 
-    current_mapping_ = active_layers_.top().prior_mapping;
+    auto layer_to_deactivate = active_layers_.top();
     active_layers_.pop();
-    // TODO: Release all the currently pressed keys after this was activated.
+
+    current_mapping_ = layer_to_deactivate.prior_mapping;
+    // Get all the currently pressed keys after this was activated.
+    int threshold = layer_to_deactivate.emitted_count;
+    std::vector<KeyHeld> removed_keys;
+    auto new_end =
+        std::remove_if(keys_held_.begin(), keys_held_.end(),
+                       [threshold, &removed_keys](const KeyHeld& kh) {
+                         if (kh.emitted_count >= threshold) {
+                           removed_keys.push_back(kh);
+                           return true;
+                         }
+                         return false;
+                       });
+    // And release them.
+    for (const auto& kh : removed_keys) {
+      emit_key_code(kh.key_code, 0);
+    }
+    // And remove them from keys_held_.
+    keys_held_.erase(new_end, keys_held_.end());
     trigger(key_code);
     return true;
   }
 
   void trigger(int key_code) {
-    const int press = (key_code > 0 ? 1 : 0);
+    const bool press = key_code > 0;
     if (key_code < 0) key_code = -key_code;
-    if (press == 1) {
+    if (press) {
       keys_held_.push_back(KeyHeld{emitted_count_, key_code});
     } else {
       auto it = std::find_if(
@@ -148,10 +180,7 @@ class Remapper {
           keys_held_.begin(), keys_held_.end(),
           [key_code](KeyHeld& kh) { return kh.key_code == key_code; }));
     }
-    if (emit_key_code_ != nullptr) {
-      emit_key_code_(key_code, press);
-    }
-    ++emitted_count_;
+    emit_key_code(key_code, press);
   }
 
   // Do not use this directly, use get_mapping_number().
