@@ -1,5 +1,11 @@
 // Note that this can be dangerous if it grabs the keyboard and makes Ctrl+C
-// impossible. Always run this with `sudo timeout 20s ./<binary>`.
+// impossible.
+// So, to test, run this with `sudo timeout 20s ./<binary>`.
+//
+// WIP
+// - Take the keyboard device from comamnd line
+// - Integrate with remapper, read from config
+// - Move preview mode to command line --preview
 #include <fcntl.h>
 #include <linux/input.h>
 #include <stdio.h>
@@ -17,7 +23,11 @@ class InputDevice {
     if (fd < 0) {
       throw std::runtime_error("Error opening device");
     }
+  }
 
+  // If called, the original device will now be hidden from the rest of the
+  // operating system. Do not call more than once.
+  void Hide() {
     // Grab the device
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {
       close(fd);
