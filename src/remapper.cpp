@@ -1,4 +1,4 @@
-// Note that this can be dangerous if it grabs the keyboard and makes Ctrl+C
+// Note that this can be dangerous if we grab the keyboard and make Ctrl+C
 // impossible.
 // So, to test, run this with `sudo timeout 20s ./<binary>`.
 //
@@ -15,6 +15,8 @@
 
 #include "virtual_device.h"
 
+const bool kPreviewOnly = true;
+
 class InputDevice {
  public:
   InputDevice(const char* device) {
@@ -25,20 +27,24 @@ class InputDevice {
     }
   }
 
-  // If called, the original device will now be hidden from the rest of the
-  // operating system. Do not call more than once.
-  void Hide() {
+  // Hides the device will from the operating system, so no other applications
+  // process the events.
+  void Grab() {
+    if (grabbed_) return;
     // Grab the device
     if (ioctl(fd, EVIOCGRAB, 1) < 0) {
       close(fd);
       throw std::runtime_error("Error grabbing device");
     }
+    grabbed_ = true;
   }
 
   ~InputDevice() {
     if (fd >= 0) {
-      // Release the device
-      ioctl(fd, EVIOCGRAB, 0);
+      if (grabbed_) {
+        // Release the device
+        ioctl(fd, EVIOCGRAB, 0);
+      }
       close(fd);
     }
   }
@@ -47,6 +53,7 @@ class InputDevice {
 
  private:
   int fd = -1;
+  bool grabbed_ = false;
 };
 
 int main() {
@@ -56,6 +63,8 @@ int main() {
 
   InputDevice device(
       "/dev/input/by-id/usb-Drunkdeer_Drunkdeer_G65_US_RYMicro-event-kbd");
+  if (!kPreviewOnly) device.Grab();
+
   VirtualDevice out_device;
 
   struct input_event ie;
@@ -63,11 +72,13 @@ int main() {
     if (ie.type == EV_KEY) {
       // printf("Key %i %s\n", ie.code, ie.value ? "pressed" : "released");
 
-      // Process and remap key events here
-      if (ie.value) {
-        out_device.KeyPress(ie.code);
-      } else {
-        out_device.KeyRelease(ie.code);
+      if (!kPreviewOnly) {
+        // Process and remap key events here
+        if (ie.value) {
+          out_device.KeyPress(ie.code);
+        } else {
+          out_device.KeyRelease(ie.code);
+        }
       }
     }
   }
