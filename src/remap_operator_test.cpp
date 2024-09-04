@@ -125,11 +125,11 @@ TEST_CASE("Lead key held except certain switches", "[remapper]") {
                        {KeyReleaseEvent(KEY_RIGHTCTRL), KeyPressEvent(KEY_F1)});
 
   // Covers mapped keys.
-  REQUIRE(GetOutcomes(
-              remapper, false,
-              {KEY_RIGHTCTRL, KEY_BACKSPACE, -KEY_RIGHTCTRL, -KEY_BACKSPACE}) ==
+  REQUIRE(GetOutcomes(remapper, false,
+                      {KEY_RIGHTCTRL, KEY_BACKSPACE, -KEY_RIGHTCTRL,
+                       -KEY_BACKSPACE, KEY_BACKSPACE}) ==
           vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_A", "Out: R KEY_A",
-                         "Out: R KEY_RIGHTCTRL"});
+                         "Out: R KEY_RIGHTCTRL", "Out: P KEY_BACKSPACE"});
   // Covers all other keys as expected.
   REQUIRE(GetOutcomes(remapper, false,
                       {KEY_RIGHTCTRL, KEY_B, -KEY_RIGHTCTRL, -KEY_B}) ==

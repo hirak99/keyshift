@@ -168,43 +168,43 @@ class Remapper {
     current_mapping_ = layer_to_deactivate.prior_mapping;
     // Get all the currently pressed keys after this was activated.
     int threshold = layer_to_deactivate.event_seq_num;
-    std::vector<KeyHeld> removed_keys;
-    auto new_end =
-        std::remove_if(keys_held_.begin(), keys_held_.end(),
-                       [threshold, &removed_keys](const KeyHeld& kh) {
-                         if (kh.event_seq_num >= threshold) {
-                           removed_keys.push_back(kh);
-                           return true;
-                         }
-                         return false;
-                       });
-    // And release them, in reverse order.
-    for(auto it=removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
-      emit_key_code(KeyEvent{it->key_code, KeyEventType::kKeyRelease});
+    std::vector<std::pair<int, int>> removed_keys;
+    // Erase keys held after the layer was activated.
+    for (auto it = keys_held_.begin(); it != keys_held_.end();) {
+      if (it->second > threshold) {
+        removed_keys.push_back({it->first, it->second});
+        it = keys_held_.erase(it);
+      } else {
+        ++it;
+      }
     }
-    // And remove them from keys_held_.
-    keys_held_.erase(new_end, keys_held_.end());
+    // And release them in reverse order.
+    std::sort(
+        removed_keys.begin(), removed_keys.end(),
+        [](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
+          if (lhs.second != rhs.second) {
+            return lhs.second < rhs.second;
+          }
+          return lhs.first < rhs.first;
+        });
+    for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
+      emit_key_code(KeyEvent{it->first, KeyEventType::kKeyRelease});
+    }
     process_key_event(key_event);
     return true;
   }
 
   void process_key_event(KeyEvent key_event) {
     if (key_event.value == KeyEventType::kKeyPress) {
-      keys_held_.push_back(KeyHeld{event_seq_num_++, key_event.key_code});
+      keys_held_[key_event.key_code] = event_seq_num_++;
     } else if (key_event.value == KeyEventType::kKeyRelease) {
-      auto it = std::find_if(keys_held_.begin(), keys_held_.end(),
-                             [key_event](const KeyHeld& kh) {
-                               return kh.key_code == key_event.key_code;
-                             });
+      auto it = keys_held_.find(key_event.key_code);
       if (it == keys_held_.end()) {
         // This key is not actually held. This is normal, and can happen when a
         // lead key is released if it was not set up to register a press.
         return;
       }
-      keys_held_.erase(std::remove_if(
-          keys_held_.begin(), keys_held_.end(), [key_event](KeyHeld& kh) {
-            return kh.key_code == key_event.key_code;
-          }));
+      keys_held_.erase(key_event.key_code);
     } else {
       std::cerr << "WARNING: Unimplemented key code value "
                 << int(key_event.value) << std::endl;
@@ -217,12 +217,6 @@ class Remapper {
     int event_seq_num;              // When the layer was activated.
     KeyEvent key_event;             // key_code that activated this layer.
     const ActionMap prior_mapping;  // Mapping to revert to on deactivation.
-  };
-
-  // A key that was pressed. All currently held keys will be kept in a vector.
-  struct KeyHeld {
-    int event_seq_num;  // When the key was held.
-    int key_code;       // key_code that was pressed.
   };
 
   // Do not use this directly, use get_mapping_number().
@@ -238,8 +232,10 @@ class Remapper {
   // Pair of key_code, mapping_index.
   std::stack<LayerActivation> active_layers_;
 
-  // Current keys being pressed. This is based on what's emitted.
-  std::vector<KeyHeld> keys_held_;
+  // Current keys being held. Maps to event_seq_num, i.e. when it was held.
+  // If somehow a key is pressed multiple times (e.g. repeats maybe?) then this
+  // holds the last occurrence, as per the event_seq_num.
+  std::unordered_map<int, int> keys_held_;
 
   // Can only increase.
   int event_seq_num_ = 0;
