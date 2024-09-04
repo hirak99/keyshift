@@ -1,5 +1,4 @@
-// Class to create a new keyboard input device.
-//
+// Creates a virtual keyboard input device.
 
 #include <iostream>
 #include <errno.h>
@@ -27,7 +26,7 @@ class VirtualDevice {
     setup.id.vendor = 0x549c;
     setup.id.product = 0xb248;
     setup.id.version = 1;
-    strcpy(setup.name, "Remapped Virtual Keyboard");
+    strcpy(setup.name, "Virtual Keyboard");
 
     // Enable the necessary event types and keys
     if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
@@ -36,7 +35,7 @@ class VirtualDevice {
       return;
     }
 
-    // Enable the device to send all possible keys
+    // Enable the device to send all possible keys.
     // So far it looks like KEY_MICMUTE is the highest with value 248.
     for (int keycode = KEY_ESC; keycode <= 255; ++keycode) {
       if (ioctl(fd, UI_SET_KEYBIT, keycode) < 0) {
