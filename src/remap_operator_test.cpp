@@ -141,3 +141,26 @@ TEST_CASE("Lead key held except certain switches", "[remapper]") {
           vector<string>{"Out: P KEY_RIGHTCTRL", "Out: R KEY_RIGHTCTRL",
                          "Out: P KEY_F1", "Out: R KEY_F1"});
 }
+
+TEST_CASE("Del+Bksp is Print, but Del alone is Del", "[remapper]") {
+  Remapper remapper;
+
+  remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
+                       {remapper.action_activate_mapping("fn_layer")});
+  remapper.add_mapping("fn_layer", KeyPressEvent(KEY_BACKSPACE),
+                       {KeyPressEvent(KEY_PRINT)});
+  remapper.add_mapping(
+      "fn_layer", KeyReleaseEvent(KEY_DELETE),
+      {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE)});
+  // WIP - The test does not pass currently.
+  // Any key pressed with Del should act as per mapping.
+  REQUIRE(
+      GetOutcomes(remapper, false,
+                  {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE}) ==
+      vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
+  // Del alone should act as Del key.
+  REQUIRE(
+      GetOutcomes(remapper, false,
+                  {KEY_DELETE, -KEY_DELETE}) ==
+      vector<string>{"Out: P KEY_DELETE", "Out: R KEY_DELETE"});
+}

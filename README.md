@@ -34,27 +34,16 @@ ctest
 # Remapping Needs
 
 ## Use Cases
-- Simple remap: E.g. CAPSLOCK to act as ESC.
-- Lead keys:
-  - E.g. CAPSLOCK when held, activates several new mappings.
-  - E.g. CTRL when held, holds CTRL and activates mappings for some buttons.
-  - Pseudocode:
-```
-'CAPSLOCK': {
-    if (next_key in [1, ..., 0]) {
-        use mapping {1: F1, ..., 0: F10}
-    }
-}
-CTRL: {
-    press CTRL
-    if (next_key in [F1, ..., F10]) {
-        release CTRL
-        use mapping {1: F1, ..., 0: F10}
-    }
-}
-```
-- Macros: E.g. (SHIFT + CAPSLOCK) -> "H E L L O".
+- E.g. NUM- to Volume Up button.
+- E.g. CAPSLOCK when held, activates certain mapping layer.
+- E.g. Shift when held, Esc acts as Backtick (resulting in Shift+Backtick = ~).
+- E.g. Ctrl when held, 1 leads to F1 (_not_ Ctrl+F1), but every other key work as Ctrl+key.
+- (TBD) E.g. Del when held, if any other key pressed it uses some specified mapping. If nothing else pressed, output Del.
+- (TBD) Macros: E.g. (SHIFT + CAPSLOCK) -> "H E L L O".
+- (TBD) Pause within macros (will require threading).
 
+Other considerations -
+- (TBD) Make it configurable if a layer passes through or blocks all keys by default?
 
 Example json mapping -
 
