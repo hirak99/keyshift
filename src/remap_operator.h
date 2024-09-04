@@ -22,6 +22,7 @@
 // Note: Negative, -key_code is interpreted as key realease, both as condition
 // and as an action.
 
+// Maps to the same codes as input.h value.
 enum class KeyEventType {
   kKeyPress = 1,
   kKeyRelease = 0,
@@ -75,20 +76,6 @@ using Action = std::variant<KeyEvent, ActionLayerChange>;
 using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
                                      KeyEvent::Hash, KeyEvent::Equal>;
 
-// TODO: Move these inside the class as private?
-// These will be stored in a stack as new layers get activated.
-struct LayerActivation {
-  int emitted_count;              // When the layer was activated.
-  KeyEvent key_event;             // key_code that activated this layer.
-  const ActionMap prior_mapping;  // Mapping to revert to on deactivation.
-};
-
-// A key that was pressed. All currently held keys will be kept in a vector.
-struct KeyHeld {
-  int emitted_count;  // When the key was held.
-  int key_code;       // key_code that was pressed.
-};
-
 class Remapper {
  public:
   Remapper() : current_mapping_(all_mappings_[0]) {
@@ -120,7 +107,7 @@ class Remapper {
 
     auto it = current_mapping_.find(key_event);
     if (it == current_mapping_.end()) {
-      // Not found. Pass the key through by triggering as is and return.
+      // Not remapped. Pass thru.
       process_key_event(key_event);
       return;
     }
@@ -132,7 +119,7 @@ class Remapper {
         auto it = all_mappings_.find(layer_change.layer_index);
         if (it != all_mappings_.end()) {
           active_layers_.push(
-              LayerActivation{emitted_count_, key_event, current_mapping_});
+              LayerActivation{event_seq_num_++, key_event, current_mapping_});
           current_mapping_ = it->second;
         } else {
           perror(
@@ -164,7 +151,6 @@ class Remapper {
     if (emit_key_code_ != nullptr) {
       emit_key_code_(key_event.key_code, int(key_event.value));
     }
-    ++emitted_count_;
   }
 
   // Check if any layer was activated by the current key_code, and if so,
@@ -181,20 +167,20 @@ class Remapper {
 
     current_mapping_ = layer_to_deactivate.prior_mapping;
     // Get all the currently pressed keys after this was activated.
-    int threshold = layer_to_deactivate.emitted_count;
+    int threshold = layer_to_deactivate.event_seq_num;
     std::vector<KeyHeld> removed_keys;
-    auto new_end = std::remove_if(
-        keys_held_.begin(), keys_held_.end(),
-        [threshold, &removed_keys](const KeyHeld& kh) {
-          if (kh.emitted_count >= threshold) {
-            removed_keys.push_back(kh);
-            return true;
-          }
-          return false;
-        });
-    // And release them.
-    for (const auto& kh : removed_keys) {
-      emit_key_code(KeyEvent{kh.key_code, KeyEventType::kKeyRelease});
+    auto new_end =
+        std::remove_if(keys_held_.begin(), keys_held_.end(),
+                       [threshold, &removed_keys](const KeyHeld& kh) {
+                         if (kh.event_seq_num >= threshold) {
+                           removed_keys.push_back(kh);
+                           return true;
+                         }
+                         return false;
+                       });
+    // And release them, in reverse order.
+    for(auto it=removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
+      emit_key_code(KeyEvent{it->key_code, KeyEventType::kKeyRelease});
     }
     // And remove them from keys_held_.
     keys_held_.erase(new_end, keys_held_.end());
@@ -204,7 +190,7 @@ class Remapper {
 
   void process_key_event(KeyEvent key_event) {
     if (key_event.value == KeyEventType::kKeyPress) {
-      keys_held_.push_back(KeyHeld{emitted_count_, key_event.key_code});
+      keys_held_.push_back(KeyHeld{event_seq_num_++, key_event.key_code});
     } else if (key_event.value == KeyEventType::kKeyRelease) {
       auto it = std::find_if(keys_held_.begin(), keys_held_.end(),
                              [key_event](const KeyHeld& kh) {
@@ -226,6 +212,19 @@ class Remapper {
     emit_key_code(key_event);
   }
 
+  // These will be stored in a stack as new layers get activated.
+  struct LayerActivation {
+    int event_seq_num;              // When the layer was activated.
+    KeyEvent key_event;             // key_code that activated this layer.
+    const ActionMap prior_mapping;  // Mapping to revert to on deactivation.
+  };
+
+  // A key that was pressed. All currently held keys will be kept in a vector.
+  struct KeyHeld {
+    int event_seq_num;  // When the key was held.
+    int key_code;       // key_code that was pressed.
+  };
+
   // Do not use this directly, use get_mapping_number().
   std::unordered_map<std::string, int> mapping_name_to_index_;
 
@@ -242,8 +241,8 @@ class Remapper {
   // Current keys being pressed. This is based on what's emitted.
   std::vector<KeyHeld> keys_held_;
 
-  // How many keys emitted so far. Acts as a convenient time tag for events.
-  int emitted_count_ = 0;
+  // Can only increase.
+  int event_seq_num_ = 0;
 
   // On process(), key_codes are emitted via this callback.
   std::function<void(int, int)> emit_key_code_ = nullptr;
