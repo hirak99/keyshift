@@ -40,7 +40,7 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
           << keyCodeToString(abs(keycode));
       outcomes.push_back(oss.str());
     }
-    remapper.process(keycode);
+    remapper.process(abs(keycode), keycode > 0 ? 1 : 0);
   };
 
   remapper.SetCallback([&outcomes](int keycode, int press) {
@@ -59,12 +59,14 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
 TEST_CASE("Test1", "[remapper]") {
   Remapper remapper;
 
-  remapper.add_mapping("fnkeys", KEY_A, {remapper.action_key(KEY_B)});
-  remapper.add_mapping("fnkeys", -KEY_A, {remapper.action_key(-KEY_B)});
-  remapper.add_mapping("fnkeys", KEY_1, {remapper.action_key(KEY_F1)});
-  remapper.add_mapping("fnkeys", KEY_0, {remapper.action_key(KEY_F10)});
-  remapper.add_mapping("", KEY_RIGHTCTRL,
-                       {remapper.action_key(KEY_RIGHTCTRL),
+  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_A), {KeyPressEvent(KEY_B)});
+  remapper.add_mapping("fnkeys", KeyReleaseEvent(KEY_A),
+                       {KeyReleaseEvent(KEY_B)});
+  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_1), {KeyPressEvent(KEY_F1)});
+  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_0),
+                       {KeyPressEvent(KEY_F10)});
+  remapper.add_mapping("", KeyPressEvent(KEY_RIGHTCTRL),
+                       {KeyPressEvent(KEY_RIGHTCTRL),
                         remapper.action_activate_mapping("fnkeys")});
 
   REQUIRE(GetOutcomes(remapper, true,
@@ -93,8 +95,9 @@ TEST_CASE("Test1", "[remapper]") {
 TEST_CASE("Lead key", "[remapper]") {
   Remapper remapper;
 
-  remapper.add_mapping("del", KEY_BACKSPACE, {remapper.action_key(KEY_PRINT)});
-  remapper.add_mapping("", KEY_DELETE,
+  remapper.add_mapping("del", KeyPressEvent(KEY_BACKSPACE),
+                       {KeyPressEvent(KEY_PRINT)});
+  remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
                        {remapper.action_activate_mapping("del")});
 
   // Leave the lead key first.
