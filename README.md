@@ -55,21 +55,67 @@ Here -
 {
     "mapppings": {
         "[default]": {
-            "^CAPSLOCK": ":activate func_keys",
-            "~CAPSLOCK": ":deactivate func_keys",
+            ":passthru": "_ALL",
+
+            // As long as CAPSLOCK is held, use the func_layer.
+            "^CAPSLOCK": ":activate [func_layer]",
+
+            // When pressed, hold the key and activate its layer.
             "^RIGHT_CTRL": [
                 "^RIGHT_CTRL",
-                [":if :next in :[func_keys]", ["~RIGHT_CTRL", ":[func_keys](:next)"]]
+                ":activate [rctrl_func_layer]",
             ],
             "^LEFT_SHIFT": [
                 "^LEFT_SHIFT",
-                [":if :next is ESC", "BACKTICK"]
+                ":activate [lshift_layer]",
             ],
-            # Snap tap.
+
+            // Snap tap.
             "^D": ["~A", "^D"],
             "^A": ["~D", "^A"],
         },
-        "[func_keys]": {"1": "F1", "2": "F2"}
+        "[lshift_layer]": {
+            "ESC": "`",  // Since LEFT_SHIFT will be held, this will produce ~.
+            ":passthru": "_ALL",
+        },
+        "[func_layer]": {
+            "1": "F1",
+            "2": "F2",
+            ":passthru": [],
+        },
+        "[rctrl_func_layer]": {
+            "_pre": "~RIGHT_CTRL",
+            "1": "F1",
+            "2": "F2",
+            ":passthru": [],
+        },
+    }
+}
+```
+
+More advanced configurations -
+- If Esc is held for 500ms, do something, else do something else.
+- If Del is held and another key is pressed, act as a layer. But if Del is
+  released, just act as tap.
+
+Note that in these scenarios, it is impossible to process the key immediately,
+and keys will be emitted only when the outcome is fully determined.
+
+```json
+{
+    "mapppings": {
+        "[default]": {
+            // If ESC is held for more than 500ms, it acts as BACKTICK.
+            // But if it is released before, it acts as ESC.
+            "ESC": [":hold_for 500ms", "BACKTICK", "ESC"],
+
+            // When DELETE is held and another key sis pressed, use del_layer.
+            // If DELETE is release before other key is pressed, just tap DELETE.
+            "DELETE": [":on_another_key", ":activate [del_layer]", "DELETE"],
+        },
+        "[del_layer]": {
+            "END": "VOLUME_UP",
+        },
     }
 }
 ```
