@@ -79,8 +79,11 @@ using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
 class Remapper {
  public:
   Remapper() : current_mapping_(all_mappings_[0]) {
-    // Ensure that "" is 0.
-    (void)get_mapping_number("");
+    // Ensure that "" is 0. The act of getting "" creates the mapping and sets
+    // it to 0, because it is the first mapping.
+    if (get_mapping_number("") != 0) {
+      throw std::runtime_error("Could not assert first index to be 0");
+    }
   }
 
   void SetCallback(std::function<void(int, int)> emit_key_code) {
