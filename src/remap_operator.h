@@ -76,12 +76,23 @@ using Action = std::variant<KeyEvent, ActionLayerChange>;
 using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
                                      KeyEvent::Hash, KeyEvent::Equal>;
 
+// Encapsulates the state in which the mapper is right now.
+// Layers are a kind of state.
+// This has three major components -
+// 1. ActionMap key - What events are we looking for.
+// 2. ActionMap value - What do we do when that event occurs.
+// 3. State parameters such as passthru enabled or not.
+struct KeyboardState {
+  ActionMap action_map;
+  bool pasthru_other_keys = true;
+};
+
 class Remapper {
  public:
-  Remapper() : current_mapping_(all_mappings_[0]) {
-    // Ensure that "" is 0. The act of getting "" creates the mapping and sets
-    // it to 0, because it is the first mapping.
-    if (get_mapping_number("") != 0) {
+  Remapper() : current_state_(all_states_[0]) {
+    // Make "" to have index 0.
+    if (state_name_to_index("") != 0) {
+      // Should not happen!
       throw std::runtime_error("Could not assert first index to be 0");
     }
   }
@@ -91,27 +102,29 @@ class Remapper {
   }
 
   // Default table should have name "".
-  void add_mapping(const std::string& name, KeyEvent key_event,
+  void add_mapping(const std::string& state_name, KeyEvent key_event,
                    const std::vector<Action>& actions) {
-    auto& mapping = all_mappings_[get_mapping_number(name)];
-    mapping[key_event] = actions;
+    auto& keyboard_state = all_states_[state_name_to_index(state_name)];
+    keyboard_state.action_map[key_event] = actions;
   }
 
   ActionLayerChange action_activate_mapping(std::string mapping_name) {
-    return ActionLayerChange{get_mapping_number(mapping_name)};
+    return ActionLayerChange{state_name_to_index(mapping_name)};
   }
 
   void process(int key_code_int, int value) {
     KeyEvent key_event{key_code_int, KeyEventType(value)};
-    // Check if key_event is in activated mapping stack.
+    // Check if key_event is in activated keyboard_state stack.
     if (deactivate_layer(key_event)) {
       return;
     }
 
-    auto it = current_mapping_.find(key_event);
-    if (it == current_mapping_.end()) {
-      // Not remapped. Pass thru.
-      process_key_event(key_event);
+    auto it = current_state_.action_map.find(key_event);
+    if (it == current_state_.action_map.end()) {
+      // Not remapped.
+      if (current_state_.pasthru_other_keys) {
+        process_key_event(key_event);
+      }
       return;
     }
     for (const Action& action : it->second) {
@@ -119,14 +132,15 @@ class Remapper {
         process_key_event(std::get<KeyEvent>(action));
       } else if (std::holds_alternative<ActionLayerChange>(action)) {
         const auto& layer_change = std::get<ActionLayerChange>(action);
-        auto it = all_mappings_.find(layer_change.layer_index);
-        if (it != all_mappings_.end()) {
+        auto it = all_states_.find(layer_change.layer_index);
+        if (it != all_states_.end()) {
           active_layers_.push(
-              LayerActivation{event_seq_num_++, key_event, current_mapping_});
-          current_mapping_ = it->second;
+              LayerActivation{event_seq_num_++, key_event, current_state_});
+          current_state_ = it->second;
         } else {
           perror(
-              "WARNING: Invalid mapping code. This is unexpected, please "
+              "WARNING: Invalid keyboard_state code. This is unexpected, "
+              "please "
               "report a bug.");
         }
       } else {
@@ -136,12 +150,12 @@ class Remapper {
   }
 
  private:
-  // Finds index of mapping name. If it doesn't exist, adds it.
-  int get_mapping_number(std::string name) {
-    auto index_it = mapping_name_to_index_.find(name);
-    if (index_it == mapping_name_to_index_.end()) {
-      int index = mapping_name_to_index_.size();
-      mapping_name_to_index_[name] = index;
+  // Finds index of keyboard_state name. If it doesn't exist, adds it.
+  int state_name_to_index(std::string state_name) {
+    auto index_it = state_name_to_index_.find(state_name);
+    if (index_it == state_name_to_index_.end()) {
+      int index = state_name_to_index_.size();
+      state_name_to_index_[state_name] = index;
       return index;
     }
     return index_it->second;
@@ -168,7 +182,7 @@ class Remapper {
 
     active_layers_.pop();
 
-    current_mapping_ = layer_to_deactivate.prior_mapping;
+    current_state_ = layer_to_deactivate.prior_state;
     // Get all the currently pressed keys after this was activated.
     int threshold = layer_to_deactivate.event_seq_num;
     std::vector<std::pair<int, int>> removed_keys;
@@ -217,20 +231,21 @@ class Remapper {
 
   // These will be stored in a stack as new layers get activated.
   struct LayerActivation {
-    int event_seq_num;              // When the layer was activated.
-    KeyEvent key_event;             // key_code that activated this layer.
-    const ActionMap prior_mapping;  // Mapping to revert to on deactivation.
+    int event_seq_num;                // When the layer was activated.
+    KeyEvent key_event;               // key_code that activated this layer.
+    const KeyboardState prior_state;  // Mapping to revert to on deactivation.
   };
 
-  // Do not use this directly, use get_mapping_number().
-  std::unordered_map<std::string, int> mapping_name_to_index_;
+  // Do not use this directly, use state_name_to_index().
+  std::unordered_map<std::string, int> state_name_to_index_;
 
-  // Outer key is a lookup from the mapping name.
+  // Outer key is a lookup from the keyboard_state name.
   // Inner key is the condition, a key_code. Negative indicates on release.
-  std::unordered_map<int, ActionMap> all_mappings_;
+  std::unordered_map<int, KeyboardState> all_states_;
 
-  // Currently activated mapping. Maintained for efficiency during operation.
-  ActionMap& current_mapping_;
+  // Currently activated keyboard_state. Maintained for efficiency during
+  // operation.
+  KeyboardState& current_state_;
   // Previous mappings. This is used as mappings get deactivated.
   // Pair of key_code, mapping_index.
   std::stack<LayerActivation> active_layers_;

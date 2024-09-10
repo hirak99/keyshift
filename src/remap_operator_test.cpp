@@ -147,15 +147,16 @@ TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
 //   Remapper remapper;
 //
 //   remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
-//                        {remapper.action_activate_mapping("fn_layer")});
+//                      {remapper.action_activate_mapping("fn_layer")});
 //   remapper.add_mapping("fn_layer", KeyPressEvent(KEY_BACKSPACE),
-//                        {KeyPressEvent(KEY_PRINT)});
-//   remapper.add_mapping(
-//       "fn_layer", KeyReleaseEvent(KEY_DELETE),
-//       {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE)});
+//                      {KeyPressEvent(KEY_PRINT)});
+//   remapper.add_mapping("fn_layer", KeyReleaseEvent(KEY_DELETE),
+//                      {KeyPressEvent(KEY_DELETE),
+//                      KeyReleaseEvent(KEY_DELETE)});
 //   REQUIRE(
 //       GetOutcomes(remapper, false,
-//                   {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE}) ==
+//                   {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE})
+//                   ==
 //       vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
 //   // Del alone should act as Del key.
 //   REQUIRE(GetOutcomes(remapper, false, {KEY_DELETE, -KEY_DELETE}) ==

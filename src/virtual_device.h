@@ -1,6 +1,5 @@
 // Creates a virtual keyboard input device.
 
-#include <iostream>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/uinput.h>
@@ -8,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <iostream>
 
 class VirtualDevice {
  public:

@@ -107,11 +107,11 @@ and keys will be emitted only when the outcome is fully determined.
         "[default]": {
             // If ESC is held for more than 500ms, it acts as BACKTICK.
             // But if it is released before, it acts as ESC.
-            "ESC": [":hold_for 500ms", "BACKTICK", "ESC"],
+            "ESC": [":if_held_for 500ms", "BACKTICK", "ESC"],
 
             // When DELETE is held and another key sis pressed, use del_layer.
             // If DELETE is release before other key is pressed, just tap DELETE.
-            "DELETE": [":on_another_key", ":activate [del_layer]", "DELETE"],
+            "DELETE": [":if_another_key", ":activate [del_layer]", "DELETE"],
         },
         "[del_layer]": {
             "END": "VOLUME_UP",
