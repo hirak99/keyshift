@@ -142,23 +142,31 @@ TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
                          "Out: P KEY_F1", "Out: R KEY_F1"});
 }
 
-// WIP - Use Del by itself if no other key is pressed, otherwise use mapping.
-// TEST_CASE("Del+Bksp is Print, but Del alone is Del", "[remapper]") {
-//   Remapper remapper;
-//
-//   remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
-//                      {remapper.action_activate_mapping("fn_layer")});
-//   remapper.add_mapping("fn_layer", KeyPressEvent(KEY_BACKSPACE),
-//                      {KeyPressEvent(KEY_PRINT)});
-//   remapper.add_mapping("fn_layer", KeyReleaseEvent(KEY_DELETE),
-//                      {KeyPressEvent(KEY_DELETE),
-//                      KeyReleaseEvent(KEY_DELETE)});
-//   REQUIRE(
-//       GetOutcomes(remapper, false,
-//                   {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE})
-//                   ==
-//       vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
-//   // Del alone should act as Del key.
-//   REQUIRE(GetOutcomes(remapper, false, {KEY_DELETE, -KEY_DELETE}) ==
-//           vector<string>{"Out: P KEY_DELETE", "Out: R KEY_DELETE"});
-// }
+SCENARIO("Del+Bksp is Print, but Del alone is Del") {
+  GIVEN("Remapper with del") {
+    Remapper remapper;
+
+    remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
+                         {remapper.action_activate_mapping("del_layer")});
+    remapper.add_mapping(
+        "del_layer", KeyReleaseEvent(KEY_DELETE),
+        {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE),
+         ActionDeactivateLayer{}});
+    remapper.add_mapping(
+        "del_layer", KeyReleaseEvent(KEY_END),
+        {KeyPressEvent(KEY_VOLUMEUP), KeyReleaseEvent(KEY_VOLUMEUP),
+         ActionDeactivateLayer{}});
+
+    // WIP - Does not pass yet.
+    THEN("Del+End does VolumeUp") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {KEY_DELETE, KEY_END, -KEY_END, -KEY_DELETE}) ==
+              vector<string>{"Out: P KEY_VOLUMEUP", "Out: R KEY_VOLUMEUP"});
+    }
+
+    THEN("Del alone should act as Del key") {
+      REQUIRE(GetOutcomes(remapper, false, {KEY_DELETE, -KEY_DELETE}) ==
+              vector<string>{"Out: P KEY_DELETE", "Out: R KEY_DELETE"});
+    }
+  }
+}

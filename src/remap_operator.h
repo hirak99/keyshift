@@ -70,7 +70,10 @@ struct ActionLayerChange {
   int layer_index;
 };
 
-using Action = std::variant<KeyEvent, ActionLayerChange>;
+// Explicit action to deactivate a layer.
+struct ActionDeactivateLayer {};
+
+using Action = std::variant<KeyEvent, ActionLayerChange, ActionDeactivateLayer>;
 
 // KeyEvent to which action they are mapped.
 using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
@@ -84,7 +87,11 @@ using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
 // 3. State parameters such as passthru enabled or not.
 struct KeyboardState {
   ActionMap action_map;
+  // If true, keys not in ActionMap are allowed.
   bool pasthru_other_keys = true;
+  // If true, when invoking this layer we note down the deactivation condition.
+  // Set automatically to false if action_deactivate_layer is explicitly added.
+  bool auto_deactivate_layer = true;
 };
 
 class Remapper {
@@ -106,6 +113,12 @@ class Remapper {
                    const std::vector<Action>& actions) {
     auto& keyboard_state = all_states_[state_name_to_index(state_name)];
     keyboard_state.action_map[key_event] = actions;
+    if (std::any_of(actions.begin(), actions.end(), [](Action action) {
+          return std::holds_alternative<ActionDeactivateLayer>(action);
+        })) {
+      // Do not auto deactivate if there is any explicit deactivation request.
+      keyboard_state.auto_deactivate_layer = false;
+    }
   }
 
   ActionLayerChange action_activate_mapping(std::string mapping_name) {
@@ -115,7 +128,7 @@ class Remapper {
   void process(int key_code_int, int value) {
     KeyEvent key_event{key_code_int, KeyEventType(value)};
     // Check if key_event is in activated keyboard_state stack.
-    if (deactivate_layer(key_event)) {
+    if (deactivate_layer_by_key(key_event)) {
       return;
     }
 
@@ -134,15 +147,20 @@ class Remapper {
         const auto& layer_change = std::get<ActionLayerChange>(action);
         auto it = all_states_.find(layer_change.layer_index);
         if (it != all_states_.end()) {
-          active_layers_.push(
-              LayerActivation{event_seq_num_++, key_event, current_state_});
-          current_state_ = it->second;
+          auto new_state = it->second;
+          if (new_state.auto_deactivate_layer) {
+            active_layers_.push(
+                LayerActivation{event_seq_num_++, key_event, current_state_});
+          }
+          current_state_ = new_state;
         } else {
           perror(
               "WARNING: Invalid keyboard_state code. This is unexpected, "
               "please "
               "report a bug.");
         }
+      } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
+        deactivate_current_layer();
       } else {
         perror("WARNING: Unknown action.");
       }
@@ -172,14 +190,25 @@ class Remapper {
 
   // Check if any layer was activated by the current key_code, and if so,
   // deactivate it.
-  bool deactivate_layer(KeyEvent key_event) {
+  bool deactivate_layer_by_key(KeyEvent key_event) {
     if (active_layers_.empty()) return false;
-    // TODO: The key_event may correspondo to not the top layer. Change this to
+    // TODO: The key_event may not correspond to the top layer. Change this to
     // do a search on all active layers.
     auto layer_to_deactivate = active_layers_.top();
     if (layer_to_deactivate.key_event.key_code != key_event.key_code)
       return false;
 
+    deactivate_current_layer();
+    process_key_event(key_event);
+    return true;
+  }
+
+  void deactivate_current_layer() {
+    if (active_layers_.empty()) {
+      perror("WARNING: Trying to deactivate when no layer is active.");
+      return;
+    }
+    auto layer_to_deactivate = active_layers_.top();
     active_layers_.pop();
 
     current_state_ = layer_to_deactivate.prior_state;
@@ -207,8 +236,6 @@ class Remapper {
     for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
       emit_key_code(KeyEvent{it->first, KeyEventType::kKeyRelease});
     }
-    process_key_event(key_event);
-    return true;
   }
 
   void process_key_event(KeyEvent key_event) {

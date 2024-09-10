@@ -119,3 +119,14 @@ and keys will be emitted only when the outcome is fully determined.
     }
 }
 ```
+
+Internally, the DELETE layer may be implemented like this -
+```json
+{
+    "^DELETE": [":activate del_layer"],
+    "[del_layer]": {
+        "~DELETE": ["DELETE", ":deactivate_layer"],
+        "END": ["VOLUME_UP", ":deactivate_layer"],
+    }
+}
+```
