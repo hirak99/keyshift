@@ -39,10 +39,10 @@ void Remapper::AddMapping(const std::string& state_name, KeyEvent key_event,
                           const std::vector<Action>& actions) {
   auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
   keyboard_state.action_map[key_event] = actions;
+  // Do not auto deactivate if there is any explicit deactivation request.
   if (std::any_of(actions.begin(), actions.end(), [](Action action) {
         return std::holds_alternative<ActionDeactivateLayer>(action);
       })) {
-    // Do not auto deactivate if there is any explicit deactivation request.
     keyboard_state.auto_deactivate_layer = false;
   }
 }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -111,15 +112,23 @@ class ConfigParser {
       perror("ERROR: Prefix (^ or ~) for layer keys is not supported yet.");
       return false;
     }
-    string layer_name = key_str + "_layer";
+    string layer_name = layer_key_str + "_layer";
 
     // Add default to layer mapping.
     remapper_->AddMapping(kDefaultLayerName, KeyReleaseEvent(*layer_key),
                           {remapper_->ActionActivateState(layer_name)});
 
-    // TODO: Handle *.
+    // Handle SHIFT + * = *.
+    if (key_str == "*") {
+      if (assignment != "*") {
+        perror("ERROR: Must be a * on the right side of for KEY + * = *");
+        return false;
+      }
+      remapper_->SetAllowOtherKeys(layer_name, true);
+      return true;
+    }
 
-    // TODO: Handle nothing.
+    // Handle DELETE + nothing = DELETE.
     if (key_str == "nothing") {
       try {
         remapper_->SetNullEventActions(layer_name,
