@@ -130,3 +130,28 @@ Internally, the DELETE layer may be implemented like this -
     }
 }
 ```
+
+## Alternative Super Simple Specs?
+
+```
+CAPSLOCK + 1 = F1
+CAPSLOCK + 2 = F2
+
+^RIGHT_CTRL = ^RIGHT_CTRL
+RIGHT_CTRL + 1 = ~RIGHT_CTRL + F1
+RIGHT_CTRL + 2 = ~RIGHT_CTRL + F2
+
+# Allows Shift+Esc = ~.
+^SHIFT = ^SHIFT
+SHIFT + ESC = BACKTICK
+SHIFT + * = *
+
+# Snap tap.
+^D = ~A ^D
+^A = ~D ^A
+
+ESC + 500ms = BACKTICK
+
+DEL + END = VOLUME_UP
+DEL + [] = DEL  # Nothing happened within DEL.
+```
