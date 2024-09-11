@@ -84,6 +84,30 @@ void Remapper::process(int key_code_int, int value) {
   process_actions(it->second, key_event);
 }
 
+void Remapper::dump_config() {
+  for (const auto& [id, state] : all_states_) {
+    std::cout << "State #" << id << std::endl;
+    for (const auto& [trigger, actions] : state.action_map) {
+      std::cout << "  On: " << trigger << std::endl;
+      for (const auto& action : actions) {
+        if (std::holds_alternative<KeyEvent>(action)) {
+          const auto& key_event = std::get<KeyEvent>(action);
+          std::cout << "    Key: " << key_event << std::endl;
+        } else if (std::holds_alternative<ActionLayerChange>(action)) {
+          const auto& layer_change = std::get<ActionLayerChange>(action);
+          std::cout << "    Layer Change: " << layer_change.layer_index
+                    << std::endl;
+        } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
+          deactivate_current_layer();
+          std::cout << "    Deactivate Layer" << std::endl;
+        } else {
+          perror("WARNING: Unknown action.");
+        }
+      }
+    }
+  }
+}
+
 // PRIVATE
 
 // Finds index of keyboard_state name. If it doesn't exist, adds it.

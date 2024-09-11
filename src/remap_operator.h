@@ -35,6 +35,23 @@ struct KeyEvent {
   int key_code;
   KeyEventType value;
 
+  friend std::ostream& operator<<(std::ostream& os, const KeyEvent& key_event) {
+    os << "(" << keyCodeToName(key_event.key_code) << " ";
+    switch (key_event.value) {
+      case KeyEventType::kKeyPress:
+        os << "Press";
+        break;
+      case KeyEventType::kKeyRelease:
+        os << "Release";
+        break;
+      case KeyEventType::kKeyRepeat:
+        os << "Repeat";
+        break;
+    }
+    os << ")";
+    return os;
+  }
+
   // Following methods are needed to use this struct as key in map.
   bool operator==(const KeyEvent& other) const {
     return key_code == other.key_code && value == other.value;
@@ -131,6 +148,9 @@ class Remapper {
   ActionLayerChange action_activate_mapping(std::string state_name);
 
   void process(int key_code_int, int value);
+
+  // Prints the existing config to terminal.
+  void dump_config();
 
  private:
   // Finds index of keyboard_state name. If it doesn't exist, adds it.

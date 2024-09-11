@@ -141,5 +141,7 @@ int main() {
     exit(-1);
   }
 
+  remapper.dump_config();
+
   return 0;
 }
