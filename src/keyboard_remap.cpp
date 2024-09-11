@@ -84,11 +84,11 @@ int main() {
   if (!kPreviewOnly) device.Grab();
 
   Remapper remapper;
-  remapper.add_mapping("", KeyPressEvent(KEY_A),
-                       {remapper.action_activate_mapping("fn_layer")});
-  remapper.add_mapping("fn_layer", KeyPressEvent(KEY_S),
+  remapper.AddMapping("", KeyPressEvent(KEY_A),
+                       {remapper.ActionActivateState("fn_layer")});
+  remapper.AddMapping("fn_layer", KeyPressEvent(KEY_S),
                        {KeyPressEvent(KEY_B)});
-  remapper.add_mapping("fn_layer", KeyReleaseEvent(KEY_S),
+  remapper.AddMapping("fn_layer", KeyReleaseEvent(KEY_S),
                        {KeyReleaseEvent(KEY_B)});
   VirtualDevice out_device;
 
@@ -110,7 +110,7 @@ int main() {
                   << std::endl;
       }
 
-      remapper.process(ie.code, ie.value);
+      remapper.Process(ie.code, ie.value);
 
       if (!kPreviewOnly) {
         // Process and remap key events here

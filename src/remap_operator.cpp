@@ -24,7 +24,7 @@ KeyEvent KeyReleaseEvent(int key_code) {
 
 Remapper::Remapper() : current_state_(all_states_[0]) {
   // Make "" to have index 0.
-  if (state_name_to_index("") != 0) {
+  if (StateNameToIndex("") != 0) {
     // Should not happen!
     throw std::runtime_error("Could not assert first index to be 0");
   }
@@ -35,9 +35,9 @@ void Remapper::SetCallback(std::function<void(int, int)> emit_key_code) {
 }
 
 // Default state_name is "".
-void Remapper::add_mapping(const std::string& state_name, KeyEvent key_event,
-                           const std::vector<Action>& actions) {
-  auto& keyboard_state = all_states_[state_name_to_index(state_name)];
+void Remapper::AddMapping(const std::string& state_name, KeyEvent key_event,
+                          const std::vector<Action>& actions) {
+  auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
   keyboard_state.action_map[key_event] = actions;
   if (std::any_of(actions.begin(), actions.end(), [](Action action) {
         return std::holds_alternative<ActionDeactivateLayer>(action);
@@ -47,26 +47,26 @@ void Remapper::add_mapping(const std::string& state_name, KeyEvent key_event,
   }
 }
 
-void Remapper::set_null_event_actions(const std::string& state_name,
-                                      const std::vector<Action> actions) {
-  auto& keyboard_state = all_states_[state_name_to_index(state_name)];
+void Remapper::SetNullEventActions(const std::string& state_name,
+                                   const std::vector<Action> actions) {
+  auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
   keyboard_state.null_event_actions = actions;
 }
 
-void Remapper::set_allow_other_keys(const std::string& state_name,
-                                    bool allow_other_keys) {
-  auto& keyboard_state = all_states_[state_name_to_index(state_name)];
+void Remapper::SetAllowOtherKeys(const std::string& state_name,
+                                 bool allow_other_keys) {
+  auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
   keyboard_state.allow_other_keys = allow_other_keys;
 }
 
-ActionLayerChange Remapper::action_activate_mapping(std::string state_name) {
-  return ActionLayerChange{state_name_to_index(state_name)};
+ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
+  return ActionLayerChange{StateNameToIndex(state_name)};
 }
 
-void Remapper::process(int key_code_int, int value) {
+void Remapper::Process(int key_code_int, int value) {
   KeyEvent key_event{key_code_int, KeyEventType(value)};
   // Check if key_event is in activated keyboard_state stack.
-  if (deactivate_layer_by_key(key_event)) {
+  if (DeactivateLayerByKey(key_event)) {
     return;
   }
 
@@ -74,17 +74,17 @@ void Remapper::process(int key_code_int, int value) {
   if (it == current_state_.action_map.end()) {
     // Not remapped.
     if (current_state_.allow_other_keys) {
-      process_key_event(key_event);
+      ProcessKeyEvent(key_event);
     }
     return;
   }
   // Since a key was pressed, null event will not be triggered on
   // deactivation.
   current_state_.null_event_applicable = false;
-  process_actions(it->second, key_event);
+  ProcessActions(it->second, key_event);
 }
 
-void Remapper::dump_config() {
+void Remapper::DumpConfig() {
   for (const auto& [id, state] : all_states_) {
     std::cout << "State #" << id << std::endl;
     for (const auto& [trigger, actions] : state.action_map) {
@@ -98,7 +98,7 @@ void Remapper::dump_config() {
           std::cout << "    Layer Change: " << layer_change.layer_index
                     << std::endl;
         } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
-          deactivate_current_layer();
+          DeactivateCurrentLayer();
           std::cout << "    Deactivate Layer" << std::endl;
         } else {
           perror("WARNING: Unknown action.");
@@ -111,7 +111,7 @@ void Remapper::dump_config() {
 // PRIVATE
 
 // Finds index of keyboard_state name. If it doesn't exist, adds it.
-int Remapper::state_name_to_index(std::string state_name) {
+int Remapper::StateNameToIndex(std::string state_name) {
   auto index_it = state_name_to_index_.find(state_name);
   if (index_it == state_name_to_index_.end()) {
     int index = state_name_to_index_.size();
@@ -121,7 +121,7 @@ int Remapper::state_name_to_index(std::string state_name) {
   return index_it->second;
 }
 
-void Remapper::emit_key_code(KeyEvent key_event) {
+void Remapper::EmitKeyCode(KeyEvent key_event) {
   // std::cout << "Emit "
   //           << (key_event.value == KeyEventType::kKeyPress ? "P" : "R")
   //           << key_event.key_code << std::endl;
@@ -132,7 +132,7 @@ void Remapper::emit_key_code(KeyEvent key_event) {
 
 // Check if any layer was activated by the current key_code, and if so,
 // deactivate it.
-bool Remapper::deactivate_layer_by_key(KeyEvent key_event) {
+bool Remapper::DeactivateLayerByKey(KeyEvent key_event) {
   if (active_layers_.empty()) return false;
   // TODO: The key_event may not correspond to the top layer. Change this to
   // do a search on all active layers.
@@ -140,12 +140,12 @@ bool Remapper::deactivate_layer_by_key(KeyEvent key_event) {
   if (layer_to_deactivate.key_event.key_code != key_event.key_code)
     return false;
 
-  deactivate_current_layer();
-  process_key_event(key_event);
+  DeactivateCurrentLayer();
+  ProcessKeyEvent(key_event);
   return true;
 }
 
-void Remapper::deactivate_current_layer() {
+void Remapper::DeactivateCurrentLayer() {
   if (active_layers_.empty()) {
     perror("WARNING: Trying to deactivate when no layer is active.");
     return;
@@ -155,7 +155,7 @@ void Remapper::deactivate_current_layer() {
 
   current_state_.deactivate();
   if (current_state_.null_event_applicable) {
-    process_actions(current_state_.null_event_actions, std::nullopt);
+    ProcessActions(current_state_.null_event_actions, std::nullopt);
   }
   current_state_ = layer_to_deactivate.prior_state;
   // Get all the currently pressed keys after this was activated.
@@ -179,11 +179,11 @@ void Remapper::deactivate_current_layer() {
               return lhs.first < rhs.first;
             });
   for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
-    emit_key_code(KeyEvent{it->first, KeyEventType::kKeyRelease});
+    EmitKeyCode(KeyEvent{it->first, KeyEventType::kKeyRelease});
   }
 }
 
-void Remapper::process_key_event(KeyEvent key_event) {
+void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
     keys_held_[key_event.key_code] = event_seq_num_++;
   } else if (key_event.value == KeyEventType::kKeyRelease) {
@@ -198,14 +198,14 @@ void Remapper::process_key_event(KeyEvent key_event) {
     std::cerr << "WARNING: Unimplemented key code value "
               << int(key_event.value) << std::endl;
   }
-  emit_key_code(key_event);
+  EmitKeyCode(key_event);
 }
 
-void Remapper::process_actions(const std::vector<Action>& actions,
-                               const std::optional<KeyEvent> key_event) {
+void Remapper::ProcessActions(const std::vector<Action>& actions,
+                              const std::optional<KeyEvent> key_event) {
   for (const Action& action : actions) {
     if (std::holds_alternative<KeyEvent>(action)) {
-      process_key_event(std::get<KeyEvent>(action));
+      ProcessKeyEvent(std::get<KeyEvent>(action));
     } else if (std::holds_alternative<ActionLayerChange>(action)) {
       const auto& layer_change = std::get<ActionLayerChange>(action);
       auto it = all_states_.find(layer_change.layer_index);
@@ -225,7 +225,7 @@ void Remapper::process_actions(const std::vector<Action>& actions,
             "report a bug.");
       }
     } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
-      deactivate_current_layer();
+      DeactivateCurrentLayer();
     } else {
       perror("WARNING: Unknown action.");
     }

@@ -40,7 +40,7 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
           << keyCodeToName(abs(keycode));
       outcomes.push_back(oss.str());
     }
-    remapper.process(abs(keycode), keycode > 0 ? 1 : 0);
+    remapper.Process(abs(keycode), keycode > 0 ? 1 : 0);
   };
 
   remapper.SetCallback([&outcomes](int keycode, int press) {
@@ -59,15 +59,15 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
 TEST_CASE("Test1", "[remapper]") {
   Remapper remapper;
 
-  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_A), {KeyPressEvent(KEY_B)});
-  remapper.add_mapping("fnkeys", KeyReleaseEvent(KEY_A),
+  remapper.AddMapping("fnkeys", KeyPressEvent(KEY_A), {KeyPressEvent(KEY_B)});
+  remapper.AddMapping("fnkeys", KeyReleaseEvent(KEY_A),
                        {KeyReleaseEvent(KEY_B)});
-  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_1), {KeyPressEvent(KEY_F1)});
-  remapper.add_mapping("fnkeys", KeyPressEvent(KEY_0),
+  remapper.AddMapping("fnkeys", KeyPressEvent(KEY_1), {KeyPressEvent(KEY_F1)});
+  remapper.AddMapping("fnkeys", KeyPressEvent(KEY_0),
                        {KeyPressEvent(KEY_F10)});
-  remapper.add_mapping("", KeyPressEvent(KEY_RIGHTCTRL),
+  remapper.AddMapping("", KeyPressEvent(KEY_RIGHTCTRL),
                        {KeyPressEvent(KEY_RIGHTCTRL),
-                        remapper.action_activate_mapping("fnkeys")});
+                        remapper.ActionActivateState("fnkeys")});
 
   REQUIRE(GetOutcomes(remapper, true,
                       {KEY_C, -KEY_C, KEY_RIGHTCTRL, KEY_A, -KEY_RIGHTCTRL,
@@ -95,9 +95,9 @@ TEST_CASE("Test1", "[remapper]") {
 TEST_CASE("Lead key", "[remapper]") {
   Remapper remapper;
 
-  remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
-                       {remapper.action_activate_mapping("del")});
-  remapper.add_mapping("del", KeyPressEvent(KEY_BACKSPACE),
+  remapper.AddMapping("", KeyPressEvent(KEY_DELETE),
+                       {remapper.ActionActivateState("del")});
+  remapper.AddMapping("del", KeyPressEvent(KEY_BACKSPACE),
                        {KeyPressEvent(KEY_PRINT)});
 
   // Leave the lead key first.
@@ -115,13 +115,13 @@ TEST_CASE("Lead key", "[remapper]") {
 TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
   Remapper remapper;
 
-  remapper.add_mapping("", KeyPressEvent(KEY_RIGHTCTRL),
+  remapper.AddMapping("", KeyPressEvent(KEY_RIGHTCTRL),
                        {KeyPressEvent(KEY_RIGHTCTRL),
-                        remapper.action_activate_mapping("rctrl_fn_layer")});
-  remapper.add_mapping("rctrl_fn_layer", KeyPressEvent(KEY_BACKSPACE),
+                        remapper.ActionActivateState("rctrl_fn_layer")});
+  remapper.AddMapping("rctrl_fn_layer", KeyPressEvent(KEY_BACKSPACE),
                        {KeyPressEvent(KEY_A)});
   // Ctrl will be released if 0 is pressed.
-  remapper.add_mapping("rctrl_fn_layer", KeyPressEvent(KEY_1),
+  remapper.AddMapping("rctrl_fn_layer", KeyPressEvent(KEY_1),
                        {KeyReleaseEvent(KEY_RIGHTCTRL), KeyPressEvent(KEY_F1)});
 
   // Covers mapped keys.
@@ -146,14 +146,14 @@ SCENARIO("Del+Bksp is Print, but Del alone is Del") {
   GIVEN("Remapper with del") {
     Remapper remapper;
 
-    remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
-                         {remapper.action_activate_mapping("del_layer")});
-    remapper.set_allow_other_keys("del_layer", false);
-    remapper.add_mapping("del_layer", KeyPressEvent(KEY_END),
+    remapper.AddMapping("", KeyPressEvent(KEY_DELETE),
+                         {remapper.ActionActivateState("del_layer")});
+    remapper.SetAllowOtherKeys("del_layer", false);
+    remapper.AddMapping("del_layer", KeyPressEvent(KEY_END),
                          {KeyPressEvent(KEY_VOLUMEUP)});
-    remapper.add_mapping("del_layer", KeyReleaseEvent(KEY_END),
+    remapper.AddMapping("del_layer", KeyReleaseEvent(KEY_END),
                          {KeyReleaseEvent(KEY_VOLUMEUP)});
-    remapper.set_null_event_actions(
+    remapper.SetNullEventActions(
         "del_layer", {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE)});
 
     // WIP - Does not pass yet.

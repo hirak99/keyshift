@@ -136,38 +136,39 @@ class Remapper {
   void SetCallback(std::function<void(int, int)> emit_key_code);
 
   // Default state_name is "".
-  void add_mapping(const std::string& state_name, KeyEvent key_event,
-                   const std::vector<Action>& actions);
+  void AddMapping(const std::string& state_name, KeyEvent key_event,
+                  const std::vector<Action>& actions);
 
-  void set_null_event_actions(const std::string& state_name,
-                              const std::vector<Action> actions);
+  void SetNullEventActions(const std::string& state_name,
+                           const std::vector<Action> actions);
 
-  void set_allow_other_keys(const std::string& state_name,
-                            bool allow_other_keys);
+  void SetAllowOtherKeys(const std::string& state_name, bool allow_other_keys);
 
-  ActionLayerChange action_activate_mapping(std::string state_name);
+  // Returns an action to activate a state. Can be part of actions in
+  // AddMapping().
+  ActionLayerChange ActionActivateState(std::string state_name);
 
-  void process(int key_code_int, int value);
+  void Process(int key_code_int, int value);
 
   // Prints the existing config to terminal.
-  void dump_config();
+  void DumpConfig();
 
  private:
   // Finds index of keyboard_state name. If it doesn't exist, adds it.
-  int state_name_to_index(std::string state_name);
+  int StateNameToIndex(std::string state_name);
 
-  void emit_key_code(KeyEvent key_event);
+  void EmitKeyCode(KeyEvent key_event);
 
   // Check if any layer was activated by the current key_code, and if so,
   // deactivate it.
-  bool deactivate_layer_by_key(KeyEvent key_event);
+  bool DeactivateLayerByKey(KeyEvent key_event);
 
-  void deactivate_current_layer();
+  void DeactivateCurrentLayer();
 
-  void process_key_event(KeyEvent key_event);
+  void ProcessKeyEvent(KeyEvent key_event);
 
-  void process_actions(const std::vector<Action>& actions,
-                       const std::optional<KeyEvent> key_event);
+  void ProcessActions(const std::vector<Action>& actions,
+                      const std::optional<KeyEvent> key_event);
 
   // These will be stored in a stack as new layers get activated.
   struct LayerActivation {
@@ -176,7 +177,7 @@ class Remapper {
     const KeyboardState prior_state;  // Mapping to revert to on deactivation.
   };
 
-  // Do not use this directly, use state_name_to_index().
+  // Do not use this directly, use StateNameToIndex().
   std::unordered_map<std::string, int> state_name_to_index_;
 
   // Outer key is a lookup from the keyboard_state name.
@@ -198,7 +199,7 @@ class Remapper {
   // Can only increase.
   int event_seq_num_ = 0;
 
-  // On process(), key_codes are emitted via this callback.
+  // On Process(), key_codes are emitted via this callback.
   std::function<void(int, int)> emit_key_code_ = nullptr;
 };
 
