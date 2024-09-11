@@ -87,8 +87,9 @@ void Remapper::Process(int key_code_int, int value) {
 void Remapper::DumpConfig() {
   for (const auto& [id, state] : all_states_) {
     std::cout << "State #" << id << std::endl;
-    for (const auto& [trigger, actions] : state.action_map) {
-      std::cout << "  On: " << trigger << std::endl;
+    std::cout << "  Other keys: "
+              << (state.allow_other_keys ? "Allow" : "Block") << std::endl;
+    auto ShowActions = [](const std::vector<Action>& actions) {
       for (const auto& action : actions) {
         if (std::holds_alternative<KeyEvent>(action)) {
           const auto& key_event = std::get<KeyEvent>(action);
@@ -98,12 +99,19 @@ void Remapper::DumpConfig() {
           std::cout << "    Layer Change: " << layer_change.layer_index
                     << std::endl;
         } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
-          DeactivateCurrentLayer();
           std::cout << "    Deactivate Layer" << std::endl;
         } else {
           perror("WARNING: Unknown action.");
         }
       }
+    };
+    for (const auto& [trigger, actions] : state.action_map) {
+      std::cout << "  On: " << trigger << std::endl;
+      ShowActions(actions);
+    }
+    if (!state.null_event_actions.empty()) {
+      std::cout << "  On nothing:" << std::endl;
+      ShowActions(state.null_event_actions);
     }
   }
 }

@@ -68,10 +68,14 @@ class ConfigParser {
  private:
   // Converts a string like "~D ^A" to actions.
   std::vector<Action> AssignmentToActions(const string& assignment) {
+    const auto tokens = SplitString(assignment, ' ');
+    return AssignmentToActions(tokens);
+  }
+
+  std::vector<Action> AssignmentToActions(const std::vector<string>& tokens) {
     std::vector<Action> actions;
-    std::istringstream iss(assignment);
-    string token;
-    while (iss >> token) {
+
+    for (const auto& token : tokens) {
       const auto [right_prefix, right_key] = SplitKeyPrefix(token);
       if (!right_key.has_value()) {
         throw std::invalid_argument("Invalid keycode.");
@@ -93,16 +97,24 @@ class ConfigParser {
 
     std::vector<Action> actions;
     try {
-      actions = AssignmentToActions(assignment);
+      const auto tokens = SplitString(assignment, ' ');
+      // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
+      if (left_prefix == 0 && tokens.size() == 1) {
+        remapper_->AddMapping(layer_name, KeyPressEvent(*left_key),
+                              AssignmentToActions({"^" + tokens[0]}));
+        remapper_->AddMapping(layer_name, KeyReleaseEvent(*left_key),
+                              AssignmentToActions({"~" + tokens[0]}));
+        return true;
+      } else {
+        remapper_->AddMapping(layer_name,
+                              left_prefix == '~' ? KeyReleaseEvent(*left_key)
+                                                 : KeyPressEvent(*left_key),
+                              AssignmentToActions(tokens));
+        return true;
+      }
     } catch (const std::invalid_argument&) {
       return false;
     }
-
-    remapper_->AddMapping(layer_name,
-                          left_prefix == '~' ? KeyReleaseEvent(*left_key)
-                                             : KeyPressEvent(*left_key),
-                          actions);
-    return true;
   }
 
   bool ParseLayerAssignment(const string& layer_key_str, const string& key_str,
@@ -115,7 +127,7 @@ class ConfigParser {
     string layer_name = layer_key_str + "_layer";
 
     // Add default to layer mapping.
-    remapper_->AddMapping(kDefaultLayerName, KeyReleaseEvent(*layer_key),
+    remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(*layer_key),
                           {remapper_->ActionActivateState(layer_name)});
 
     // Handle SHIFT + * = *.
