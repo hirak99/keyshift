@@ -7,6 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <stack>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>

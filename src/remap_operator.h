@@ -9,16 +9,12 @@
 // - Implement json config parsing.
 // - Need to handle repeats. 1 is press. 0 is release. And repeat is code 2.
 
-#include <stdio.h>
-
-#include <algorithm>
+#include <cstddef>
 #include <functional>
-#include <iostream>
 #include <optional>
 #include <stack>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <variant>
 #include <vector>
 
