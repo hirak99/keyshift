@@ -151,7 +151,7 @@ class Remapper {
   void Process(int key_code_int, int value);
 
   // Prints the existing config to terminal.
-  void DumpConfig();
+  void DumpConfig(std::ostream& os = std::cout);
 
  private:
   // Finds index of keyboard_state name. If it doesn't exist, adds it.
