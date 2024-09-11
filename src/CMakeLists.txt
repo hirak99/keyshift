@@ -16,12 +16,12 @@ find_package(Catch2 3 REQUIRED)
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyboard_remap keyboard_remap.cpp remap_operator.cpp keycode_lookup.cpp)
 
-# Temporary.
-add_executable(config_parser config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
-
 # Add the tests.
 enable_testing()
 add_executable(remap_operator_test remap_operator_test.cpp remap_operator.cpp keycode_lookup.cpp)
 target_link_libraries(remap_operator_test PRIVATE Catch2::Catch2WithMain)
 add_test(NAME remap_operator_test COMMAND remap_operator_test)
 
+add_executable(config_parser_test config_parser_test.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
+target_link_libraries(config_parser_test PRIVATE Catch2::Catch2WithMain)
+add_test(NAME config_parser_test COMMAND config_parser_test)

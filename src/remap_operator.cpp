@@ -92,7 +92,7 @@ void Remapper::Process(int key_code_int, int value) {
   ProcessActions(it->second, key_event);
 }
 
-void Remapper::DumpConfig(std::ostream& os) {
+void Remapper::DumpConfig(std::ostream& os) const {
   for (const auto& [id, state] : all_states_) {
     os << "State #" << id << std::endl;
     os << "  Other keys: " << (state.allow_other_keys ? "Allow" : "Block")

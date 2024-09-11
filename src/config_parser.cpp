@@ -34,7 +34,7 @@ string RemoveComment(const string& line) {
   return line;
 }
 
-string trim(const string& line) {
+string StringTrim(const string& line) {
   static auto trim_chars = " \t\n\r\f\v";
   auto start = line.find_first_not_of(trim_chars);
   if (start == string::npos) {
@@ -188,7 +188,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
 [[nodiscard]] bool ConfigParser::ParseLine(const string& original_line) {
   // Ignore comments and empty lines.
   line_being_parsed_ = original_line;
-  string line = trim(RemoveComment(original_line));
+  string line = StringTrim(RemoveComment(original_line));
   if (line.empty()) {
     return true;
   }
@@ -200,42 +200,20 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
     return false;
   }
 
-  string key_combo = trim(parts[0]);
-  string action = trim(parts[1]);
+  string key_combo = StringTrim(parts[0]);
+  string action = StringTrim(parts[1]);
 
   // Split key combination by '+', e.g., "DEL + END"
   auto keys = SplitString(key_combo, '+');
   if (keys.size() == 1) {
-    return ParseAssignment(kDefaultLayerName, trim(keys[0]), action);
+    return ParseAssignment(kDefaultLayerName, StringTrim(keys[0]), action);
   } else if (keys.size() == 2) {
-    return ParseLayerAssignment(trim(keys[0]), trim(keys[1]), action);
+    return ParseLayerAssignment(StringTrim(keys[0]), StringTrim(keys[1]),
+                                action);
   } else {
     std::cerr << "ERROR Cannot have more than 1 '+' in line:" << original_line
               << std::endl;
     return false;
   }
   return true;
-}
-
-int main() {
-  Remapper remapper;
-  ConfigParser config_parser(&remapper);
-
-  // Example config lines to be parsed.
-  std::vector<string> config_lines = {
-      "CAPSLOCK + 1 = F1",         "CAPSLOCK + 2 = F2",
-      "^RIGHTCTRL = ^RIGHTCTRL",   "RIGHTCTRL + 1 = ~RIGHTCTRL F1",
-      "RIGHTCTRL + * = *",         "^LEFTSHIFT = ^LEFTSHIFT",
-      "LEFTSHIFT + ESC = GRAVE",   "DELETE + END = VOLUMEUP",
-      "DELETE + nothing = DELETE", "^A = ~D ^A"};
-
-  // Parse the config and set up the remapper.
-  if (!config_parser.Parse(config_lines)) {
-    perror("Could not parse config, exiting.\n");
-    exit(-1);
-  }
-
-  remapper.DumpConfig();
-
-  return 0;
 }
