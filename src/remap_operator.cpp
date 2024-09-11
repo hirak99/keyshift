@@ -38,7 +38,15 @@ void Remapper::SetCallback(std::function<void(int, int)> emit_key_code) {
 void Remapper::AddMapping(const std::string& state_name, KeyEvent key_event,
                           const std::vector<Action>& actions) {
   auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
-  keyboard_state.action_map[key_event] = actions;
+
+  // If exists, append. Else set.
+  auto it = keyboard_state.action_map.find(key_event);
+  if (it != keyboard_state.action_map.end()) {
+    it->second.insert(it->second.end(), actions.begin(), actions.end());
+  } else {
+    keyboard_state.action_map[key_event] = actions;
+  }
+
   // Do not auto deactivate if there is any explicit deactivation request.
   if (std::any_of(actions.begin(), actions.end(), [](Action action) {
         return std::holds_alternative<ActionDeactivateLayer>(action);

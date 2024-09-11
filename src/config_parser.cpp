@@ -78,6 +78,8 @@ class ConfigParser {
     for (const auto& token : tokens) {
       const auto [right_prefix, right_key] = SplitKeyPrefix(token);
       if (!right_key.has_value()) {
+        std::cerr << "ERROR: Invalid keycode. Line - " << line_being_parsed_
+                  << std::endl;
         throw std::invalid_argument("Invalid keycode.");
       };
       if (right_prefix == 0 || right_prefix == '^') {
@@ -97,13 +99,24 @@ class ConfigParser {
 
     std::vector<Action> actions;
     try {
-      const auto tokens = SplitString(assignment, ' ');
+      std::vector<string> tokens = SplitString(assignment, ' ');
       // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
-      if (left_prefix == 0 && tokens.size() == 1) {
+      if (left_prefix == 0) {
+        int n_tokens = tokens.size();
+        string last_token = tokens[n_tokens - 1];
+        if (last_token[0] == '^' || last_token[0] == '~') {
+          std::cerr << "ERROR: If left does not have a prefix (^ or ~), the "
+                       "last token of assignment must not have either; line "
+                    << line_being_parsed_ << std::endl;
+          return false;
+        }
+        // On activation, do everything, but only activate the final key.
+        tokens[n_tokens - 1] = "^" + last_token;
         remapper_->AddMapping(layer_name, KeyPressEvent(*left_key),
-                              AssignmentToActions({"^" + tokens[0]}));
+                              AssignmentToActions(tokens));
+        // On release, do nothing, and only release the final key.
         remapper_->AddMapping(layer_name, KeyReleaseEvent(*left_key),
-                              AssignmentToActions({"~" + tokens[0]}));
+                              AssignmentToActions({"~" + last_token}));
         return true;
       } else {
         remapper_->AddMapping(layer_name,
@@ -113,6 +126,8 @@ class ConfigParser {
         return true;
       }
     } catch (const std::invalid_argument&) {
+      std::cerr << "ParseAssignment: Failed at line " << line_being_parsed_
+                << std::endl;
       return false;
     }
   }
@@ -127,8 +142,18 @@ class ConfigParser {
     string layer_name = layer_key_str + "_layer";
 
     // Add default to layer mapping.
-    remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(*layer_key),
-                          {remapper_->ActionActivateState(layer_name)});
+    if (known_layers_.find(layer_name) == known_layers_.end()) {
+      try {
+        remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(*layer_key),
+                              {remapper_->ActionActivateState(layer_name)});
+      } catch (std::invalid_argument&) {
+        std::cerr << "ParseLayerAssignment: Failed at line "
+                  << line_being_parsed_ << std::endl;
+        return false;
+      }
+      remapper_->SetAllowOtherKeys(layer_name, false);
+      known_layers_.insert(layer_name);
+    }
 
     // Handle SHIFT + * = *.
     if (key_str == "*") {
@@ -156,6 +181,7 @@ class ConfigParser {
 
   [[nodiscard]] bool parse_line(const string& original_line) {
     // Ignore comments and empty lines.
+    line_being_parsed_ = original_line;
     string line = trim(RemoveComment(original_line));
     if (line.empty()) {
       return true;
@@ -186,6 +212,11 @@ class ConfigParser {
   }
 
   Remapper* remapper_;
+  // To keep track of which layers have been seen. Used to do one time actions,
+  // such as disallow other keys.
+  std::set<string> known_layers_;
+  // Only to display current line for errors.
+  string line_being_parsed_;
 };
 
 int main() {
