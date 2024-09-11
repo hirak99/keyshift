@@ -137,21 +137,23 @@ Internally, the DELETE layer may be implemented like this -
 CAPSLOCK + 1 = F1
 CAPSLOCK + 2 = F2
 
+// The line below enables the button explicitly, even if it also activates other keys.
 ^RIGHT_CTRL = ^RIGHT_CTRL
 RIGHT_CTRL + 1 = ~RIGHT_CTRL + F1
 RIGHT_CTRL + 2 = ~RIGHT_CTRL + F2
+RIGHT_CTRL + * = *  // Any key not defined is passed thru.
 
-# Allows Shift+Esc = ~.
+// Allows Shift+Esc = ~.
 ^SHIFT = ^SHIFT
 SHIFT + ESC = BACKTICK
 SHIFT + * = *
 
-# Snap tap.
+// Snap tap.
 ^D = ~A ^D
 ^A = ~D ^A
 
 ESC + 500ms = BACKTICK
 
 DEL + END = VOLUME_UP
-DEL + [] = DEL  # Nothing happened within DEL.
+DEL + nothing = DEL  # Do a DEL if nothing else happened.
 ```
