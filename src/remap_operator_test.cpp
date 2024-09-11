@@ -37,7 +37,7 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
     if (keep_incoming) {
       std::ostringstream oss;
       oss << "In: " << (keycode > 0 ? "P " : "R ")
-          << keyCodeToString(abs(keycode));
+          << keyCodeToName(abs(keycode));
       outcomes.push_back(oss.str());
     }
     remapper.process(abs(keycode), keycode > 0 ? 1 : 0);
@@ -45,7 +45,7 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
 
   remapper.SetCallback([&outcomes](int keycode, int press) {
     std::ostringstream oss;
-    oss << "Out: " << (press == 1 ? "P " : "R ") << keyCodeToString(keycode);
+    oss << "Out: " << (press == 1 ? "P " : "R ") << keyCodeToName(keycode);
     outcomes.push_back(oss.str());
   });
 

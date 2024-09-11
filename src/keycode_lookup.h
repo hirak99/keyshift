@@ -4,271 +4,319 @@
 #include <linux/input-event-codes.h>
 
 #include <iostream>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <unordered_map>
 
-// clang-format off
-std::string keyCodeToString(int key_code) {
-  switch (key_code) {
-    case KEY_RESERVED: return "KEY_RESERVED";
-    case KEY_ESC: return "KEY_ESC";
-    case KEY_1: return "KEY_1";
-    case KEY_2: return "KEY_2";
-    case KEY_3: return "KEY_3";
-    case KEY_4: return "KEY_4";
-    case KEY_5: return "KEY_5";
-    case KEY_6: return "KEY_6";
-    case KEY_7: return "KEY_7";
-    case KEY_8: return "KEY_8";
-    case KEY_9: return "KEY_9";
-    case KEY_0: return "KEY_0";
-    case KEY_MINUS: return "KEY_MINUS";
-    case KEY_EQUAL: return "KEY_EQUAL";
-    case KEY_BACKSPACE: return "KEY_BACKSPACE";
-    case KEY_TAB: return "KEY_TAB";
-    case KEY_Q: return "KEY_Q";
-    case KEY_W: return "KEY_W";
-    case KEY_E: return "KEY_E";
-    case KEY_R: return "KEY_R";
-    case KEY_T: return "KEY_T";
-    case KEY_Y: return "KEY_Y";
-    case KEY_U: return "KEY_U";
-    case KEY_I: return "KEY_I";
-    case KEY_O: return "KEY_O";
-    case KEY_P: return "KEY_P";
-    case KEY_LEFTBRACE: return "KEY_LEFTBRACE";
-    case KEY_RIGHTBRACE: return "KEY_RIGHTBRACE";
-    case KEY_ENTER: return "KEY_ENTER";
-    case KEY_LEFTCTRL: return "KEY_LEFTCTRL";
-    case KEY_A: return "KEY_A";
-    case KEY_S: return "KEY_S";
-    case KEY_D: return "KEY_D";
-    case KEY_F: return "KEY_F";
-    case KEY_G: return "KEY_G";
-    case KEY_H: return "KEY_H";
-    case KEY_J: return "KEY_J";
-    case KEY_K: return "KEY_K";
-    case KEY_L: return "KEY_L";
-    case KEY_SEMICOLON: return "KEY_SEMICOLON";
-    case KEY_APOSTROPHE: return "KEY_APOSTROPHE";
-    case KEY_GRAVE: return "KEY_GRAVE";
-    case KEY_LEFTSHIFT: return "KEY_LEFTSHIFT";
-    case KEY_BACKSLASH: return "KEY_BACKSLASH";
-    case KEY_Z: return "KEY_Z";
-    case KEY_X: return "KEY_X";
-    case KEY_C: return "KEY_C";
-    case KEY_V: return "KEY_V";
-    case KEY_B: return "KEY_B";
-    case KEY_N: return "KEY_N";
-    case KEY_M: return "KEY_M";
-    case KEY_COMMA: return "KEY_COMMA";
-    case KEY_DOT: return "KEY_DOT";
-    case KEY_SLASH: return "KEY_SLASH";
-    case KEY_RIGHTSHIFT: return "KEY_RIGHTSHIFT";
-    case KEY_KPASTERISK: return "KEY_KPASTERISK";
-    case KEY_LEFTALT: return "KEY_LEFTALT";
-    case KEY_SPACE: return "KEY_SPACE";
-    case KEY_CAPSLOCK: return "KEY_CAPSLOCK";
-    case KEY_F1: return "KEY_F1";
-    case KEY_F2: return "KEY_F2";
-    case KEY_F3: return "KEY_F3";
-    case KEY_F4: return "KEY_F4";
-    case KEY_F5: return "KEY_F5";
-    case KEY_F6: return "KEY_F6";
-    case KEY_F7: return "KEY_F7";
-    case KEY_F8: return "KEY_F8";
-    case KEY_F9: return "KEY_F9";
-    case KEY_F10: return "KEY_F10";
-    case KEY_NUMLOCK: return "KEY_NUMLOCK";
-    case KEY_SCROLLLOCK: return "KEY_SCROLLLOCK";
-    case KEY_KP7: return "KEY_KP7";
-    case KEY_KP8: return "KEY_KP8";
-    case KEY_KP9: return "KEY_KP9";
-    case KEY_KPMINUS: return "KEY_KPMINUS";
-    case KEY_KP4: return "KEY_KP4";
-    case KEY_KP5: return "KEY_KP5";
-    case KEY_KP6: return "KEY_KP6";
-    case KEY_KPPLUS: return "KEY_KPPLUS";
-    case KEY_KP1: return "KEY_KP1";
-    case KEY_KP2: return "KEY_KP2";
-    case KEY_KP3: return "KEY_KP3";
-    case KEY_KP0: return "KEY_KP0";
-    case KEY_KPDOT: return "KEY_KPDOT";
-
-    case KEY_ZENKAKUHANKAKU: return "KEY_ZENKAKUHANKAKU";
-    case KEY_102ND: return "KEY_102ND";
-    case KEY_F11: return "KEY_F11";
-    case KEY_F12: return "KEY_F12";
-    case KEY_RO: return "KEY_RO";
-    case KEY_KATAKANA: return "KEY_KATAKANA";
-    case KEY_HIRAGANA: return "KEY_HIRAGANA";
-    case KEY_HENKAN: return "KEY_HENKAN";
-    case KEY_KATAKANAHIRAGANA: return "KEY_KATAKANAHIRAGANA";
-    case KEY_MUHENKAN: return "KEY_MUHENKAN";
-    case KEY_KPJPCOMMA: return "KEY_KPJPCOMMA";
-    case KEY_KPENTER: return "KEY_KPENTER";
-    case KEY_RIGHTCTRL: return "KEY_RIGHTCTRL";
-    case KEY_KPSLASH: return "KEY_KPSLASH";
-    case KEY_SYSRQ: return "KEY_SYSRQ";
-    case KEY_RIGHTALT: return "KEY_RIGHTALT";
-    case KEY_LINEFEED: return "KEY_LINEFEED";
-    case KEY_HOME: return "KEY_HOME";
-    case KEY_UP: return "KEY_UP";
-    case KEY_PAGEUP: return "KEY_PAGEUP";
-    case KEY_LEFT: return "KEY_LEFT";
-    case KEY_RIGHT: return "KEY_RIGHT";
-    case KEY_END: return "KEY_END";
-    case KEY_DOWN: return "KEY_DOWN";
-    case KEY_PAGEDOWN: return "KEY_PAGEDOWN";
-    case KEY_INSERT: return "KEY_INSERT";
-    case KEY_DELETE: return "KEY_DELETE";
-    case KEY_MACRO: return "KEY_MACRO";
-    case KEY_MUTE: return "KEY_MUTE";
-    case KEY_VOLUMEDOWN: return "KEY_VOLUMEDOWN";
-    case KEY_VOLUMEUP: return "KEY_VOLUMEUP";
-    case KEY_POWER: return "KEY_POWER";
-    case KEY_KPEQUAL: return "KEY_KPEQUAL";
-    case KEY_KPPLUSMINUS: return "KEY_KPPLUSMINUS";
-    case KEY_PAUSE: return "KEY_PAUSE";
-    case KEY_SCALE: return "KEY_SCALE";
-
-    case KEY_KPCOMMA: return "KEY_KPCOMMA";
-    case KEY_HANGEUL: return "KEY_HANGEUL";
-    case KEY_HANJA: return "KEY_HANJA";
-    case KEY_YEN: return "KEY_YEN";
-    case KEY_LEFTMETA: return "KEY_LEFTMETA";
-    case KEY_RIGHTMETA: return "KEY_RIGHTMETA";
-    case KEY_COMPOSE: return "KEY_COMPOSE";
-
-    case KEY_STOP: return "KEY_STOP";
-    case KEY_AGAIN: return "KEY_AGAIN";
-    case KEY_PROPS: return "KEY_PROPS";
-    case KEY_UNDO: return "KEY_UNDO";
-    case KEY_FRONT: return "KEY_FRONT";
-    case KEY_COPY: return "KEY_COPY";
-    case KEY_OPEN: return "KEY_OPEN";
-    case KEY_PASTE: return "KEY_PASTE";
-    case KEY_FIND: return "KEY_FIND";
-    case KEY_CUT: return "KEY_CUT";
-    case KEY_HELP: return "KEY_HELP";
-    case KEY_MENU: return "KEY_MENU";
-    case KEY_CALC: return "KEY_CALC";
-    case KEY_SETUP: return "KEY_SETUP";
-    case KEY_SLEEP: return "KEY_SLEEP";
-    case KEY_WAKEUP: return "KEY_WAKEUP";
-    case KEY_FILE: return "KEY_FILE";
-    case KEY_SENDFILE: return "KEY_SENDFILE";
-    case KEY_DELETEFILE: return "KEY_DELETEFILE";
-    case KEY_XFER: return "KEY_XFER";
-    case KEY_PROG1: return "KEY_PROG1";
-    case KEY_PROG2: return "KEY_PROG2";
-    case KEY_WWW: return "KEY_WWW";
-    case KEY_MSDOS: return "KEY_MSDOS";
-    case KEY_COFFEE: return "KEY_COFFEE";
-    case KEY_ROTATE_DISPLAY: return "KEY_ROTATE_DISPLAY";
-    case KEY_CYCLEWINDOWS: return "KEY_CYCLEWINDOWS";
-    case KEY_MAIL: return "KEY_MAIL";
-    case KEY_BOOKMARKS: return "KEY_BOOKMARKS";
-    case KEY_COMPUTER: return "KEY_COMPUTER";
-    case KEY_BACK: return "KEY_BACK";
-    case KEY_FORWARD: return "KEY_FORWARD";
-    case KEY_CLOSECD: return "KEY_CLOSECD";
-    case KEY_EJECTCD: return "KEY_EJECTCD";
-    case KEY_EJECTCLOSECD: return "KEY_EJECTCLOSECD";
-    case KEY_NEXTSONG: return "KEY_NEXTSONG";
-    case KEY_PLAYPAUSE: return "KEY_PLAYPAUSE";
-    case KEY_PREVIOUSSONG: return "KEY_PREVIOUSSONG";
-    case KEY_STOPCD: return "KEY_STOPCD";
-    case KEY_RECORD: return "KEY_RECORD";
-    case KEY_REWIND: return "KEY_REWIND";
-    case KEY_PHONE: return "KEY_PHONE";
-    case KEY_ISO: return "KEY_ISO";
-    case KEY_CONFIG: return "KEY_CONFIG";
-    case KEY_HOMEPAGE: return "KEY_HOMEPAGE";
-    case KEY_REFRESH: return "KEY_REFRESH";
-    case KEY_EXIT: return "KEY_EXIT";
-    case KEY_MOVE: return "KEY_MOVE";
-    case KEY_EDIT: return "KEY_EDIT";
-    case KEY_SCROLLUP: return "KEY_SCROLLUP";
-    case KEY_SCROLLDOWN: return "KEY_SCROLLDOWN";
-    case KEY_KPLEFTPAREN: return "KEY_KPLEFTPAREN";
-    case KEY_KPRIGHTPAREN: return "KEY_KPRIGHTPAREN";
-    case KEY_NEW: return "KEY_NEW";
-    case KEY_REDO: return "KEY_REDO";
-
-    case KEY_F13: return "KEY_F13";
-    case KEY_F14: return "KEY_F14";
-    case KEY_F15: return "KEY_F15";
-    case KEY_F16: return "KEY_F16";
-    case KEY_F17: return "KEY_F17";
-    case KEY_F18: return "KEY_F18";
-    case KEY_F19: return "KEY_F19";
-    case KEY_F20: return "KEY_F20";
-    case KEY_F21: return "KEY_F21";
-    case KEY_F22: return "KEY_F22";
-    case KEY_F23: return "KEY_F23";
-    case KEY_F24: return "KEY_F24";
-
-    case KEY_PLAYCD: return "KEY_PLAYCD";
-    case KEY_PAUSECD: return "KEY_PAUSECD";
-    case KEY_PROG3: return "KEY_PROG3";
-    case KEY_PROG4: return "KEY_PROG4";
-    case KEY_ALL_APPLICATIONS: return "KEY_ALL_APPLICATIONS";
-    case KEY_SUSPEND: return "KEY_SUSPEND";
-    case KEY_CLOSE: return "KEY_CLOSE";
-    case KEY_PLAY: return "KEY_PLAY";
-    case KEY_FASTFORWARD: return "KEY_FASTFORWARD";
-    case KEY_BASSBOOST: return "KEY_BASSBOOST";
-    case KEY_PRINT: return "KEY_PRINT";
-    case KEY_HP: return "KEY_HP";
-    case KEY_CAMERA: return "KEY_CAMERA";
-    case KEY_SOUND: return "KEY_SOUND";
-    case KEY_QUESTION: return "KEY_QUESTION";
-    case KEY_EMAIL: return "KEY_EMAIL";
-    case KEY_CHAT: return "KEY_CHAT";
-    case KEY_SEARCH: return "KEY_SEARCH";
-    case KEY_CONNECT: return "KEY_CONNECT";
-    case KEY_FINANCE: return "KEY_FINANCE";
-    case KEY_SPORT: return "KEY_SPORT";
-    case KEY_SHOP: return "KEY_SHOP";
-    case KEY_ALTERASE: return "KEY_ALTERASE";
-    case KEY_CANCEL: return "KEY_CANCEL";
-    case KEY_BRIGHTNESSDOWN: return "KEY_BRIGHTNESSDOWN";
-    case KEY_BRIGHTNESSUP: return "KEY_BRIGHTNESSUP";
-    case KEY_MEDIA: return "KEY_MEDIA";
-
-    case KEY_SWITCHVIDEOMODE: return "KEY_SWITCHVIDEOMODE";
-    case KEY_KBDILLUMTOGGLE: return "KEY_KBDILLUMTOGGLE";
-    case KEY_KBDILLUMDOWN: return "KEY_KBDILLUMDOWN";
-    case KEY_KBDILLUMUP: return "KEY_KBDILLUMUP";
-
-    case KEY_SEND: return "KEY_SEND";
-    case KEY_REPLY: return "KEY_REPLY";
-    case KEY_FORWARDMAIL: return "KEY_FORWARDMAIL";
-    case KEY_SAVE: return "KEY_SAVE";
-    case KEY_DOCUMENTS: return "KEY_DOCUMENTS";
-
-    case KEY_BATTERY: return "KEY_BATTERY";
-
-    case KEY_BLUETOOTH: return "KEY_BLUETOOTH";
-    case KEY_WLAN: return "KEY_WLAN";
-    case KEY_UWB: return "KEY_UWB";
-
-    case KEY_UNKNOWN: return "KEY_UNKNOWN";
-
-    case KEY_VIDEO_NEXT: return "KEY_VIDEO_NEXT";
-    case KEY_VIDEO_PREV: return "KEY_VIDEO_PREV";
-    case KEY_BRIGHTNESS_CYCLE: return "KEY_BRIGHTNESS_CYCLE";
-    case KEY_BRIGHTNESS_AUTO: return "KEY_BRIGHTNESS_AUTO";
-    case KEY_DISPLAY_OFF: return "KEY_DISPLAY_OFF";
-
-    case KEY_WWAN: return "KEY_WWAN";
-    case KEY_RFKILL: return "KEY_RFKILL";
-
-    case KEY_MICMUTE: return "KEY_MICMUTE";
-//clang-format on
-
-    default:
-      return "UNRECOGNIZED_KEY_CODE(" + std::to_string(key_code) + ")";
+class KeyCodes {
+ public:
+  static const std::shared_ptr<KeyCodes> instance() {
+    if (instance_ == nullptr) {
+      instance_.reset(new KeyCodes());
+    }
+    return instance_;
   }
+
+  KeyCodes(const KeyCodes&) = delete;
+  KeyCodes& operator=(const KeyCodes&) = delete;
+
+  std::string toString(int key_code) const {
+    auto it = keycode_to_name_.find(key_code);
+    if (it == keycode_to_name_.end()) {
+      return "UNRECOGNIZED_KEY_CODE(" + std::to_string(key_code) + ")";
+    }
+    return it->second;
+  }
+
+  std::optional<int> toCode(std::string name) const {
+    auto it = name_to_keycode_.find(name);
+    if (it == name_to_keycode_.end()) {
+      return std::nullopt;
+    }
+    return it->second;
+  }
+
+ private:
+  KeyCodes() {
+    for (const auto& pair : keycode_to_name_) {
+      name_to_keycode_[pair.second] = pair.first;
+    }
+  }
+  static std::shared_ptr<KeyCodes> instance_;
+
+  const std::unordered_map<int, std::string> keycode_to_name_ = {
+      {KEY_RESERVED, "KEY_RESERVED"},
+      {KEY_ESC, "KEY_ESC"},
+      {KEY_1, "KEY_1"},
+      {KEY_2, "KEY_2"},
+      {KEY_3, "KEY_3"},
+      {KEY_4, "KEY_4"},
+      {KEY_5, "KEY_5"},
+      {KEY_6, "KEY_6"},
+      {KEY_7, "KEY_7"},
+      {KEY_8, "KEY_8"},
+      {KEY_9, "KEY_9"},
+      {KEY_0, "KEY_0"},
+      {KEY_MINUS, "KEY_MINUS"},
+      {KEY_EQUAL, "KEY_EQUAL"},
+      {KEY_BACKSPACE, "KEY_BACKSPACE"},
+      {KEY_TAB, "KEY_TAB"},
+      {KEY_Q, "KEY_Q"},
+      {KEY_W, "KEY_W"},
+      {KEY_E, "KEY_E"},
+      {KEY_R, "KEY_R"},
+      {KEY_T, "KEY_T"},
+      {KEY_Y, "KEY_Y"},
+      {KEY_U, "KEY_U"},
+      {KEY_I, "KEY_I"},
+      {KEY_O, "KEY_O"},
+      {KEY_P, "KEY_P"},
+      {KEY_LEFTBRACE, "KEY_LEFTBRACE"},
+      {KEY_RIGHTBRACE, "KEY_RIGHTBRACE"},
+      {KEY_ENTER, "KEY_ENTER"},
+      {KEY_LEFTCTRL, "KEY_LEFTCTRL"},
+      {KEY_A, "KEY_A"},
+      {KEY_S, "KEY_S"},
+      {KEY_D, "KEY_D"},
+      {KEY_F, "KEY_F"},
+      {KEY_G, "KEY_G"},
+      {KEY_H, "KEY_H"},
+      {KEY_J, "KEY_J"},
+      {KEY_K, "KEY_K"},
+      {KEY_L, "KEY_L"},
+      {KEY_SEMICOLON, "KEY_SEMICOLON"},
+      {KEY_APOSTROPHE, "KEY_APOSTROPHE"},
+      {KEY_GRAVE, "KEY_GRAVE"},
+      {KEY_LEFTSHIFT, "KEY_LEFTSHIFT"},
+      {KEY_BACKSLASH, "KEY_BACKSLASH"},
+      {KEY_Z, "KEY_Z"},
+      {KEY_X, "KEY_X"},
+      {KEY_C, "KEY_C"},
+      {KEY_V, "KEY_V"},
+      {KEY_B, "KEY_B"},
+      {KEY_N, "KEY_N"},
+      {KEY_M, "KEY_M"},
+      {KEY_COMMA, "KEY_COMMA"},
+      {KEY_DOT, "KEY_DOT"},
+      {KEY_SLASH, "KEY_SLASH"},
+      {KEY_RIGHTSHIFT, "KEY_RIGHTSHIFT"},
+      {KEY_KPASTERISK, "KEY_KPASTERISK"},
+      {KEY_LEFTALT, "KEY_LEFTALT"},
+      {KEY_SPACE, "KEY_SPACE"},
+      {KEY_CAPSLOCK, "KEY_CAPSLOCK"},
+      {KEY_F1, "KEY_F1"},
+      {KEY_F2, "KEY_F2"},
+      {KEY_F3, "KEY_F3"},
+      {KEY_F4, "KEY_F4"},
+      {KEY_F5, "KEY_F5"},
+      {KEY_F6, "KEY_F6"},
+      {KEY_F7, "KEY_F7"},
+      {KEY_F8, "KEY_F8"},
+      {KEY_F9, "KEY_F9"},
+      {KEY_F10, "KEY_F10"},
+      {KEY_NUMLOCK, "KEY_NUMLOCK"},
+      {KEY_SCROLLLOCK, "KEY_SCROLLLOCK"},
+      {KEY_KP7, "KEY_KP7"},
+      {KEY_KP8, "KEY_KP8"},
+      {KEY_KP9, "KEY_KP9"},
+      {KEY_KPMINUS, "KEY_KPMINUS"},
+      {KEY_KP4, "KEY_KP4"},
+      {KEY_KP5, "KEY_KP5"},
+      {KEY_KP6, "KEY_KP6"},
+      {KEY_KPPLUS, "KEY_KPPLUS"},
+      {KEY_KP1, "KEY_KP1"},
+      {KEY_KP2, "KEY_KP2"},
+      {KEY_KP3, "KEY_KP3"},
+      {KEY_KP0, "KEY_KP0"},
+      {KEY_KPDOT, "KEY_KPDOT"},
+
+      {KEY_ZENKAKUHANKAKU, "KEY_ZENKAKUHANKAKU"},
+      {KEY_102ND, "KEY_102ND"},
+      {KEY_F11, "KEY_F11"},
+      {KEY_F12, "KEY_F12"},
+      {KEY_RO, "KEY_RO"},
+      {KEY_KATAKANA, "KEY_KATAKANA"},
+      {KEY_HIRAGANA, "KEY_HIRAGANA"},
+      {KEY_HENKAN, "KEY_HENKAN"},
+      {KEY_KATAKANAHIRAGANA, "KEY_KATAKANAHIRAGANA"},
+      {KEY_MUHENKAN, "KEY_MUHENKAN"},
+      {KEY_KPJPCOMMA, "KEY_KPJPCOMMA"},
+      {KEY_KPENTER, "KEY_KPENTER"},
+      {KEY_RIGHTCTRL, "KEY_RIGHTCTRL"},
+      {KEY_KPSLASH, "KEY_KPSLASH"},
+      {KEY_SYSRQ, "KEY_SYSRQ"},
+      {KEY_RIGHTALT, "KEY_RIGHTALT"},
+      {KEY_LINEFEED, "KEY_LINEFEED"},
+      {KEY_HOME, "KEY_HOME"},
+      {KEY_UP, "KEY_UP"},
+      {KEY_PAGEUP, "KEY_PAGEUP"},
+      {KEY_LEFT, "KEY_LEFT"},
+      {KEY_RIGHT, "KEY_RIGHT"},
+      {KEY_END, "KEY_END"},
+      {KEY_DOWN, "KEY_DOWN"},
+      {KEY_PAGEDOWN, "KEY_PAGEDOWN"},
+      {KEY_INSERT, "KEY_INSERT"},
+      {KEY_DELETE, "KEY_DELETE"},
+      {KEY_MACRO, "KEY_MACRO"},
+      {KEY_MUTE, "KEY_MUTE"},
+      {KEY_VOLUMEDOWN, "KEY_VOLUMEDOWN"},
+      {KEY_VOLUMEUP, "KEY_VOLUMEUP"},
+      {KEY_POWER, "KEY_POWER"},
+      {KEY_KPEQUAL, "KEY_KPEQUAL"},
+      {KEY_KPPLUSMINUS, "KEY_KPPLUSMINUS"},
+      {KEY_PAUSE, "KEY_PAUSE"},
+      {KEY_SCALE, "KEY_SCALE"},
+
+      {KEY_KPCOMMA, "KEY_KPCOMMA"},
+      {KEY_HANGEUL, "KEY_HANGEUL"},
+      {KEY_HANJA, "KEY_HANJA"},
+      {KEY_YEN, "KEY_YEN"},
+      {KEY_LEFTMETA, "KEY_LEFTMETA"},
+      {KEY_RIGHTMETA, "KEY_RIGHTMETA"},
+      {KEY_COMPOSE, "KEY_COMPOSE"},
+
+      {KEY_STOP, "KEY_STOP"},
+      {KEY_AGAIN, "KEY_AGAIN"},
+      {KEY_PROPS, "KEY_PROPS"},
+      {KEY_UNDO, "KEY_UNDO"},
+      {KEY_FRONT, "KEY_FRONT"},
+      {KEY_COPY, "KEY_COPY"},
+      {KEY_OPEN, "KEY_OPEN"},
+      {KEY_PASTE, "KEY_PASTE"},
+      {KEY_FIND, "KEY_FIND"},
+      {KEY_CUT, "KEY_CUT"},
+      {KEY_HELP, "KEY_HELP"},
+      {KEY_MENU, "KEY_MENU"},
+      {KEY_CALC, "KEY_CALC"},
+      {KEY_SETUP, "KEY_SETUP"},
+      {KEY_SLEEP, "KEY_SLEEP"},
+      {KEY_WAKEUP, "KEY_WAKEUP"},
+      {KEY_FILE, "KEY_FILE"},
+      {KEY_SENDFILE, "KEY_SENDFILE"},
+      {KEY_DELETEFILE, "KEY_DELETEFILE"},
+      {KEY_XFER, "KEY_XFER"},
+      {KEY_PROG1, "KEY_PROG1"},
+      {KEY_PROG2, "KEY_PROG2"},
+      {KEY_WWW, "KEY_WWW"},
+      {KEY_MSDOS, "KEY_MSDOS"},
+      {KEY_COFFEE, "KEY_COFFEE"},
+      {KEY_ROTATE_DISPLAY, "KEY_ROTATE_DISPLAY"},
+      {KEY_CYCLEWINDOWS, "KEY_CYCLEWINDOWS"},
+      {KEY_MAIL, "KEY_MAIL"},
+      {KEY_BOOKMARKS, "KEY_BOOKMARKS"},
+      {KEY_COMPUTER, "KEY_COMPUTER"},
+      {KEY_BACK, "KEY_BACK"},
+      {KEY_FORWARD, "KEY_FORWARD"},
+      {KEY_CLOSECD, "KEY_CLOSECD"},
+      {KEY_EJECTCD, "KEY_EJECTCD"},
+      {KEY_EJECTCLOSECD, "KEY_EJECTCLOSECD"},
+      {KEY_NEXTSONG, "KEY_NEXTSONG"},
+      {KEY_PLAYPAUSE, "KEY_PLAYPAUSE"},
+      {KEY_PREVIOUSSONG, "KEY_PREVIOUSSONG"},
+      {KEY_STOPCD, "KEY_STOPCD"},
+      {KEY_RECORD, "KEY_RECORD"},
+      {KEY_REWIND, "KEY_REWIND"},
+      {KEY_PHONE, "KEY_PHONE"},
+      {KEY_ISO, "KEY_ISO"},
+      {KEY_CONFIG, "KEY_CONFIG"},
+      {KEY_HOMEPAGE, "KEY_HOMEPAGE"},
+      {KEY_REFRESH, "KEY_REFRESH"},
+      {KEY_EXIT, "KEY_EXIT"},
+      {KEY_MOVE, "KEY_MOVE"},
+      {KEY_EDIT, "KEY_EDIT"},
+      {KEY_SCROLLUP, "KEY_SCROLLUP"},
+      {KEY_SCROLLDOWN, "KEY_SCROLLDOWN"},
+      {KEY_KPLEFTPAREN, "KEY_KPLEFTPAREN"},
+      {KEY_KPRIGHTPAREN, "KEY_KPRIGHTPAREN"},
+      {KEY_NEW, "KEY_NEW"},
+      {KEY_REDO, "KEY_REDO"},
+
+      {KEY_F13, "KEY_F13"},
+      {KEY_F14, "KEY_F14"},
+      {KEY_F15, "KEY_F15"},
+      {KEY_F16, "KEY_F16"},
+      {KEY_F17, "KEY_F17"},
+      {KEY_F18, "KEY_F18"},
+      {KEY_F19, "KEY_F19"},
+      {KEY_F20, "KEY_F20"},
+      {KEY_F21, "KEY_F21"},
+      {KEY_F22, "KEY_F22"},
+      {KEY_F23, "KEY_F23"},
+      {KEY_F24, "KEY_F24"},
+
+      {KEY_PLAYCD, "KEY_PLAYCD"},
+      {KEY_PAUSECD, "KEY_PAUSECD"},
+      {KEY_PROG3, "KEY_PROG3"},
+      {KEY_PROG4, "KEY_PROG4"},
+      {KEY_ALL_APPLICATIONS, "KEY_ALL_APPLICATIONS"},
+      {KEY_SUSPEND, "KEY_SUSPEND"},
+      {KEY_CLOSE, "KEY_CLOSE"},
+      {KEY_PLAY, "KEY_PLAY"},
+      {KEY_FASTFORWARD, "KEY_FASTFORWARD"},
+      {KEY_BASSBOOST, "KEY_BASSBOOST"},
+      {KEY_PRINT, "KEY_PRINT"},
+      {KEY_HP, "KEY_HP"},
+      {KEY_CAMERA, "KEY_CAMERA"},
+      {KEY_SOUND, "KEY_SOUND"},
+      {KEY_QUESTION, "KEY_QUESTION"},
+      {KEY_EMAIL, "KEY_EMAIL"},
+      {KEY_CHAT, "KEY_CHAT"},
+      {KEY_SEARCH, "KEY_SEARCH"},
+      {KEY_CONNECT, "KEY_CONNECT"},
+      {KEY_FINANCE, "KEY_FINANCE"},
+      {KEY_SPORT, "KEY_SPORT"},
+      {KEY_SHOP, "KEY_SHOP"},
+      {KEY_ALTERASE, "KEY_ALTERASE"},
+      {KEY_CANCEL, "KEY_CANCEL"},
+      {KEY_BRIGHTNESSDOWN, "KEY_BRIGHTNESSDOWN"},
+      {KEY_BRIGHTNESSUP, "KEY_BRIGHTNESSUP"},
+      {KEY_MEDIA, "KEY_MEDIA"},
+
+      {KEY_SWITCHVIDEOMODE, "KEY_SWITCHVIDEOMODE"},
+      {KEY_KBDILLUMTOGGLE, "KEY_KBDILLUMTOGGLE"},
+      {KEY_KBDILLUMDOWN, "KEY_KBDILLUMDOWN"},
+      {KEY_KBDILLUMUP, "KEY_KBDILLUMUP"},
+
+      {KEY_SEND, "KEY_SEND"},
+      {KEY_REPLY, "KEY_REPLY"},
+      {KEY_FORWARDMAIL, "KEY_FORWARDMAIL"},
+      {KEY_SAVE, "KEY_SAVE"},
+      {KEY_DOCUMENTS, "KEY_DOCUMENTS"},
+
+      {KEY_BATTERY, "KEY_BATTERY"},
+
+      {KEY_BLUETOOTH, "KEY_BLUETOOTH"},
+      {KEY_WLAN, "KEY_WLAN"},
+      {KEY_UWB, "KEY_UWB"},
+
+      {KEY_UNKNOWN, "KEY_UNKNOWN"},
+
+      {KEY_VIDEO_NEXT, "KEY_VIDEO_NEXT"},
+      {KEY_VIDEO_PREV, "KEY_VIDEO_PREV"},
+      {KEY_BRIGHTNESS_CYCLE, "KEY_BRIGHTNESS_CYCLE"},
+      {KEY_BRIGHTNESS_AUTO, "KEY_BRIGHTNESS_AUTO"},
+      {KEY_DISPLAY_OFF, "KEY_DISPLAY_OFF"},
+
+      {KEY_WWAN, "KEY_WWAN"},
+      {KEY_RFKILL, "KEY_RFKILL"},
+
+      {KEY_MICMUTE, "KEY_MICMUTE"},
+  };
+
+  std::unordered_map<std::string, int> name_to_keycode_;
+};
+
+std::shared_ptr<KeyCodes> KeyCodes::instance_ = nullptr;
+
+// For convenience.
+
+std::string keyCodeToName(int key_code) {
+  return KeyCodes::instance()->toString(key_code);
+}
+
+std::optional<int> nameToKeyCode(std::string name) {
+  return KeyCodes::instance()->toCode(name);
 }
 
 #endif  // __KEYCODE_LOOKUP_H

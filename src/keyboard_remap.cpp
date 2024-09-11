@@ -95,7 +95,7 @@ int main() {
   if (kPreviewOnly) {
     auto echo_on_emit_fn = [](int key_code, int press) {
       std::cout << "  Out: " << (press ? "P " : "R ")
-                << keyCodeToString(key_code) << std::endl;
+                << keyCodeToName(key_code) << std::endl;
     };
     remapper.SetCallback(echo_on_emit_fn);
   }
@@ -106,7 +106,7 @@ int main() {
       // printf("Key %i %s\n", ie.code, ie.value ? "pressed" : "released");
 
       if (kPreviewOnly) {
-        std::cout << "In: " << ie.value << " " << keyCodeToString(ie.code)
+        std::cout << "In: " << ie.value << " " << keyCodeToName(ie.code)
                   << std::endl;
       }
 
