@@ -18,6 +18,8 @@
 #include <variant>
 #include <vector>
 
+#include "keycode_lookup.h"
+
 // Note: Negative, -key_code is interpreted as key realease, both as condition
 // and as an action.
 
@@ -40,6 +42,7 @@ struct KeyEvent {
   bool operator!=(const KeyEvent& other) const {
     return key_code != other.key_code || value != other.value;
   }
+
   struct Equal {
     bool operator()(const KeyEvent& lhs, const KeyEvent& rhs) const {
       return lhs.key_code == rhs.key_code && lhs.value == rhs.value;

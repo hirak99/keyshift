@@ -32,6 +32,7 @@ class KeyCodes {
   std::optional<int> toCode(std::string name) const {
     auto it = name_to_keycode_.find(name);
     if (it == name_to_keycode_.end()) {
+      std::cerr << "keycode_lookup: Unknown key " << name << std::endl;
       return std::nullopt;
     }
     return it->second;

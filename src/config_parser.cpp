@@ -7,11 +7,13 @@
 #include "keycode_lookup.h"
 #include "remap_operator.h"
 
+using std::string;
+
 // Utility functions.
 
-std::vector<std::string> split_string(const std::string& str, char delimiter) {
-  std::vector<std::string> tokens;
-  std::string token;
+std::vector<string> split_string(const string& str, char delimiter) {
+  std::vector<string> tokens;
+  string token;
   std::istringstream tokenStream(str);
   while (std::getline(tokenStream, token, delimiter)) {
     tokens.push_back(token);
@@ -19,29 +21,40 @@ std::vector<std::string> split_string(const std::string& str, char delimiter) {
   return tokens;
 }
 
-std::string removeComment(const std::string& line) {
+string removeComment(const string& line) {
   auto pos = line.find("//");
-  if (pos != std::string::npos) {
+  if (pos != string::npos) {
     return line.substr(0, pos);
   }
   return line;
 }
 
-std::string trim(const std::string& line) {
+string trim(const string& line) {
   static auto trim_chars = " \t\n\r\f\v";
   auto start = line.find_first_not_of(trim_chars);
-  if (start == std::string::npos) {
+  if (start == string::npos) {
     return "";
   }
   auto end = line.find_last_not_of(trim_chars);
   return line.substr(start, end - start + 1);
 }
 
+std::pair<char, std::optional<int>> split_key_prefix(string name) {
+  static const string prefixes = "~^";
+  char prefix = 0;
+  if (prefixes.find(name[0]) != std::string::npos) {
+    prefix = name[0];
+    name = name.substr(1);
+  }
+  return {prefix, nameToKeyCode("KEY_" + name)};
+}
+
 // Main class.
 
 class ConfigParser {
  public:
-  [[nodiscard]] bool parse(const std::vector<std::string>& lines) {
+  ConfigParser(Remapper* remapper) { remapper_ = remapper; }
+  [[nodiscard]] bool parse(const std::vector<string>& lines) {
     bool success = true;
     for (const auto& line : lines) {
       success &= parse_line(line);
@@ -49,12 +62,35 @@ class ConfigParser {
     return success;
   }
 
-  const Remapper getRemapper() { return remapper_; }
-
  private:
-  [[nodiscard]] bool parse_line(const std::string& original_line) {
+  bool parse_assignment(const string& left, string& right) {
+    auto [left_prefix, left_key] = split_key_prefix(left);
+    if (!left_key.has_value()) return false;
+
+    std::vector<Action> actions;
+    std::istringstream iss(right);
+    string token;
+    while (iss >> token) {
+      auto [right_prefix, right_key] = split_key_prefix(token);
+      if (!right_key.has_value()) return false;
+      if (right_prefix == 0 || right_prefix == '^') {
+        actions.push_back(KeyPressEvent(*right_key));
+      }
+      if (right_prefix == 0 || right_prefix == '~') {
+        actions.push_back(KeyReleaseEvent(*right_key));
+      }
+    }
+
+    remapper_->add_mapping("",
+                           left_prefix == '~' ? KeyReleaseEvent(*left_key)
+                                              : KeyPressEvent(*left_key),
+                           actions);
+    return true;
+  }
+
+  [[nodiscard]] bool parse_line(const string& original_line) {
     // Ignore comments and empty lines.
-    std::string line = trim(removeComment(original_line));
+    string line = trim(removeComment(original_line));
     if (line.empty()) {
       return true;
     }
@@ -66,13 +102,14 @@ class ConfigParser {
       return false;
     }
 
-    std::string key_combo = trim(parts[0]);
-    std::string action = trim(parts[1]);
+    string key_combo = trim(parts[0]);
+    string action = trim(parts[1]);
 
     // Split key combination by '+', e.g., "DEL + END"
     auto keys = split_string(key_combo, '+');
     if (keys.size() == 1) {
       // TODO: Add mapping from left code to right code
+      parse_assignment(key_combo, action);
     } else if (keys.size() == 2) {
       // TODO: Add mapping into a layer.
       // TODO: Consider special case of "*".
@@ -84,19 +121,20 @@ class ConfigParser {
     return true;
   }
 
-  Remapper remapper_;
+  Remapper* remapper_;
 };
 
 int main() {
-  ConfigParser config_parser;
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
 
   // Example config lines to be parsed.
-  std::vector<std::string> config_lines = {
-      "CAPSLOCK + 1 = F1",         "CAPSLOCK + 2 = F2",
-      "^RIGHT_CTRL = ^RIGHT_CTRL", "RIGHT_CTRL + 1 = ~RIGHT_CTRL + F1",
-      "RIGHT_CTRL + * = *",        "^SHIFT = ^SHIFT",
-      "SHIFT + ESC = BACKTICK",    "DEL + END = VOLUME_UP",
-      "DEL + nothing = DEL"};
+  std::vector<string> config_lines = {
+      "CAPSLOCK + 1 = F1",          "CAPSLOCK + 2 = F2",
+      "^RIGHTCTRL = ^RIGHTCTRL",    "RIGHTCTRL + 1 = ~RIGHTCTRL F1",
+      "RIGHTCTRL + * = *",          "^LEFTSHIFT = ^LEFTSHIFT",
+      "LEFTSHIFT + ESC = BACKTICK", "DEL + END = VOLUME_UP",
+      "DEL + nothing = DEL",        "^A = ~D ^A"};
 
   // Parse the config and set up the remapper.
   if (!config_parser.parse(config_lines)) {

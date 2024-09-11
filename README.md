@@ -139,8 +139,8 @@ CAPSLOCK + 2 = F2
 
 // The line below enables the button explicitly, even if it also activates other keys.
 ^RIGHT_CTRL = ^RIGHT_CTRL
-RIGHT_CTRL + 1 = ~RIGHT_CTRL + F1
-RIGHT_CTRL + 2 = ~RIGHT_CTRL + F2
+RIGHT_CTRL + 1 = ~RIGHT_CTRL F1
+RIGHT_CTRL + 2 = ~RIGHT_CTRL F2
 RIGHT_CTRL + * = *  // Any key not defined is passed thru.
 
 // Allows Shift+Esc = ~.
