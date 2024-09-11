@@ -148,14 +148,13 @@ SCENARIO("Del+Bksp is Print, but Del alone is Del") {
 
     remapper.add_mapping("", KeyPressEvent(KEY_DELETE),
                          {remapper.action_activate_mapping("del_layer")});
-    remapper.add_mapping(
-        "del_layer", KeyReleaseEvent(KEY_DELETE),
-        {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE),
-         ActionDeactivateLayer{}});
-    remapper.add_mapping(
-        "del_layer", KeyReleaseEvent(KEY_END),
-        {KeyPressEvent(KEY_VOLUMEUP), KeyReleaseEvent(KEY_VOLUMEUP),
-         ActionDeactivateLayer{}});
+    remapper.set_allow_other_keys("del_layer", false);
+    remapper.add_mapping("del_layer", KeyPressEvent(KEY_END),
+                         {KeyPressEvent(KEY_VOLUMEUP)});
+    remapper.add_mapping("del_layer", KeyReleaseEvent(KEY_END),
+                         {KeyReleaseEvent(KEY_VOLUMEUP)});
+    remapper.set_null_event_actions(
+        "del_layer", {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE)});
 
     // WIP - Does not pass yet.
     THEN("Del+End does VolumeUp") {
