@@ -10,6 +10,24 @@ std::string GetRemapperConfigDump(const Remapper& remapper) {
   return oss.str();
 }
 
+const std::string kConfigLines = R"(
+CAPSLOCK + 1 = F1
+CAPSLOCK + 2 = F2
+
+^RIGHTCTRL = ^RIGHTCTRL
+RIGHTCTRL + 1 = ~RIGHTCTRL F1
+RIGHTCTRL + * = *
+
+^LEFTSHIFT = ^LEFTSHIFT
+LEFTSHIFT + ESC = GRAVE
+
+DELETE + END = VOLUMEUP
+DELETE + nothing = DELETE
+
+// Snap tap.
+^A = ~D ^A
+)";
+
 const std::string kExpectedDump = R"(State #4
   Other keys: Block
   On: (KEY_END Release)
@@ -59,18 +77,22 @@ State #0
     Layer Change: 1
 )";
 
+std::vector<string> SplitLines(const string& str) {
+  std::vector<string> lines;
+  string line;
+  std::istringstream line_stream(str);
+  while (std::getline(line_stream, line, '\n')) {
+    lines.push_back(line);
+  }
+  return lines;
+}
+
 SCENARIO("All mappings together") {
   GIVEN("All mappings together") {
     Remapper remapper;
     ConfigParser config_parser(&remapper);
 
-    // Example config lines to be parsed.
-    std::vector<string> config_lines = {
-        "CAPSLOCK + 1 = F1",         "CAPSLOCK + 2 = F2",
-        "^RIGHTCTRL = ^RIGHTCTRL",   "RIGHTCTRL + 1 = ~RIGHTCTRL F1",
-        "RIGHTCTRL + * = *",         "^LEFTSHIFT = ^LEFTSHIFT",
-        "LEFTSHIFT + ESC = GRAVE",   "DELETE + END = VOLUMEUP",
-        "DELETE + nothing = DELETE", "^A = ~D ^A"};
+    auto config_lines = SplitLines(kConfigLines);
 
     // Parse the config and set up the remapper.
     if (!config_parser.Parse(config_lines)) {

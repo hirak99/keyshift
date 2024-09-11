@@ -19,8 +19,8 @@ const string kDefaultLayerName = "";
 std::vector<string> SplitString(const string& str, char delimiter) {
   std::vector<string> tokens;
   string token;
-  std::istringstream tokenStream(str);
-  while (std::getline(tokenStream, token, delimiter)) {
+  std::istringstream token_stream(str);
+  while (std::getline(token_stream, token, delimiter)) {
     tokens.push_back(token);
   }
   return tokens;
