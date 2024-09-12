@@ -9,10 +9,11 @@
 #include <stack>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include "essentials.h"
 
 KeyEvent KeyPressEvent(int key_code) {
   return KeyEvent{key_code, KeyEventType::kKeyPress};
@@ -93,7 +94,7 @@ void Remapper::Process(int key_code_int, int value) {
 }
 
 void Remapper::DumpConfig(std::ostream& os) const {
-  for (const auto& [id, state] : all_states_) {
+  for (const auto& [id, state] : Sorted(all_states_)) {
     os << "State #" << id << std::endl;
     os << "  Other keys: " << (state.allow_other_keys ? "Allow" : "Block")
        << std::endl;

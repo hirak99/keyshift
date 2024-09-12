@@ -33,39 +33,7 @@ DELETE + nothing = DELETE
 2 = 1
 )";
 
-const std::string kExpectedDump = R"(State #4
-  Other keys: Block
-  On: (KEY_END Release)
-    Key: (KEY_VOLUMEUP Release)
-  On: (KEY_END Press)
-    Key: (KEY_VOLUMEUP Press)
-  On nothing:
-    Key: (KEY_DELETE Press)
-    Key: (KEY_DELETE Release)
-State #3
-  Other keys: Block
-  On: (KEY_ESC Release)
-    Key: (KEY_GRAVE Release)
-  On: (KEY_ESC Press)
-    Key: (KEY_GRAVE Press)
-State #2
-  Other keys: Allow
-  On: (KEY_1 Release)
-    Key: (KEY_F1 Release)
-  On: (KEY_1 Press)
-    Key: (KEY_RIGHTCTRL Release)
-    Key: (KEY_F1 Press)
-State #1
-  Other keys: Block
-  On: (KEY_2 Release)
-    Key: (KEY_F2 Release)
-  On: (KEY_2 Press)
-    Key: (KEY_F2 Press)
-  On: (KEY_1 Release)
-    Key: (KEY_F1 Release)
-  On: (KEY_1 Press)
-    Key: (KEY_F1 Press)
-State #0
+const std::string kExpectedDump = R"(State #0
   Other keys: Allow
   On: (KEY_2 Release)
     Key: (KEY_1 Release)
@@ -88,6 +56,38 @@ State #0
     Layer Change: 2
   On: (KEY_CAPSLOCK Press)
     Layer Change: 1
+State #1
+  Other keys: Block
+  On: (KEY_2 Release)
+    Key: (KEY_F2 Release)
+  On: (KEY_2 Press)
+    Key: (KEY_F2 Press)
+  On: (KEY_1 Release)
+    Key: (KEY_F1 Release)
+  On: (KEY_1 Press)
+    Key: (KEY_F1 Press)
+State #2
+  Other keys: Allow
+  On: (KEY_1 Release)
+    Key: (KEY_F1 Release)
+  On: (KEY_1 Press)
+    Key: (KEY_RIGHTCTRL Release)
+    Key: (KEY_F1 Press)
+State #3
+  Other keys: Block
+  On: (KEY_ESC Release)
+    Key: (KEY_GRAVE Release)
+  On: (KEY_ESC Press)
+    Key: (KEY_GRAVE Press)
+State #4
+  Other keys: Block
+  On: (KEY_END Release)
+    Key: (KEY_VOLUMEUP Release)
+  On: (KEY_END Press)
+    Key: (KEY_VOLUMEUP Press)
+  On nothing:
+    Key: (KEY_DELETE Press)
+    Key: (KEY_DELETE Release)
 )";
 
 std::vector<string> SplitLines(const string& str) {
