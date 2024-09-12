@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "remap_operator.h"
+#include "test_utils.h"
 
 std::string GetRemapperConfigDump(const Remapper& remapper) {
   std::ostringstream oss;
@@ -87,8 +88,8 @@ std::vector<string> SplitLines(const string& str) {
   return lines;
 }
 
-SCENARIO("All mappings together") {
-  GIVEN("All mappings together") {
+SCENARIO("All mappings") {
+  GIVEN("All mappings") {
     Remapper remapper;
     ConfigParser config_parser(&remapper);
 
@@ -102,6 +103,16 @@ SCENARIO("All mappings together") {
 
     THEN("Dump is as expected") {
       REQUIRE(GetRemapperConfigDump(remapper) == kExpectedDump);
+    }
+
+    // Functional tests.
+    THEN("Remap outcome CAPSLOCK+Fn") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {KEY_CAPSLOCK, KEY_1, -KEY_1, -KEY_CAPSLOCK}) ==
+              vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+      REQUIRE(GetOutcomes(remapper, false,
+                          {KEY_CAPSLOCK, KEY_1, -KEY_CAPSLOCK, -KEY_1}) ==
+              vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
     }
   }
 }
