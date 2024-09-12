@@ -236,8 +236,7 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
         }
       } else {
         perror(
-            "WARNING: Invalid keyboard_state code. This is unexpected, "
-            "please "
+            "WARNING: Invalid keyboard_state code. This is unexpected, please "
             "report a bug.");
       }
     } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
