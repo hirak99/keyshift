@@ -12,6 +12,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <boost/program_options.hpp>
 #include <iostream>
 #include <stdexcept>
 
@@ -23,7 +24,7 @@ const bool kPreviewOnly = true;
 
 class InputDevice {
  public:
-  InputDevice(const char* device) {
+  InputDevice(const char *device) {
     // Open the input device
     fd = open(device, O_RDONLY);
     if (fd < 0) {
@@ -73,29 +74,51 @@ void DisableEcho() {
   }
 }
 
-int main() {
+namespace po = boost::program_options;
+
+[[nodiscard]] po::variables_map ParseArgs(int argc, char **argv) {
+  po::options_description desc("Allowed options");
+  desc.add_options()(
+      "kbd", po::value<std::string>(),
+      "Address of the -kbd device to remap in `/dev/input/by-path`.")(
+      "config", po::value<std::string>(), "File with remapping configuration.");
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  // std::cout << vm["kbd"].as<std::string>() << std::endl;
+  return vm;
+}
+
+int main(int argc, char **argv) {
+  auto args = ParseArgs(argc, argv);
+  if (!args.count("kbd")) {
+    std::cerr << "Error: kbd is required." << std::endl;
+    return 1;
+  }
+
+  const std::string arg_kbd = args["kbd"].as<std::string>();
+
   printf("Wating a sec, release all keys! ...\n");
   sleep(1);
   printf("Starting now...\n");
   DisableEcho();
 
-  InputDevice device(
-      "/dev/input/by-id/usb-Drunkdeer_Drunkdeer_G65_US_RYMicro-event-kbd");
+  InputDevice device(arg_kbd.c_str());
   if (!kPreviewOnly) device.Grab();
 
   Remapper remapper;
   remapper.AddMapping("", KeyPressEvent(KEY_A),
-                       {remapper.ActionActivateState("fn_layer")});
-  remapper.AddMapping("fn_layer", KeyPressEvent(KEY_S),
-                       {KeyPressEvent(KEY_B)});
+                      {remapper.ActionActivateState("fn_layer")});
+  remapper.AddMapping("fn_layer", KeyPressEvent(KEY_S), {KeyPressEvent(KEY_B)});
   remapper.AddMapping("fn_layer", KeyReleaseEvent(KEY_S),
-                       {KeyReleaseEvent(KEY_B)});
+                      {KeyReleaseEvent(KEY_B)});
   VirtualDevice out_device;
 
   if (kPreviewOnly) {
     auto echo_on_emit_fn = [](int key_code, int press) {
-      std::cout << "  Out: " << (press ? "P " : "R ")
-                << keyCodeToName(key_code) << std::endl;
+      std::cout << "  Out: " << (press ? "P " : "R ") << keyCodeToName(key_code)
+                << std::endl;
     };
     remapper.SetCallback(echo_on_emit_fn);
   }
