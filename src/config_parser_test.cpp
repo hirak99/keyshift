@@ -27,6 +27,10 @@ DELETE + nothing = DELETE
 
 // Snap tap.
 ^A = ~D ^A
+
+// Swap 1 and 2.
+1 = 2
+2 = 1
 )";
 
 const std::string kExpectedDump = R"(State #4
@@ -63,11 +67,19 @@ State #1
     Key: (KEY_F1 Press)
 State #0
   Other keys: Allow
+  On: (KEY_2 Release)
+    Key: (KEY_1 Release)
+  On: (KEY_1 Press)
+    Key: (KEY_2 Press)
+  On: (KEY_1 Release)
+    Key: (KEY_2 Release)
   On: (KEY_A Press)
     Key: (KEY_D Release)
     Key: (KEY_A Press)
   On: (KEY_DELETE Press)
     Layer Change: 4
+  On: (KEY_2 Press)
+    Key: (KEY_1 Press)
   On: (KEY_LEFTSHIFT Press)
     Key: (KEY_LEFTSHIFT Press)
     Layer Change: 3
