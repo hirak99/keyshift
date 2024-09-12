@@ -20,6 +20,14 @@ As part of maintainability, we will keep the code readable. We will for now foll
 
 # Building
 
+## Dependencies
+
+Following c++ libraries are needed -
+- Boost
+- Catch2 (for tests only)
+
+## Build
+
 Run the following commands to build and test -
 
 ```sh

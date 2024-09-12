@@ -212,6 +212,7 @@ void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   } else {
     std::cerr << "WARNING: Unimplemented key code value "
               << int(key_event.value) << std::endl;
+    return;
   }
   EmitKeyCode(key_event);
 }
