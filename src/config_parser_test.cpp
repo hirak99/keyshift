@@ -152,3 +152,31 @@ SCENARIO("All mappings") {
     }
   }
 }
+
+SCENARIO("Custom tests") {
+  GIVEN("KEY + X = X") {
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
+
+    auto config_lines = SplitLines(kConfigLines);
+
+    if (!config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"})) {
+      perror("Could not parse config, exiting.\n");
+      FAIL();
+    }
+
+    THEN("Dump is as expected") {
+      REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+  Other keys: Allow
+  On: (KEY_CAPSLOCK Press)
+    Layer Change: 1
+State #1
+  Other keys: Block
+  On: (KEY_LEFTALT Release)
+    Key: (KEY_LEFTALT Release)
+  On: (KEY_LEFTALT Press)
+    Key: (KEY_LEFTALT Press)
+)");
+    }
+  }
+}
