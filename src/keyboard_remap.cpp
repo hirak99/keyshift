@@ -18,9 +18,6 @@
 #include "remap_operator.h"
 #include "virtual_device.h"
 
-// TODO: Move preview mode to command line --preview.
-const bool kPreviewOnly = true;
-
 // Disable echoing input when run in terminal.
 void DisableEcho() {
   struct termios tty;
@@ -44,7 +41,10 @@ namespace po = boost::program_options;
       "config-string", po::value<std::string>(),
       "Config as a string, e.g. 'A=B;B=A'")(
       "config-file", po::value<std::string>(),
-      "File with remapping configuration.");
+      "File with remapping configuration.")(
+      "dry-run",
+      "If passed, will not start a service but will only show previews.");
+
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -100,8 +100,8 @@ Remapper GetRemapper(std::optional<std::string> config,
 
 int main(int argc, char** argv) {
   auto args = ParseArgs(argc, argv);
+  const bool arg_dry_run = args.count("dry-run") > 0;
   const std::string arg_kbd = GetRequiredArg(args, "kbd");
-  // TODO: Read either from config-string or from config-file.
   const std::optional<std::string> arg_config =
       GetOptionalArg(args, "config-string");
   const std::optional<std::string> arg_config_file =
@@ -111,40 +111,39 @@ int main(int argc, char** argv) {
   remapper.DumpConfig();
   VirtualDevice out_device;
   InputDevice device(arg_kbd.c_str());
-  if (!kPreviewOnly) device.Grab();
 
   printf("Wating a sec, release all keys! ...\n");
   sleep(1);
   printf("Starting now...\n");
-  DisableEcho();
 
-  if (kPreviewOnly) {
+  if (arg_dry_run) {
+    DisableEcho();
     auto echo_on_emit_fn = [](int key_code, int press) {
       std::cout << "  Out: " << (press ? "P " : "R ") << keyCodeToName(key_code)
                 << std::endl;
     };
     remapper.SetCallback(echo_on_emit_fn);
+    printf("Dryrun - processing disabled, echo enabled.\n");
+  } else {
+    remapper.SetCallback([&out_device](int code, int value) {
+      out_device.DoKeyEvent(code, value);
+    });
+    device.Grab();
+    printf("Processing enabled.\n");
   }
 
   struct input_event ie;
   while (read(device.get_fd(), &ie, sizeof(struct input_event)) > 0) {
     if (ie.type != EV_KEY) continue;
 
-    if (kPreviewOnly) {
+    if (arg_dry_run) {
       std::cout << "In: " << ie.value << " " << keyCodeToName(ie.code)
                 << std::endl;
     }
 
+    // This will call the function set with SetCallback() as new key events are
+    // generated.
     remapper.Process(ie.code, ie.value);
-
-    if (!kPreviewOnly) {
-      // Process and remap key events here
-      if (ie.value) {
-        out_device.KeyPress(ie.code);
-      } else {
-        out_device.KeyRelease(ie.code);
-      }
-    }
   }
   return 0;
 }

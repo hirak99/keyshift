@@ -73,12 +73,9 @@ class VirtualDevice {
 
   inline int IsOpen() const { return file_descriptor_ >= 0; }
 
-  void KeyPress(unsigned int code) const {
-    SendEvent(EV_KEY, code, 1);
-    SendEvent(EV_SYN, SYN_REPORT, 0);  // Synchronize
-  }
-  void KeyRelease(unsigned int code) const {
-    SendEvent(EV_KEY, code, 0);
+  void DoKeyEvent(unsigned int code, int value) const {
+    std::cerr << "Sending " << code << ", " << value << std::endl;
+    SendEvent(EV_KEY, code, value);
     SendEvent(EV_SYN, SYN_REPORT, 0);  // Synchronize
   }
 

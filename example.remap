@@ -12,7 +12,9 @@ CAPSLOCK + 0 = F10
 CAPSLOCK + KPEQUAL = F11
 CAPSLOCK + KPPLUSMINUS = F12
 
+CAPSLOCK + TAB = CAPSLOCK
 CAPSLOCK + C = PLAYPAUSE
+CAPSLOCK + END = HOME
 
 // Rightctrl will act as itself (until something else is pressed).
 ^RIGHTCTRL = ^RIGHTCTRL
@@ -40,6 +42,7 @@ RIGHTCTRL + * = *
 
 // Additional functionalities on DELETE.
 DELETE + BACKSPACE = PRINT
+DELETE + BACKSLASH = PAUSE
 DELETE + nothing = DELETE
 
 ^LEFTSHIFT = ^LEFTSHIFT
