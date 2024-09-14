@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <fstream>
 #include <iostream>
 
 #include "config_parser.h"
@@ -51,6 +52,14 @@ namespace po = boost::program_options;
   return vm;
 }
 
+std::optional<std::string> GetOptionalArg(const po::variables_map& args,
+                                          const std::string& name) {
+  if (!args.count(name)) {
+    return std::nullopt;
+  }
+  return args[name].as<std::string>();
+}
+
 std::string GetRequiredArg(const po::variables_map& args,
                            const std::string& name) {
   if (!args.count(name)) {
@@ -61,14 +70,30 @@ std::string GetRequiredArg(const po::variables_map& args,
   return args[name].as<std::string>();
 }
 
-Remapper GetRemapper(std::string config) {
+Remapper GetRemapper(std::optional<std::string> config,
+                     std::optional<std::string> config_file) {
   std::vector<std::string> lines;
-  boost::algorithm::split(lines, config, boost::is_any_of(";"));
+  if (config_file.has_value()) {
+    std::ifstream file(config_file.value());
+    if (!file.is_open()) {
+      std::cerr << "ERROR: Could not open file " << config_file.value()
+                << std::endl;
+      exit(1);
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+      lines.push_back(line);
+    }
+    file.close();
+  }
+  if (config.has_value()) {
+    boost::algorithm::split(lines, config.value(), boost::is_any_of(";"));
+  }
 
   Remapper remapper;
   ConfigParser config_parser(&remapper);
   if (!config_parser.Parse(lines)) {
-    throw std::runtime_error("Error parsing config");
+    exit(1);
   }
   return remapper;
 }
@@ -77,9 +102,12 @@ int main(int argc, char** argv) {
   auto args = ParseArgs(argc, argv);
   const std::string arg_kbd = GetRequiredArg(args, "kbd");
   // TODO: Read either from config-string or from config-file.
-  const std::string arg_config = GetRequiredArg(args, "config-string");
+  const std::optional<std::string> arg_config =
+      GetOptionalArg(args, "config-string");
+  const std::optional<std::string> arg_config_file =
+      GetOptionalArg(args, "config-file");
 
-  Remapper remapper = GetRemapper(arg_config);
+  Remapper remapper = GetRemapper(arg_config, arg_config_file);
   remapper.DumpConfig();
   VirtualDevice out_device;
   InputDevice device(arg_kbd.c_str());

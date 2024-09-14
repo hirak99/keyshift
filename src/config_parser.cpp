@@ -51,7 +51,11 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
     prefix = name[0];
     name = name.substr(1);
   }
-  return {prefix, nameToKeyCode("KEY_" + name)};
+  const auto& keycode = nameToKeyCode("KEY_" + name);
+  if (!keycode.has_value()) {
+    std::cerr << "ERROR: Unknown key code " << name << std::endl;
+  }
+  return {prefix, keycode};
 }
 
 // Main class.
@@ -82,8 +86,8 @@ std::vector<Action> ConfigParser::AssignmentToActions(
   for (const auto& token : tokens) {
     const auto [right_prefix, right_key] = SplitKeyPrefix(token);
     if (!right_key.has_value()) {
-      std::cerr << "ERROR: Invalid keycode. Line - " << line_being_parsed_
-                << std::endl;
+      std::cerr << "ERROR: Could not parse token " << token << ", Line - "
+                << line_being_parsed_ << std::endl;
       throw std::invalid_argument("Invalid keycode.");
     };
     if (right_prefix == 0 || right_prefix == '^') {
