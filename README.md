@@ -165,3 +165,8 @@ ESC + 500ms = BACKTICK
 DEL + END = VOLUME_UP
 DEL + nothing = DEL  # Do a DEL if nothing else happened.
 ```
+
+# TODO
+- Handle multiple layers being active at the same time.
+  - E.g. Alt + Caps + 4 = Alt F4
+  - The modifications should compose in order of layers activated.

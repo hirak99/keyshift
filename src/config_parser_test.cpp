@@ -106,12 +106,7 @@ SCENARIO("All mappings") {
     ConfigParser config_parser(&remapper);
 
     auto config_lines = SplitLines(kConfigLines);
-
-    // Parse the config and set up the remapper.
-    if (!config_parser.Parse(config_lines)) {
-      perror("Could not parse config, exiting.\n");
-      FAIL();
-    }
+    REQUIRE(config_parser.Parse(config_lines));
 
     THEN("Dump is as expected") {
       REQUIRE(GetRemapperConfigDump(remapper) == kExpectedDump);
@@ -154,16 +149,38 @@ SCENARIO("All mappings") {
 }
 
 SCENARIO("Custom tests") {
-  GIVEN("KEY + X = X") {
-    Remapper remapper;
-    ConfigParser config_parser(&remapper);
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
 
-    auto config_lines = SplitLines(kConfigLines);
-
-    if (!config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"})) {
-      perror("Could not parse config, exiting.\n");
-      FAIL();
+  GIVEN("ALT + CAPS + 4 = ALT F4") {
+    REQUIRE(config_parser.Parse(
+        {"CAPSLOCK + LEFTALT = LEFTALT", "CAPSLOCK + 4 = F4"}));
+    THEN("CAPS + ALT + 4") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_CAPSLOCK, 1},
+                           {KEY_LEFTALT, 1},
+                           {KEY_4, 1},
+                           {KEY_LEFTALT, 0},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_4, 0}}) ==
+              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
+    THEN("ALT + CAPS + 4") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_LEFTALT, 1},
+                           {KEY_CAPSLOCK, 1},
+                           {KEY_4, 1},
+                           {KEY_LEFTALT, 0},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_4, 0}}) ==
+              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+    }
+  }
+
+  GIVEN("KEY + X = X") {
+    REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"}));
 
     THEN("Dump is as expected") {
       REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
