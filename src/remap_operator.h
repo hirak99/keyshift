@@ -189,7 +189,7 @@ class Remapper {
   KeyboardState& current_state_;
   // Previous mappings. This is used as mappings get deactivated.
   // Pair of key_code, mapping_index.
-  std::stack<LayerActivation> active_layers_;
+  std::vector<LayerActivation> active_layers_;
 
   // Current keys being held. Maps to event_seq_num, i.e. when it was held.
   // If somehow a key is pressed multiple times (e.g. repeats maybe?) then this

@@ -149,10 +149,11 @@ void Remapper::EmitKeyCode(KeyEvent key_event) {
 // Check if any layer was activated by the current key_code, and if so,
 // deactivate it.
 bool Remapper::DeactivateLayerByKey(KeyEvent key_event) {
+  if (key_event.value != KeyEventType::kKeyRelease) return false;
   if (active_layers_.empty()) return false;
   // TODO: The key_event may not correspond to the top layer. Change this to
   // do a search on all active layers.
-  auto layer_to_deactivate = active_layers_.top();
+  auto layer_to_deactivate = active_layers_.back();
   if (layer_to_deactivate.key_event.key_code != key_event.key_code)
     return false;
 
@@ -166,8 +167,8 @@ void Remapper::DeactivateCurrentLayer() {
     perror("WARNING: Trying to deactivate when no layer is active.");
     return;
   }
-  auto layer_to_deactivate = active_layers_.top();
-  active_layers_.pop();
+  auto layer_to_deactivate = active_layers_.back();
+  active_layers_.pop_back();
 
   current_state_.deactivate();
   if (current_state_.null_event_applicable) {
@@ -202,6 +203,14 @@ void Remapper::DeactivateCurrentLayer() {
 void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
     keys_held_[key_event.key_code] = event_seq_num_++;
+    EmitKeyCode(key_event);
+  } else if (key_event.value == KeyEventType::kKeyRepeat) {
+    // If the repeating key was used to activate a layer, do nothing.
+    for (const auto& layer : active_layers_) {
+      if (layer.key_event.key_code == key_event.key_code) return;
+    }
+    // Else, emit the key.
+    EmitKeyCode(key_event);
   } else if (key_event.value == KeyEventType::kKeyRelease) {
     auto it = keys_held_.find(key_event.key_code);
     if (it == keys_held_.end()) {
@@ -210,12 +219,12 @@ void Remapper::ProcessKeyEvent(KeyEvent key_event) {
       return;
     }
     keys_held_.erase(key_event.key_code);
+    EmitKeyCode(key_event);
   } else {
     std::cerr << "WARNING: Unimplemented key code value "
               << int(key_event.value) << std::endl;
     return;
   }
-  EmitKeyCode(key_event);
 }
 
 void Remapper::ProcessActions(const std::vector<Action>& actions,
@@ -230,7 +239,7 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
         auto new_state = it->second;
         if (new_state.activate()) {
           if (new_state.auto_deactivate_layer && key_event.has_value()) {
-            active_layers_.push(
+            active_layers_.push_back(
                 LayerActivation{event_seq_num_++, *key_event, current_state_});
           }
           current_state_ = new_state;
