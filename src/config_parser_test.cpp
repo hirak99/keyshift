@@ -119,12 +119,16 @@ SCENARIO("All mappings") {
 
     // Functional tests.
     THEN("Remap outcome CAPSLOCK+Fn") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {KEY_CAPSLOCK, KEY_1, -KEY_1, -KEY_CAPSLOCK}) ==
-              vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
-      REQUIRE(GetOutcomes(remapper, false,
-                          {KEY_CAPSLOCK, KEY_1, -KEY_CAPSLOCK, -KEY_1}) ==
-              vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+      REQUIRE(
+          GetOutcomes(
+              remapper, false,
+              {{KEY_CAPSLOCK, 1}, {KEY_1, 1}, {KEY_1, 0}, {KEY_CAPSLOCK, 0}}) ==
+          vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+      REQUIRE(
+          GetOutcomes(
+              remapper, false,
+              {{KEY_CAPSLOCK, 1}, {KEY_1, 1}, {KEY_CAPSLOCK, 0}, {KEY_1, 0}}) ==
+          vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
     }
   }
 }

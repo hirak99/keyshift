@@ -28,8 +28,13 @@ TEST_CASE("Test1", "[remapper]") {
       {KeyPressEvent(KEY_RIGHTCTRL), remapper.ActionActivateState("fnkeys")});
 
   REQUIRE(GetOutcomes(remapper, true,
-                      {KEY_C, -KEY_C, KEY_RIGHTCTRL, KEY_A, -KEY_RIGHTCTRL,
-                       KEY_A, -KEY_A}) ==
+                      {{KEY_C, 1},
+                       {KEY_C, 0},
+                       {KEY_RIGHTCTRL, 1},
+                       {KEY_A, 1},
+                       {KEY_RIGHTCTRL, 0},
+                       {KEY_A, 1},
+                       {KEY_A, 0}}) ==
 
           vector<string>{
               "In: P KEY_C",
@@ -59,15 +64,19 @@ TEST_CASE("Lead key", "[remapper]") {
                       {KeyPressEvent(KEY_PRINT)});
 
   // Leave the lead key first.
-  REQUIRE(
-      GetOutcomes(remapper, false,
-                  {KEY_DELETE, KEY_BACKSPACE, -KEY_DELETE, -KEY_BACKSPACE}) ==
-      vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
+  REQUIRE(GetOutcomes(remapper, false,
+                      {{KEY_DELETE, 1},
+                       {KEY_BACKSPACE, 1},
+                       {KEY_DELETE, 0},
+                       {KEY_BACKSPACE, 0}}) ==
+          vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
   // Leave the other key first.
-  REQUIRE(
-      GetOutcomes(remapper, false,
-                  {KEY_DELETE, KEY_BACKSPACE, -KEY_BACKSPACE, -KEY_DELETE}) ==
-      vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
+  REQUIRE(GetOutcomes(remapper, false,
+                      {{KEY_DELETE, 1},
+                       {KEY_BACKSPACE, 1},
+                       {KEY_BACKSPACE, 0},
+                       {KEY_DELETE, 0}}) ==
+          vector<string>{"Out: P KEY_PRINT", "Out: R KEY_PRINT"});
 }
 
 TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
@@ -84,20 +93,27 @@ TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
 
   // Covers mapped keys.
   REQUIRE(GetOutcomes(remapper, false,
-                      {KEY_RIGHTCTRL, KEY_BACKSPACE, -KEY_RIGHTCTRL,
-                       -KEY_BACKSPACE, KEY_BACKSPACE}) ==
+                      {{KEY_RIGHTCTRL, 1},
+                       {KEY_BACKSPACE, 1},
+                       {KEY_RIGHTCTRL, 0},
+                       {KEY_BACKSPACE, 0},
+                       {KEY_BACKSPACE, 1}}) ==
           vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_A", "Out: R KEY_A",
                          "Out: R KEY_RIGHTCTRL", "Out: P KEY_BACKSPACE"});
   // Covers all other keys as expected.
-  REQUIRE(GetOutcomes(remapper, false,
-                      {KEY_RIGHTCTRL, KEY_B, -KEY_RIGHTCTRL, -KEY_B}) ==
-          vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_B", "Out: R KEY_B",
-                         "Out: R KEY_RIGHTCTRL"});
+  REQUIRE(
+      GetOutcomes(
+          remapper, false,
+          {{KEY_RIGHTCTRL, 1}, {KEY_B, 1}, {KEY_RIGHTCTRL, 0}, {KEY_B, 0}}) ==
+      vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_B", "Out: R KEY_B",
+                     "Out: R KEY_RIGHTCTRL"});
   // However, as defined releases CTRL before F1.
-  REQUIRE(GetOutcomes(remapper, false,
-                      {KEY_RIGHTCTRL, KEY_1, -KEY_1, -KEY_RIGHTCTRL}) ==
-          vector<string>{"Out: P KEY_RIGHTCTRL", "Out: R KEY_RIGHTCTRL",
-                         "Out: P KEY_F1", "Out: R KEY_F1"});
+  REQUIRE(
+      GetOutcomes(
+          remapper, false,
+          {{KEY_RIGHTCTRL, 1}, {KEY_1, 1}, {KEY_1, 0}, {KEY_RIGHTCTRL, 0}}) ==
+      vector<string>{"Out: P KEY_RIGHTCTRL", "Out: R KEY_RIGHTCTRL",
+                     "Out: P KEY_F1", "Out: R KEY_F1"});
 }
 
 SCENARIO("Del+Bksp is Print, but Del alone is Del") {
@@ -116,14 +132,17 @@ SCENARIO("Del+Bksp is Print, but Del alone is Del") {
 
     // WIP - Does not pass yet.
     THEN("Del+End does VolumeUp") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {KEY_DELETE, KEY_END, -KEY_END, -KEY_DELETE}) ==
-              vector<string>{"Out: P KEY_VOLUMEUP", "Out: R KEY_VOLUMEUP"});
+      REQUIRE(
+          GetOutcomes(
+              remapper, false,
+              {{KEY_DELETE, 1}, {KEY_END, 1}, {KEY_END, 0}, {KEY_DELETE, 0}}) ==
+          vector<string>{"Out: P KEY_VOLUMEUP", "Out: R KEY_VOLUMEUP"});
     }
 
     THEN("Del alone should act as Del key") {
-      REQUIRE(GetOutcomes(remapper, false, {KEY_DELETE, -KEY_DELETE}) ==
-              vector<string>{"Out: P KEY_DELETE", "Out: R KEY_DELETE"});
+      REQUIRE(
+          GetOutcomes(remapper, false, {{KEY_DELETE, 1}, {KEY_DELETE, 0}}) ==
+          vector<string>{"Out: P KEY_DELETE", "Out: R KEY_DELETE"});
     }
   }
 }

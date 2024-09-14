@@ -9,17 +9,17 @@
 using std::string;
 using std::vector;
 
-vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
-                           vector<int> keycodes) {
-  vector<string> outcomes;
-  auto process = [&outcomes, &remapper, keep_incoming](int keycode) {
+std::vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
+                                std::vector<std::pair<int, int>> keycodes) {
+  std::vector<string> outcomes;
+  auto process = [&outcomes, &remapper, keep_incoming](int keycode, int value) {
     if (keep_incoming) {
       std::ostringstream oss;
-      oss << "In: " << (keycode > 0 ? "P " : "R ")
+      oss << "In: " << (value == 1 ? "P " : "R ")
           << keyCodeToName(abs(keycode));
       outcomes.push_back(oss.str());
     }
-    remapper.Process(abs(keycode), keycode > 0 ? 1 : 0);
+    remapper.Process(keycode, value);
   };
 
   remapper.SetCallback([&outcomes](int keycode, int press) {
@@ -43,8 +43,8 @@ vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
     outcomes.push_back(oss.str());
   });
 
-  for (int keycode : keycodes) {
-    process(keycode);
+  for (const auto& [keycode, value] : keycodes) {
+    process(keycode, value);
   }
 
   return outcomes;
