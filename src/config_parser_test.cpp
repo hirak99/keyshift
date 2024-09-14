@@ -118,7 +118,7 @@ SCENARIO("All mappings") {
     }
 
     // Functional tests.
-    THEN("Remap outcome CAPSLOCK+Fn") {
+    THEN("Test outcome CAPSLOCK+Fn") {
       REQUIRE(
           GetOutcomes(
               remapper, false,
@@ -129,6 +129,26 @@ SCENARIO("All mappings") {
               remapper, false,
               {{KEY_CAPSLOCK, 1}, {KEY_1, 1}, {KEY_CAPSLOCK, 0}, {KEY_1, 0}}) ==
           vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+    }
+    THEN("Test repeat of keys") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_X, 1}, {KEY_X, 2}, {KEY_X, 2}, {KEY_X, 0}}) ==
+              vector<string>{"Out: P KEY_X", "Out: T KEY_X", "Out: T KEY_X",
+                             "Out: R KEY_X"});
+    }
+    THEN("Test repeat of CAPSLOCK (lead) and 1 (mapped to F1)") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_CAPSLOCK, 1},
+                           {KEY_CAPSLOCK, 2},
+                           {KEY_1, 1},
+                           {KEY_1, 2},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_1, 0}}) ==
+              vector<string>{"Out: P KEY_F1",
+                             // Note: In current config, the mapped key does not
+                             // repeat. However, repeating this also should be
+                             // okay. "Out: T KEY_F1",
+                             "Out: R KEY_F1"});
     }
   }
 }

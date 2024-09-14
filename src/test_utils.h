@@ -15,8 +15,17 @@ std::vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
   auto process = [&outcomes, &remapper, keep_incoming](int keycode, int value) {
     if (keep_incoming) {
       std::ostringstream oss;
-      oss << "In: " << (value == 1 ? "P " : "R ")
-          << keyCodeToName(abs(keycode));
+      oss << "In: ";
+      if (value == 1) {
+        oss << "P ";  // Press
+      } else if (value == 0) {
+        oss << "R ";  // Release
+      } else if (value == 2) {
+        oss << "T ";  // Repeat
+      } else {
+        throw std::runtime_error("Unexpected value");
+      }
+      oss << keyCodeToName(abs(keycode));
       outcomes.push_back(oss.str());
     }
     remapper.Process(keycode, value);
