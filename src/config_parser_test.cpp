@@ -152,6 +152,24 @@ SCENARIO("Custom tests") {
   Remapper remapper;
   ConfigParser config_parser(&remapper);
 
+  GIVEN("KEY + X = X") {
+    REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"}));
+
+    THEN("Dump is as expected") {
+      REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+  Other keys: Allow
+  On: (KEY_CAPSLOCK Press)
+    Layer Change: 1
+State #1
+  Other keys: Block
+  On: (KEY_LEFTALT Release)
+    Key: (KEY_LEFTALT Release)
+  On: (KEY_LEFTALT Press)
+    Key: (KEY_LEFTALT Press)
+)");
+    }
+  }
+
   GIVEN("ALT + CAPS + 4 = ALT F4") {
     REQUIRE(config_parser.Parse(
         {"CAPSLOCK + LEFTALT = LEFTALT", "CAPSLOCK + 4 = F4"}));
@@ -179,21 +197,33 @@ SCENARIO("Custom tests") {
     }
   }
 
-  GIVEN("KEY + X = X") {
-    REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"}));
-
-    THEN("Dump is as expected") {
-      REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
-  Other keys: Allow
-  On: (KEY_CAPSLOCK Press)
-    Layer Change: 1
-State #1
-  Other keys: Block
-  On: (KEY_LEFTALT Release)
-    Key: (KEY_LEFTALT Release)
-  On: (KEY_LEFTALT Press)
-    Key: (KEY_LEFTALT Press)
-)");
+  // Handle multiple layers being active at the same time.
+  //   E.g. Alt + Caps + 4 = Alt F4
+  //   The modifications should compose in order of layers activated.
+  GIVEN("Multiple layers") {
+    REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT",
+                                 "CAPSLOCK + 4 = F4", "LEFTALT + * = *"}));
+    THEN("CAPS + ALT + 4") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_CAPSLOCK, 1},
+                           {KEY_LEFTALT, 1},
+                           {KEY_4, 1},
+                           {KEY_LEFTALT, 0},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_4, 0}}) ==
+              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+    }
+    THEN("ALT + CAPS + 4") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_LEFTALT, 1},
+                           {KEY_CAPSLOCK, 1},
+                           {KEY_4, 1},
+                           {KEY_LEFTALT, 0},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_4, 0}}) ==
+              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
   }
 }
