@@ -35,21 +35,29 @@ namespace po = boost::program_options;
 
 [[nodiscard]] po::variables_map ParseArgs(int argc, char** argv) {
   po::options_description desc("Allowed options");
-  desc.add_options()(
+  desc.add_options()("help", "Show a short help.")(
       "kbd", po::value<std::string>(),
-      "Address of the -kbd device to remap in `/dev/input/by-path`.")(
+      "Address of the -kbd device to remap in `/dev/input/by-path/`.")(
       "config-string", po::value<std::string>(),
-      "Config as a string, e.g. 'A=B;B=A'")(
+      "Config as a string, e.g. 'A=B;B=A'.")(
       "config-file", po::value<std::string>(),
       "File with remapping configuration.")(
+      "dump-parsed-configs",
+      "Show information on layers generated based on config-string or "
+      "config-file.")(
       "dry-run",
       "If passed, will not start a service but will only show previews.");
 
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
+  po::variables_map args;
+  po::store(po::parse_command_line(argc, argv, desc), args);
+  po::notify(args);
 
-  return vm;
+  const bool arg_help = args.count("help") > 0;
+  if (arg_help) {
+    std::cout << desc << std::endl;
+    exit(0);
+  }
+  return args;
 }
 
 std::optional<std::string> GetOptionalArg(const po::variables_map& args,
@@ -87,7 +95,7 @@ Remapper GetRemapper(std::optional<std::string> config,
     file.close();
   }
   if (config.has_value()) {
-    boost::algorithm::split(lines, config.value(), boost::is_any_of(";"));
+    boost::algorithm::split(lines, config.value(), boost::is_any_of(";\r\n"));
   }
 
   Remapper remapper;
@@ -100,17 +108,22 @@ Remapper GetRemapper(std::optional<std::string> config,
 
 int main(int argc, char** argv) {
   auto args = ParseArgs(argc, argv);
+  const bool dump_parsed_configs = args.count("dump-parsed-configs") > 0;
   const bool arg_dry_run = args.count("dry-run") > 0;
-  const std::string arg_kbd = GetRequiredArg(args, "kbd");
   const std::optional<std::string> arg_config =
       GetOptionalArg(args, "config-string");
   const std::optional<std::string> arg_config_file =
       GetOptionalArg(args, "config-file");
 
   Remapper remapper = GetRemapper(arg_config, arg_config_file);
-  remapper.DumpConfig();
-  VirtualDevice out_device;
+  if (dump_parsed_configs) {
+    remapper.DumpConfig();
+    return 0;
+  }
+
+  const std::string arg_kbd = GetRequiredArg(args, "kbd");
   InputDevice device(arg_kbd.c_str());
+  VirtualDevice out_device;
 
   printf("Wating a sec, release all keys! ...\n");
   sleep(1);

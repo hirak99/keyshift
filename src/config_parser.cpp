@@ -1,7 +1,8 @@
-// TODO: Fatal on invalid keys like `CPSLOCK + 1 = F1`.
-// TODO: Fatal on declaring `^KEY = ^KEY` after layering (it needs to be before).
+// TODO: Fatal on declaring `^KEY = ^KEY` after layering (it needs to be
+// before).
 #include "config_parser.h"
 
+#include <format>
 #include <iostream>
 #include <map>
 #include <set>
@@ -72,7 +73,9 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
 
 [[nodiscard]] bool ConfigParser::Parse(const std::vector<string>& lines) {
   bool success = true;
+  int line_num = 0;
   for (const auto& line : lines) {
+    line_being_parsed_ = std::format("{}: {}", ++line_num, line);
     success &= ParseLine(line);
   }
   return success;
@@ -161,6 +164,11 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
     perror("ERROR: Prefix (^ or ~) for layer keys is not supported yet.");
     return false;
   }
+  if (!layer_key.has_value()) {
+    std::cerr << "ERROR: Could not parse layer key " << layer_key_str
+              << " at line " << line_being_parsed_ << std::endl;
+    return false;
+  }
   string layer_name = layer_key_str + "_layer";
 
   // Add default to layer mapping.
@@ -203,7 +211,6 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
 
 [[nodiscard]] bool ConfigParser::ParseLine(const string& original_line) {
   // Ignore comments and empty lines.
-  line_being_parsed_ = original_line;
   string line = StringTrim(RemoveComment(original_line));
   if (line.empty()) {
     return true;
