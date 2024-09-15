@@ -2,6 +2,23 @@
 #include <unordered_map>
 #include <vector>
 
+// Let's bring some sanity to maps.
+
+// Map contains.
+template <typename T, typename U>
+bool MapContains(const std::unordered_map<T, U>& map, const T& key) {
+  const auto& it = map.find(key);
+  return it != map.end();
+}
+
+// Map lookup.
+template <typename T, typename U>
+std::optional<U> MapLookup(const std::unordered_map<T, U>& map, const T& key) {
+  const auto& it = map.find(key);
+  if (it == map.end()) return std::nullopt;
+  return it->second;
+}
+
 // Sorted version of a map, with specified sort order.
 // E.g. -
 // for (const auto& [key, value] :

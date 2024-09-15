@@ -128,13 +128,12 @@ void Remapper::DumpConfig(std::ostream& os) const {
 
 // Finds index of keyboard_state name. If it doesn't exist, adds it.
 int Remapper::StateNameToIndex(std::string state_name) {
-  auto index_it = state_name_to_index_.find(state_name);
-  if (index_it == state_name_to_index_.end()) {
-    int index = state_name_to_index_.size();
-    state_name_to_index_[state_name] = index;
-    return index;
-  }
-  return index_it->second;
+  auto result = MapLookup(state_name_to_index_, state_name);
+  if (result.has_value()) return *result;
+
+  int index = state_name_to_index_.size();
+  state_name_to_index_.emplace(state_name, index);
+  return index;
 }
 
 void Remapper::EmitKeyCode(KeyEvent key_event) {
@@ -212,8 +211,7 @@ void Remapper::ProcessKeyEvent(KeyEvent key_event) {
     // Else, emit the key.
     EmitKeyCode(key_event);
   } else if (key_event.value == KeyEventType::kKeyRelease) {
-    auto it = keys_held_.find(key_event.key_code);
-    if (it == keys_held_.end()) {
+    if (!MapContains(keys_held_, key_event.key_code)) {
       // This key is not actually held. This is normal, and can happen when a
       // lead key is released if it was not set up to register a press.
       return;

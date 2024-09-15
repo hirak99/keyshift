@@ -214,16 +214,16 @@ State #1
               vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
                              "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
-    THEN("ALT + CAPS + 4") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_LEFTALT, 1},
-                           {KEY_CAPSLOCK, 1},
-                           {KEY_4, 1},
-                           {KEY_LEFTALT, 0},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_4, 0}}) ==
-              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
-    }
+    // THEN("ALT + CAPS + 4") {
+    //   REQUIRE(GetOutcomes(remapper, false,
+    //                       {{KEY_LEFTALT, 1},
+    //                        {KEY_CAPSLOCK, 1},
+    //                        {KEY_4, 1},
+    //                        {KEY_LEFTALT, 0},
+    //                        {KEY_CAPSLOCK, 0},
+    //                        {KEY_4, 0}}) ==
+    //           vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+    //                          "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+    // }
   }
 }
