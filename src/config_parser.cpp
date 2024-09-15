@@ -1,3 +1,5 @@
+// TODO: Fatal on invalid keys like `CPSLOCK + 1 = F1`.
+// TODO: Fatal on declaring `^KEY = ^KEY` after layering (it needs to be before).
 #include "config_parser.h"
 
 #include <iostream>

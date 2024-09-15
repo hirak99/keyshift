@@ -171,10 +171,24 @@ reverse order, as long as the key is passed through, until a mapping is found.
 
 # Tutorial
 
+## Experimenting
+
+Locate your keyboard in "/dev/input/by-id".
+
+Then try this -
+
+```sh
+keyboard_remap "/dev/input/by-id/...-kbd" --config-string "A=B;B=A"
+```
+
+Verify that this swaps the keys A and B as long as it is running. You can exit out of it with Ctrl+C.
+
+
 ## Statement Reference
 
-- Keycodes
+- Available keycodes
   - You can use any keycode [defined here](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h). You can omit the "KEY_" prefix.
+  - As special tokens, you can use `*` and `nothing`. See descriptions below.
 
 - Basic remapping
   - `^KEY1 = [TOKEN ...]` - The `^` indicates press of a key. On KEY1 press, tokens on the right will be performed.

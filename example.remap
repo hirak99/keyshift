@@ -38,13 +38,15 @@ RIGHTCTRL + 9 = ~RIGHTCTRL F9
 RIGHTCTRL + 0 = ~RIGHTCTRL F10
 RIGHTCTRL + KPEQUAL = ~RIGHTCTRL F11
 RIGHTCTRL + KPPLUSMINUS = ~RIGHTCTRL F12
-// Other mappings.
+
 RIGHTCTRL + DELETE = ~RIGHTCTRL VOLUMEUP
 RIGHTCTRL + END = ~RIGHTCTRL VOLUMEDOWN
 RIGHTCTRL + PAGEUP = ~RIGHTCTRL MUTE
 RIGHTCTRL + PAGEDOWN = ~RIGHTCTRL SCROLLLOCK
-// Rightctrl will let all other keys pass thru.
-RIGHTCTRL + * = *
+
+RIGHTCTRL + * = *  // Let anything else pass thru.
+// // Or, let only specific keys pass thru.
+// RIGHTCTRL + P = P
 
 // Additional functionalities on DELETE.
 DELETE + BACKSPACE = PRINT
