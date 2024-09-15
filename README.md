@@ -173,6 +173,9 @@ reverse order, as long as the key is passed through, until a mapping is found.
 
 ## Statement Reference
 
+- Keycodes
+  - You can use any keycode [defined here](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h). You can omit the "KEY_" prefix.
+
 - Basic remapping
   - `^KEY1 = [TOKEN ...]` - The `^` indicates press of a key. On KEY1 press, tokens on the right will be performed.
   - `~KEY1 = [TOKEN ...]` - The `~` indicates release of a key. On KEY1 release, tokens on the right will be performed.

@@ -1,6 +1,13 @@
+#include <algorithm>
 #include <functional>
 #include <unordered_map>
 #include <vector>
+
+// Strings.
+
+inline bool StartsWith(const std::string& str, const std::string& prefix) {
+  return str.compare(0, prefix.length(), prefix) == 0;
+}
 
 // Let's bring some sanity to maps.
 

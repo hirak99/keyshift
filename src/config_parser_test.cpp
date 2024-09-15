@@ -170,6 +170,18 @@ State #1
     }
   }
 
+  GIVEN("Simple remap test") {
+    REQUIRE(config_parser.Parse({"A = X", "KEY_B = KEY_Y"}));
+    REQUIRE(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_A, 0},
+                            {KEY_B, 1},
+                            {KEY_B, 0},
+                        }) == vector<string>{"Out: P KEY_X", "Out: R KEY_X",
+                                             "Out: P KEY_Y", "Out: R KEY_Y"});
+  }
+
   GIVEN("ALT + CAPS + 4 = ALT F4") {
     REQUIRE(config_parser.Parse(
         {"CAPSLOCK + LEFTALT = LEFTALT", "CAPSLOCK + 4 = F4"}));
@@ -227,16 +239,17 @@ State #1
                              "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
   }
+
   GIVEN("'nothing' on right") {
-    REQUIRE(config_parser.Parse({"B = nothing"}));
+    REQUIRE(config_parser.Parse({"A = nothing"}));
     THEN("'nothing' should be blocked") {
       REQUIRE(GetOutcomes(remapper, false,
                           {
-                              {KEY_B, 1},
-                              {KEY_B, 0},
                               {KEY_A, 1},
                               {KEY_A, 0},
-                          }) == vector<string>{"Out: P KEY_A", "Out: R KEY_A"});
+                              {KEY_B, 1},
+                              {KEY_B, 0},
+                          }) == vector<string>{"Out: P KEY_B", "Out: R KEY_B"});
     }
   }
 }

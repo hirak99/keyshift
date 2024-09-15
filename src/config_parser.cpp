@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "essentials.h"
 #include "keycode_lookup.h"
 #include "remap_operator.h"
 
@@ -55,7 +56,8 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
     prefix = name[0];
     name = name.substr(1);
   }
-  const auto& keycode = nameToKeyCode("KEY_" + name);
+  const auto& keycode = StartsWith(name, "KEY_") ? nameToKeyCode(name)
+                                                 : nameToKeyCode("KEY_" + name);
   if (!keycode.has_value()) {
     std::cerr << "ERROR: Unknown key code " << name << std::endl;
   }
