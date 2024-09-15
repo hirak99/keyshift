@@ -23,7 +23,7 @@ KeyEvent KeyReleaseEvent(int key_code) {
   return KeyEvent{key_code, KeyEventType::kKeyRelease};
 }
 
-Remapper::Remapper() : current_state_(all_states_[0]) {
+Remapper::Remapper() : default_state_(all_states_[0]) {
   // Make "" to have index 0.
   if (StateNameToIndex("") != 0) {
     // Should not happen!
@@ -73,18 +73,19 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
 }
 
 std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
-  auto it = current_state_.action_map.find(key_event);
-  if (it != current_state_.action_map.end()) {
+  // TODO: Instead of just active_state, apply all active layer states.
+  KeyboardState& current_state = active_state();
+  auto it = current_state.action_map.find(key_event);
+  if (it != current_state.action_map.end()) {
     // Return the remapped actions.
     return it->second;
   }
 
   // Not remapped.
-  if (current_state_.allow_other_keys) {
-    return {key_event};
+  if (!current_state.allow_other_keys) {
+    return {};
   }
-
-  return {};
+  return {key_event};
 }
 
 void Remapper::Process(int key_code_int, int value) {
@@ -96,7 +97,7 @@ void Remapper::Process(int key_code_int, int value) {
 
   // Since a key was pressed, null event will not be triggered on
   // deactivation.
-  current_state_.null_event_applicable = false;
+  active_state().null_event_applicable = false;
 
   ProcessActions(ExpandToActions(key_event), key_event);
 }
@@ -177,11 +178,11 @@ void Remapper::DeactivateCurrentLayer() {
   auto layer_to_deactivate = active_layers_.back();
   active_layers_.pop_back();
 
-  current_state_.deactivate();
-  if (current_state_.null_event_applicable) {
-    ProcessActions(current_state_.null_event_actions, std::nullopt);
+  auto state_to_deactivate = layer_to_deactivate.this_state;
+  state_to_deactivate.deactivate();
+  if (state_to_deactivate.null_event_applicable) {
+    ProcessActions(state_to_deactivate.null_event_actions, std::nullopt);
   }
-  current_state_ = layer_to_deactivate.prior_state;
   // Get all the currently pressed keys after this was activated.
   int threshold = layer_to_deactivate.event_seq_num;
   std::vector<std::pair<int, int>> removed_keys;
@@ -246,9 +247,8 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
         if (new_state.activate()) {
           if (new_state.auto_deactivate_layer && key_event.has_value()) {
             active_layers_.push_back(
-                LayerActivation{event_seq_num_++, *key_event, current_state_});
+                LayerActivation{event_seq_num_++, *key_event, new_state});
           }
-          current_state_ = new_state;
         }
       } else {
         perror(
