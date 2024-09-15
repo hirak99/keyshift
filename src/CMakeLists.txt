@@ -15,8 +15,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 find_package(Catch2 3 REQUIRED)
 
 add_executable(demo_send_keys demo_send_keys.cpp)
-add_executable(keyboard_remap config_parser.cpp keyboard_remap.cpp remap_operator.cpp keycode_lookup.cpp)
-target_link_libraries(keyboard_remap ${Boost_LIBRARIES})
+add_executable(keyshift config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
+target_link_libraries(keyshift ${Boost_LIBRARIES})
 
 # Add the tests.
 enable_testing()
