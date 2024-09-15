@@ -205,10 +205,67 @@ Verify that this swaps the keys A and B as long as it is running. You can exit o
 
 ## Examples
 
-- Swap keys
-
+- Remap keys
 ```
+// Remap menu key (KEY_PASTE) into Right Win key.
+PASTE = RIGHTMETA
+
 // Swap A and B keys.
 A = B
 B = A
+```
+
+- Make CAPSLOCK to behave as Fn key
+
+```
+CAPSLOCK + 1 = F1
+CAPSLOCK + 2 = F2
+// ...
+CAPSLOCK + MINUS = F11
+CAPSLOCK + EQUAL = F12
+
+// The capslock key is now will no longer function as itself.
+// We can however use an alternative way to trigger it.
+CAPSLOCK + TAB = CAPSLOCK
+
+// Capslock passthrus.
+CAPSLOCK + LEFTALT = *  // Since we want CAPSLOCK+LEFTALT+4 = Alt+F4.
+CAPSLOCK + RIGHTALT = *
+CAPSLOCK + LEFTCTRL = *
+```
+
+- Make Left Shift + Esc = ~, leave shift as is otherwise
+
+```
+^LEFTSHIFT = ^LEFTSHIFT  // Holding shift will actually press shift.
+LEFTSHIFT + ESC = GRAVE  // And reassign other keys. GRAVE is the `/~ key.
+LEFTSHIFT + * = *        // All other keys while holding shift are unaltered.
+```
+
+- Make Right Ctrl behave as is, except Ctrl+0 as F10 _without_ Ctrl.
+```
+^RIGHTCTRL = ^RIGHTCTRL
+RIGHTCTRL + 0 = ~RIGHTCTRL F10  // Leave the key and press F10.
+RIGHTCTRL + * = *               // Let anything else pass thru.
+```
+
+- DEL itself is DEL, but DEL+END is Volume Up
+
+```
+DELETE + END =  VOLUMEUP
+// ... more DELETE + combos can be assigned here.
+
+// Acts as DELETE if nothing is pressed before DELETE is released.
+DELETE + nothing = DELETE
+```
+
+- Snap Tap
+  - Snaptap is a feature where pressing a key immediately deactivates some other key.
+  - WARNING: For Counter Strike, this was used with A and D keys, as in the example below. This is now banned in Counter Strike 2 for official servers.
+
+```
+// Pressing A will first release D (if D is pressed).
+^A = ~D ^A
+// And vice versa.
+^D = ~A ^D
 ```
