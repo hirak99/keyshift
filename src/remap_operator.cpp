@@ -100,11 +100,15 @@ void Remapper::Process(int key_code_int, int value) {
     return;
   }
 
-  // Since a key was pressed, null event will not be triggered on
-  // deactivation.
-  active_state().null_event_applicable = false;
+  const auto& actions = ExpandToActions(key_event);
 
-  ProcessActions(ExpandToActions(key_event), key_event);
+  if (!actions.empty()) {
+    // Since a key was pressed, null event will not be triggered on
+    // deactivation.
+    active_state().null_event_applicable = false;
+
+    ProcessActions(actions, key_event);
+  }
 }
 
 void Remapper::DumpConfig(std::ostream& os) const {
