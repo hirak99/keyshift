@@ -72,6 +72,21 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
   return ActionLayerChange{StateNameToIndex(state_name)};
 }
 
+std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
+  auto it = current_state_.action_map.find(key_event);
+  if (it != current_state_.action_map.end()) {
+    // Return the remapped actions.
+    return it->second;
+  }
+
+  // Not remapped.
+  if (current_state_.allow_other_keys) {
+    return {key_event};
+  }
+
+  return {};
+}
+
 void Remapper::Process(int key_code_int, int value) {
   KeyEvent key_event{key_code_int, KeyEventType(value)};
   // Check if key_event is in activated keyboard_state stack.
@@ -79,18 +94,11 @@ void Remapper::Process(int key_code_int, int value) {
     return;
   }
 
-  auto it = current_state_.action_map.find(key_event);
-  if (it == current_state_.action_map.end()) {
-    // Not remapped.
-    if (current_state_.allow_other_keys) {
-      ProcessKeyEvent(key_event);
-    }
-    return;
-  }
   // Since a key was pressed, null event will not be triggered on
   // deactivation.
   current_state_.null_event_applicable = false;
-  ProcessActions(it->second, key_event);
+
+  ProcessActions(ExpandToActions(key_event), key_event);
 }
 
 void Remapper::DumpConfig(std::ostream& os) const {
