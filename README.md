@@ -225,3 +225,13 @@ DELETE + nothing = DELETE
   - `KEY1 + KEY2 = *` - Shorthand for `KEY1 + KEY2 = KEY2`. Allows the key KEY2 to be passed thru in this layer unaltered.
   - `KEY1 + * = *` - Allow all keys not explicitly remapped under KEY1 to pass thru as is.
   - `KEY1 + nothing = [TOKEN ...]` - Specifies what should happen if nothing inside the layer is activated. E.g. `DELETE + 1 = F1; DELETE + nothing = DELETE` will ensure DELETE acts as itself unless 1 is pressed within it.
+
+## Safety
+
+If you lock yourself out due to a bad configuration, don't fret. There is a kill combo that deactivates keyshift. Type these keys in order while keyshift is running -
+
+`KEYSHIFTRESERVEDCMDKILL`
+
+Don't worry if you modified the keys with a configuration. The keys have to be what you type in the original hardware.
+
+You will see a std::runtime_error, which is normal.

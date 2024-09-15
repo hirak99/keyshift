@@ -173,6 +173,8 @@ class Remapper {
   void ProcessActions(const std::vector<Action>& actions,
                       const std::optional<KeyEvent> key_event);
 
+  void ProcessCombos(const KeyEvent& key_event);
+
   // TODO: Optimization to keep the active state updated in a variable.
   inline KeyboardState& active_state() {
     return active_layers_.size() > 0 ? active_layers_.back().this_state
@@ -209,6 +211,10 @@ class Remapper {
 
   // On Process(), key_codes are emitted via this callback.
   std::function<void(int, int)> emit_key_code_ = nullptr;
+
+  // Progress to typing the kill combo.
+  std::vector<int> combo_kill_keycodes_;
+  std::size_t combo_kill_progress_ = 0;
 };
 
 #endif  // __REMAP_OPERATOR_H

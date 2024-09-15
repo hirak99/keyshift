@@ -14,6 +14,9 @@
 #include <vector>
 
 #include "essentials.h"
+#include "keycode_lookup.h"
+
+const std::string kKillCombo = "KEYSHIFTRESERVEDCMDKILL";
 
 KeyEvent KeyPressEvent(int key_code) {
   return KeyEvent{key_code, KeyEventType::kKeyPress};
@@ -28,6 +31,15 @@ Remapper::Remapper() : default_state_(all_states_[0]) {
   if (StateNameToIndex("") != 0) {
     // Should not happen!
     throw std::runtime_error("Could not assert first index to be 0");
+  }
+
+  // Initialize kill combo keycodes from string.
+  for (const char c : kKillCombo) {
+    auto key_code = nameToKeyCode(std::string("KEY_") + c);
+    if (!key_code.has_value()) {
+      throw std::runtime_error("Cannot create combo for kKillCombo");
+    }
+    combo_kill_keycodes_.push_back(key_code.value());
   }
 }
 
@@ -72,29 +84,9 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
   return ActionLayerChange{StateNameToIndex(state_name)};
 }
 
-std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
-  // Iterate: active_layers_.reverse() + {default_state_}.
-  for (int layer_index = active_layers_.size() - 1; layer_index >= -1;
-       --layer_index) {
-    const auto& this_state = layer_index >= 0
-                                 ? active_layers_[layer_index].this_state
-                                 : default_state_;
-    auto it = this_state.action_map.find(key_event);
-    if (it != this_state.action_map.end()) {
-      // Return the remapped actions.
-      return it->second;
-    }
-
-    // Not remapped but all other keys not allowed.
-    if (!this_state.allow_other_keys) {
-      return {};
-    }
-  }
-  return {key_event};
-}
-
 void Remapper::Process(int key_code_int, int value) {
   KeyEvent key_event{key_code_int, KeyEventType(value)};
+  ProcessCombos(key_event);
   // Check if key_event is in activated keyboard_state stack.
   if (DeactivateLayerByKey(key_event)) {
     return;
@@ -243,6 +235,27 @@ void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   }
 }
 
+std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
+  // Iterate: active_layers_.reverse() + {default_state_}.
+  for (int layer_index = active_layers_.size() - 1; layer_index >= -1;
+       --layer_index) {
+    const auto& this_state = layer_index >= 0
+                                 ? active_layers_[layer_index].this_state
+                                 : default_state_;
+    auto it = this_state.action_map.find(key_event);
+    if (it != this_state.action_map.end()) {
+      // Return the remapped actions.
+      return it->second;
+    }
+
+    // Not remapped but all other keys not allowed.
+    if (!this_state.allow_other_keys) {
+      return {};
+    }
+  }
+  return {key_event};
+}
+
 void Remapper::ProcessActions(const std::vector<Action>& actions,
                               const std::optional<KeyEvent> key_event) {
   for (const Action& action : actions) {
@@ -269,5 +282,17 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
     } else {
       perror("WARNING: Unknown action.");
     }
+  }
+}
+
+void Remapper::ProcessCombos(const KeyEvent& key_event) {
+  if (key_event.value != KeyEventType::kKeyPress) return;
+  if (key_event.key_code == combo_kill_keycodes_[combo_kill_progress_])
+      [[unlikely]] {
+    if (++combo_kill_progress_ >= combo_kill_keycodes_.size()) {
+      throw std::runtime_error("Kill combo accepted.");
+    }
+  } else [[likely]] {
+    combo_kill_progress_ = 0;
   }
 }
