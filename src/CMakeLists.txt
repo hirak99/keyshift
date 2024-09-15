@@ -17,6 +17,12 @@ find_package(Catch2 3 REQUIRED)
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 target_link_libraries(keyshift ${Boost_LIBRARIES})
+# How to profile -
+# 1. Run ./profile, which will stress test the remapper and generate gmon.out since it is built with -pg.
+# 2. Check `gprof profile | less`.
+add_executable(profile profile.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
+set_target_properties(profile PROPERTIES COMPILE_FLAGS "-pg" LINK_FLAGS "-pg")
+target_link_libraries(profile ${Boost_LIBRARIES})
 
 # Add the tests.
 enable_testing()
