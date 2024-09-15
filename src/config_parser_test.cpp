@@ -252,4 +252,12 @@ State #1
                           }) == vector<string>{"Out: P KEY_B", "Out: R KEY_B"});
     }
   }
+
+  GIVEN("invalid keycode") {
+    REQUIRE_FALSE(config_parser.Parse({"ABC = A"}));
+  }
+
+  GIVEN("^A=^A after layer") {
+    REQUIRE_FALSE(config_parser.Parse({"A + 1 = F1", "^A = ^A"}));
+  }
 }

@@ -33,6 +33,4 @@ class ConfigParser {
   // To keep track of which layers have been seen. Used to do one time actions,
   // such as disallow other keys.
   std::set<string> known_layers_;
-  // Only to display current line for errors.
-  string line_being_parsed_;
 };

@@ -1,5 +1,3 @@
-// TODO: Fatal on declaring `^KEY = ^KEY` after layering (it needs to be
-// before).
 #include "config_parser.h"
 
 #include <format>
@@ -67,7 +65,11 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
   return {prefix, keycode};
 }
 
-// Main class.
+std::string LayerNameFromKey(int keycode) {
+  return keyCodeToName(keycode) + "_layer";
+}
+
+// Class methods.
 
 ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
 
@@ -75,8 +77,13 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
   bool success = true;
   int line_num = 0;
   for (const auto& line : lines) {
-    line_being_parsed_ = std::format("{}: {}", ++line_num, line);
-    success &= ParseLine(line);
+    ++line_num;
+    bool result = ParseLine(line);
+    if (!result) {
+      std::cerr << std::format("ERROR at line {}: {}", line_num, line)
+                << std::endl;
+    }
+    success &= result;
   }
   return success;
 }
@@ -101,8 +108,7 @@ std::vector<Action> ConfigParser::AssignmentToActions(
     }
     const auto [right_prefix, right_key] = SplitKeyPrefix(token);
     if (!right_key.has_value()) {
-      std::cerr << "ERROR: Could not parse token " << token << ", Line - "
-                << line_being_parsed_ << std::endl;
+      std::cerr << "ERROR: Could not parse token " << token << std::endl;
       throw std::invalid_argument("Invalid keycode.");
     };
     if (right_prefix == 0 || right_prefix == '^') {
@@ -120,6 +126,13 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
                                    const string& assignment) {
   const auto [left_prefix, left_key] = SplitKeyPrefix(key_str);
   if (!left_key.has_value()) return false;
+  if (layer_name == kDefaultLayerName &&
+      known_layers_.contains(LayerNameFromKey(left_key.value()))) {
+    perror(
+        "ERROR: Key assignments like KEY = ... must precede layer assignments "
+        "KEY + OTHER_KEY = ...");
+    return false;
+  }
 
   std::vector<Action> actions;
   try {
@@ -130,8 +143,8 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
       string last_token = tokens[n_tokens - 1];
       if (last_token[0] == '^' || last_token[0] == '~') {
         std::cerr << "ERROR: If left does not have a prefix (^ or ~), the "
-                     "last token of assignment must not have either; line "
-                  << line_being_parsed_ << std::endl;
+                     "last token of assignment must not have either."
+                  << std::endl;
         return false;
       }
       // On activation, do everything, but only activate the final key.
@@ -150,8 +163,6 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
       return true;
     }
   } catch (const std::invalid_argument&) {
-    std::cerr << "ParseAssignment: Failed at line " << line_being_parsed_
-              << std::endl;
     return false;
   }
 }
@@ -166,10 +177,10 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   }
   if (!layer_key.has_value()) {
     std::cerr << "ERROR: Could not parse layer key " << layer_key_str
-              << " at line " << line_being_parsed_ << std::endl;
+              << std::endl;
     return false;
   }
-  string layer_name = layer_key_str + "_layer";
+  string layer_name = LayerNameFromKey(layer_key.value());
 
   // Add default to layer mapping.
   if (known_layers_.find(layer_name) == known_layers_.end()) {
@@ -177,8 +188,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
       remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(*layer_key),
                             {remapper_->ActionActivateState(layer_name)});
     } catch (std::invalid_argument&) {
-      std::cerr << "ParseLayerAssignment: Failed at line " << line_being_parsed_
-                << std::endl;
+      std::cerr << "ParseLayerAssignment: Failed" << std::endl;
       return false;
     }
     remapper_->SetAllowOtherKeys(layer_name, false);
@@ -219,7 +229,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   // Split the config line into the key combination and the action.
   auto parts = SplitString(line, '=');
   if (parts.size() != 2) {
-    std::cerr << "ERROR Invalid line - " << original_line << std::endl;
+    std::cerr << "ERROR: Not of the form A = B" << std::endl;
     return false;
   }
 
