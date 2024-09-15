@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-project(KeyboardRemapper)
+project(KeyShift)
 
 # Set the C++ standard and compiler flags
 set(CMAKE_CXX_STANDARD 23)
@@ -14,9 +14,32 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 find_package(Catch2 3 REQUIRED)
 
+# Get the Git commit ID
+execute_process(
+    COMMAND git rev-parse HEAD
+    OUTPUT_VARIABLE GIT_COMMIT_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND git status --porcelain
+    OUTPUT_VARIABLE GIT_STATUS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if (GIT_STATUS)
+    set(GIT_COMMIT_ID "${GIT_COMMIT_ID}-dirty")
+endif()
+# Create the version header file
+configure_file(
+    ${CMAKE_SOURCE_DIR}/version.h.in
+    ${CMAKE_BINARY_DIR}/version.h
+)
+# Needed to include the version.h.
+include_directories(${CMAKE_BINARY_DIR})
+
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 target_link_libraries(keyshift ${Boost_LIBRARIES})
+
 # How to profile -
 # 1. Run ./profile, which will stress test the remapper and generate gmon.out since it is built with -pg.
 # 2. Check `gprof profile | less`.

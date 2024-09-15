@@ -17,6 +17,7 @@
 #include "input_device.h"
 #include "keycode_lookup.h"
 #include "remap_operator.h"
+#include "version.h"
 #include "virtual_device.h"
 
 // Disable echoing input when run in terminal.
@@ -45,7 +46,8 @@ std::optional<po::variables_map> ParseArgs(int argc, char** argv) {
       "File with remapping configuration.")(
       "dump", "Show internal representation of the parsed config, and exit.")(
       "dry-run",
-      "If passed, will not start a service but will only show previews.");
+      "If passed, will not start a service but will only show previews.")(
+      "version", "Display commit id and exit.");
 
   po::variables_map args;
   po::store(po::parse_command_line(argc, argv, desc), args);
@@ -54,6 +56,11 @@ std::optional<po::variables_map> ParseArgs(int argc, char** argv) {
   const bool arg_help = args.count("help") > 0;
   if (arg_help) {
     std::cout << desc << std::endl;
+    return std::nullopt;
+  }
+  const bool arg_version = args.count("version") > 0;
+  if (arg_version) {
+    std::cout << "Commit id: " << GIT_COMMIT_ID << std::endl;
     return std::nullopt;
   }
   return args;
