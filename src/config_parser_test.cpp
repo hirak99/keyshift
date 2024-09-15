@@ -227,4 +227,16 @@ State #1
                              "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
   }
+  GIVEN("'nothing' on right") {
+    REQUIRE(config_parser.Parse({"B = nothing"}));
+    THEN("'nothing' should be blocked") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {
+                              {KEY_B, 1},
+                              {KEY_B, 0},
+                              {KEY_A, 1},
+                              {KEY_A, 0},
+                          }) == vector<string>{"Out: P KEY_A", "Out: R KEY_A"});
+    }
+  }
 }

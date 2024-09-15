@@ -14,6 +14,10 @@ using std::string;
 
 const string kDefaultLayerName = "";
 
+// When on left, sets a default assignment e.g. "DELETE + nothing = DELETE".
+// When on right, blocks a key e.g. "DELETE = nothing".
+const string kNothingToken = "nothing";
+
 // Utility functions.
 
 std::vector<string> SplitString(const string& str, char delimiter) {
@@ -84,6 +88,10 @@ std::vector<Action> ConfigParser::AssignmentToActions(
   std::vector<Action> actions;
 
   for (const auto& token : tokens) {
+    if (token == kNothingToken || token == "^" + kNothingToken ||
+        token == "~" + kNothingToken) {
+      continue;
+    }
     const auto [right_prefix, right_key] = SplitKeyPrefix(token);
     if (!right_key.has_value()) {
       std::cerr << "ERROR: Could not parse token " << token << ", Line - "
@@ -176,7 +184,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   }
 
   // Handle DELETE + nothing = DELETE.
-  if (key_str == "nothing") {
+  if (key_str == kNothingToken) {
     try {
       remapper_->SetNullEventActions(layer_name,
                                      AssignmentToActions(assignment));
