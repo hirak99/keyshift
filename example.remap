@@ -1,4 +1,4 @@
-// Capslock - Function keys.
+// Capslock Function keys.
 CAPSLOCK + 1 = F1
 CAPSLOCK + 2 = F2
 CAPSLOCK + 3 = F3
@@ -12,11 +12,15 @@ CAPSLOCK + 0 = F10
 CAPSLOCK + KPEQUAL = F11
 CAPSLOCK + KPPLUSMINUS = F12
 
+CAPSLOCK + DELETE = INSERT
+CAPSLOCK + END = HOME
+
+CAPSLOCK + ESC = GRAVE
+
 CAPSLOCK + LEFTALT = LEFTALT
 CAPSLOCK + RIGHTALT = RIGHTALT
 CAPSLOCK + TAB = CAPSLOCK
 CAPSLOCK + C = PLAYPAUSE
-CAPSLOCK + END = HOME
 
 // Rightctrl will act as itself (until something else is pressed).
 ^RIGHTCTRL = ^RIGHTCTRL
