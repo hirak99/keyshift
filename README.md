@@ -165,3 +165,6 @@ ESC + 500ms = BACKTICK
 DEL + END = VOLUME_UP
 DEL + nothing = DEL  # Do a DEL if nothing else happened.
 ```
+
+Note: If multiple layers are active, all active layers will be iterated in
+reverse order, as long as the key is passed through, until a mapping is found.

@@ -202,7 +202,8 @@ State #1
   //   The modifications should compose in order of layers activated.
   GIVEN("Multiple layers") {
     REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT",
-                                 "CAPSLOCK + 4 = F4", "LEFTALT + * = *"}));
+                                 "CAPSLOCK + 4 = F4", "^LEFTALT = ^LEFTALT",
+                                 "LEFTALT + * = *"}));
     THEN("CAPS + ALT + 4") {
       REQUIRE(GetOutcomes(remapper, false,
                           {{KEY_CAPSLOCK, 1},
@@ -214,16 +215,16 @@ State #1
               vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
                              "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
-    // THEN("ALT + CAPS + 4") {
-    //   REQUIRE(GetOutcomes(remapper, false,
-    //                       {{KEY_LEFTALT, 1},
-    //                        {KEY_CAPSLOCK, 1},
-    //                        {KEY_4, 1},
-    //                        {KEY_LEFTALT, 0},
-    //                        {KEY_CAPSLOCK, 0},
-    //                        {KEY_4, 0}}) ==
-    //           vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-    //                          "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
-    // }
+    THEN("ALT + CAPS + 4") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {{KEY_LEFTALT, 1},
+                           {KEY_CAPSLOCK, 1},
+                           {KEY_4, 1},
+                           {KEY_LEFTALT, 0},
+                           {KEY_CAPSLOCK, 0},
+                           {KEY_4, 0}}) ==
+              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+    }
   }
 }

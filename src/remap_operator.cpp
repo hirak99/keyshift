@@ -73,17 +73,22 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
 }
 
 std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
-  // TODO: Instead of just active_state, apply all active layer states.
-  KeyboardState& current_state = active_state();
-  auto it = current_state.action_map.find(key_event);
-  if (it != current_state.action_map.end()) {
-    // Return the remapped actions.
-    return it->second;
-  }
+  // Iterate: active_layers_.reverse() + {default_state_}.
+  for (int layer_index = active_layers_.size() - 1; layer_index >= -1;
+       --layer_index) {
+    const auto& this_state = layer_index >= 0
+                                 ? active_layers_[layer_index].this_state
+                                 : default_state_;
+    auto it = this_state.action_map.find(key_event);
+    if (it != this_state.action_map.end()) {
+      // Return the remapped actions.
+      return it->second;
+    }
 
-  // Not remapped.
-  if (!current_state.allow_other_keys) {
-    return {};
+    // Not remapped but all other keys not allowed.
+    if (!this_state.allow_other_keys) {
+      return {};
+    }
   }
   return {key_event};
 }
