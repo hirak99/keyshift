@@ -1,5 +1,32 @@
 # Keyboard Remapper
 
+# Inspiration: Kmonad
+
+Kmonad is excellent. It is unbeatable in functionality.
+
+However, while it is very powerful, it is also heavy. I needed something simple, powerful, lightweight and performant. I needed something for gaming, and 34 threads seemed too many.
+
+Also, configuring kmonad has a learning curve to it.
+
+For these reasons I decided to start a new project. My goal was to not compromise on anything I was already doing with kmonad, and focus on performance.
+
+Table below is a comparison of few properties.
+
+| .                               | Kmonad              | KeyShift                                           |
+| ------------------------------- | ------------------- | -------------------------------------------------- |
+| Threads                         | 34                  | 1                                                  |
+| RAM                             | 1024G               | < 10mb                                             |
+| Language                        | Haskell             | C++ 23                                             |
+| Functionality: Lead keys        | ✓                   | ✓ E.g. `DELETE+END=VOLUMEUP;DELETE+nothing=DELETE` |
+| Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                             |
+| Functionality: Snap tap         | ✓                   | ✓ E.g. `^A=~D ^A;^D=~A ^D`                         |
+| Functionality: Key timeouts     | ✓                   | ✗                                                  |
+| OS Support                      | Linux, Windows, Mac | Linux only                                         |
+
+Note 1: Threads & RAM usage were measured on same configuration, on same hardware.
+
+Note 2: I left out some other functionalities. Please see the tutorial for more.
+
 # Philosophy
 
 ## Simplicity and Performance
@@ -17,6 +44,14 @@ That said, a part of the code may be re-usable for other operating systems. But 
 ## Maintainable
 
 As part of maintainability, we will keep the code readable. We will for now follow Google style guide for c++.
+
+# Bugs / Feature Requests
+
+If you encounter any issues or find that something isn't working as expected, please open an issue here.
+
+If there is a feature that you consider important and it's not currently available, feel free to open an issue to request it.
+
+While not all feature requests can be implemented, I will review each request to determine if it aligns with the project’s scope and priorities. Thank you for your input!
 
 # Building
 
@@ -53,9 +88,13 @@ ctest
 
 ## Example configuration
 
+I asked ChatGPT to read this without any other explanation, and it understood what the configuration below does. See if you can too!
+
 ```
 CAPSLOCK + 1 = F1
 CAPSLOCK + 2 = F2
+
+CAPSLOCK + TAB = CAPSLOCK
 
 // The line below enables the button explicitly, even if it also activates other keys.
 ^RIGHTCTRL = ^RIGHTCTRL
@@ -73,8 +112,10 @@ LEFTSHIFT + * = *
 ^A = ~D ^A
 
 DELETE + END = VOLUMEUP
-DELETE + nothing = DELETE  // Do a DELETE if nothing else happened.
+DELETE + nothing = DELETE  // Do a DELETE if no other key is pressed.
 ```
+
+Internally it creates layers when it parses the config. The parsed results can be viewed with `--dump` flag, e.g. `keyshift --dump --config='CAPSLOCK+1=F1'`.
 
 # Tutorial
 

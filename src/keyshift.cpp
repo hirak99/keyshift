@@ -39,13 +39,11 @@ std::optional<po::variables_map> ParseArgs(int argc, char** argv) {
   desc.add_options()("help", "Show a short help.")(
       "kbd", po::value<std::string>(),
       "Address of the -kbd device to remap in `/dev/input/by-path/`.")(
-      "config-string", po::value<std::string>(),
+      "config", po::value<std::string>(),
       "Config as a semi-colon delimited strings, e.g. 'A=B;B=A'.")(
       "config-file", po::value<std::string>(),
       "File with remapping configuration.")(
-      "dump-parsed-configs",
-      "Show information on layers generated based on config-string or "
-      "config-file.")(
+      "dump", "Show internal representation of the parsed config, and exit.")(
       "dry-run",
       "If passed, will not start a service but will only show previews.");
 
@@ -109,19 +107,19 @@ int main(int argc, char** argv) {
   auto args_opt = ParseArgs(argc, argv);
   if (!args_opt) return 0;
   auto args = args_opt.value();
-  const bool dump_parsed_configs = args.count("dump-parsed-configs") > 0;
+  const bool arg_dump = args.count("dump") > 0;
   const bool arg_dry_run = args.count("dry-run") > 0;
-  const std::optional<std::string> arg_config =
-      GetOptionalArg(args, "config-string");
+  const std::optional<std::string> arg_config = GetOptionalArg(args, "config");
   const std::optional<std::string> arg_config_file =
       GetOptionalArg(args, "config-file");
 
   auto remapper_exc = GetRemapper(arg_config, arg_config_file);
   if (!remapper_exc) {
+    std::cerr << "ERROR: " << remapper_exc.error() << std::endl;
     return 1;
   }
   Remapper remapper = remapper_exc.value();
-  if (dump_parsed_configs) {
+  if (arg_dump) {
     remapper.DumpConfig();
     return 0;
   }
@@ -130,7 +128,7 @@ int main(int argc, char** argv) {
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
 
-  printf("Wating a sec, release all keys! ...\n");
+  printf("Wating a sec, release all keys!\n");
   sleep(1);
   printf("Starting now...\n");
 
