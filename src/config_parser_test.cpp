@@ -234,7 +234,7 @@ State #1
                            {KEY_CAPSLOCK, 0},
                            {KEY_4, 0}}) ==
               vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+                             "Out: R KEY_F4", "Out: R KEY_LEFTALT"});
     }
   }
 
@@ -270,5 +270,38 @@ State #1
   On: (KEY_1 Press)
     Key: (KEY_1 Press)
 )");
+  }
+
+  GIVEN("Deactivates all layers") {
+    REQUIRE(config_parser.Parse({"A + 1 = F1", "A + * = *", "B + 2 = F2"}));
+
+    THEN("~A ~B") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {
+                              {KEY_A, 1},
+                              {KEY_B, 1},
+                              {KEY_A, 0},
+                              {KEY_B, 0},
+                              {KEY_1, 1},
+                              {KEY_1, 0},
+                              {KEY_2, 1},
+                              {KEY_2, 0},
+                          }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
+                                               "Out: P KEY_2", "Out: R KEY_2"});
+    }
+    THEN("~B ~A") {
+      REQUIRE(GetOutcomes(remapper, false,
+                          {
+                              {KEY_A, 1},
+                              {KEY_B, 1},
+                              {KEY_B, 0},
+                              {KEY_A, 0},
+                              {KEY_1, 1},
+                              {KEY_1, 0},
+                              {KEY_2, 1},
+                              {KEY_2, 0},
+                          }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
+                                               "Out: P KEY_2", "Out: R KEY_2"});
+    }
   }
 }

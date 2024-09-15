@@ -163,6 +163,7 @@ class Remapper {
   // deactivate it.
   bool DeactivateLayerByKey(KeyEvent key_event);
 
+  void DeactivateNLayers(int n);
   void DeactivateCurrentLayer();
 
   void ProcessKeyEvent(KeyEvent key_event);

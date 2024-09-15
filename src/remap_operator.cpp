@@ -160,54 +160,64 @@ void Remapper::EmitKeyCode(KeyEvent key_event) {
 bool Remapper::DeactivateLayerByKey(KeyEvent key_event) {
   if (key_event.value != KeyEventType::kKeyRelease) return false;
   if (active_layers_.empty()) return false;
-  // TODO: The key_event may not correspond to the top layer. Change this to
-  // do a search on all active layers.
-  auto layer_to_deactivate = active_layers_.back();
-  if (layer_to_deactivate.key_event.key_code != key_event.key_code)
-    return false;
 
-  DeactivateCurrentLayer();
-  ProcessKeyEvent(key_event);
-  return true;
-}
-
-void Remapper::DeactivateCurrentLayer() {
-  if (active_layers_.empty()) {
-    perror("WARNING: Trying to deactivate when no layer is active.");
-    return;
-  }
-  auto layer_to_deactivate = active_layers_.back();
-  active_layers_.pop_back();
-
-  auto state_to_deactivate = layer_to_deactivate.this_state;
-  state_to_deactivate.deactivate();
-  if (state_to_deactivate.null_event_applicable) {
-    ProcessActions(state_to_deactivate.null_event_actions, std::nullopt);
-  }
-  // Get all the currently pressed keys after this was activated.
-  int threshold = layer_to_deactivate.event_seq_num;
-  std::vector<std::pair<int, int>> removed_keys;
-  // Erase keys held after the layer was activated.
-  for (auto it = keys_held_.begin(); it != keys_held_.end();) {
-    if (it->second > threshold) {
-      removed_keys.push_back({it->first, it->second});
-      it = keys_held_.erase(it);
-    } else {
-      ++it;
+  for (std::size_t layer_index = 0; layer_index < active_layers_.size();
+       ++layer_index) {
+    // for (int layer_index = active_layers_.size() - 1; layer_index >= 0;
+    //      --layer_index) {
+    auto layer_to_deactivate = active_layers_[layer_index];
+    if (layer_to_deactivate.key_event.key_code == key_event.key_code) {
+      int num_layers_to_deactivate = active_layers_.size() - layer_index;
+      DeactivateNLayers(num_layers_to_deactivate);
+      ProcessKeyEvent(key_event);
+      return true;
     }
   }
-  // And release them in reverse order.
-  std::sort(removed_keys.begin(), removed_keys.end(),
-            [](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
-              if (lhs.second != rhs.second) {
-                return lhs.second < rhs.second;
-              }
-              return lhs.first < rhs.first;
-            });
-  for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
-    EmitKeyCode(KeyEvent{it->first, KeyEventType::kKeyRelease});
+  return false;
+}
+
+void Remapper::DeactivateNLayers(int n) {
+  for (int deactivate_count = 0; deactivate_count < n; ++deactivate_count) {
+    if (active_layers_.empty()) {
+      perror("WARNING: Trying to deactivate when no layer is active.");
+      return;
+    }
+    auto layer_to_deactivate = active_layers_.back();
+    active_layers_.pop_back();
+
+    auto state_to_deactivate = layer_to_deactivate.this_state;
+    state_to_deactivate.deactivate();
+    if (state_to_deactivate.null_event_applicable) {
+      ProcessActions(state_to_deactivate.null_event_actions, std::nullopt);
+    }
+    // Get all the currently pressed keys after this was activated.
+    int threshold = layer_to_deactivate.event_seq_num;
+    std::vector<std::pair<int, int>> removed_keys;
+    // Erase keys held after the layer was activated.
+    for (auto it = keys_held_.begin(); it != keys_held_.end();) {
+      if (it->second > threshold) {
+        removed_keys.push_back({it->first, it->second});
+        it = keys_held_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    // And release them in reverse order.
+    std::sort(
+        removed_keys.begin(), removed_keys.end(),
+        [](const std::pair<int, int>& lhs, const std::pair<int, int>& rhs) {
+          if (lhs.second != rhs.second) {
+            return lhs.second < rhs.second;
+          }
+          return lhs.first < rhs.first;
+        });
+    for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
+      EmitKeyCode({it->first, KeyEventType::kKeyRelease});
+    }
   }
 }
+
+void Remapper::DeactivateCurrentLayer() { DeactivateNLayers(1); }
 
 void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
