@@ -1,47 +1,62 @@
 # Keyboard Remapper
 
+A fast, simple and powerful keyboard remapping and layering software.
+
+This emulates Fn key of your laptop on any keyboard, and a lot more.
+
 # Inspiration: Kmonad
 
-Kmonad is excellent. It is unbeatable in functionality.
+Kmonad is excellent. It is unbeatable in functionality. If you are happy with kmonad, by all means use it!
 
-However, while it is very powerful, it is also heavy. I needed something simple, powerful, lightweight and performant. I needed something for gaming, and 34 threads seemed too many.
+This was inspired by kmonad, as a performant, easy to use alternative.
 
-Also, configuring kmonad has a learning curve to it.
+I needed something for gaming - and it wanted it to be performant and powerful.
 
-For these reasons I decided to start a new project. My goal was to not compromise on anything I was already doing with kmonad, and focus on performance.
+For these reasons I decided to experiment, and it grew into a new project. Along with performance, this now also offers a simple and easy to use config language which is different from kmonad.
 
 Keeping these in mind, table below lists and compares a few properties.
 
-| .                               | Kmonad              | KeyShift                                           |
-| ------------------------------- | ------------------- | -------------------------------------------------- |
-| Binary size                     | ~13mb               | ~400k                                              |
-| Threads ¹                       | 34                  | 1                                                  |
-| RAM ¹                           | 1024G               | < 10mb                                             |
-| Latency ²                       | Unknown             | ~0.015 ms / key                                    |
-| Language                        | Haskell             | C++ 23                                             |
-| Functionality: Lead keys        | ✓                   | ✓ E.g. `DELETE+END=VOLUMEUP;DELETE+nothing=DELETE` |
-| Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                             |
-| Functionality: Snap tap         | ✓                   | ✓ E.g. `^A=~D ^A;^D=~A ^D`                         |
-| Functionality: Key timeouts     | ✓                   | ✗                                                  |
-| OS Support                      | Linux, Windows, Mac | Linux only                                         |
+| .                               | Kmonad              | KeyShift                                         |
+| ------------------------------- | ------------------- | ------------------------------------------------ |
+| Threads ¹                       | 34                  | 1                                                |
+| RAM ¹                           | 52M (RES)           | < 10M (RES)                                       |
+| Latency overhead ²              | Unknown             | < 0.02 ms                                        |
+| Language                        | Haskell             | C++ 23                                           |
+| Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                           |
+| Functionality: Dual function    | ✓                   | ✓ E.g. `CAPSLOCK+1=F1;CAPSLOCK+nothing=CAPSLOCK` |
+| Functionality: Snap tap         | ✓                   | ✓ E.g. `^A=~D ^A;^D=~A ^D`                       |
+| Functionality: Key timeouts     | ✓                   | ✗                                                |
+| OS Support                      | Linux, Windows, Mac | Linux only                                       |
 
-Note 1: Threads & RAM usage were measured on equivalent key-mapping configuration, on same hardware. Threads may increase if timeouts are
-implemented, but it is unlikely to grow higher than 2 depending on the implementation.
+Note 1: Threads & RAM usage were measured on equivalent key-mapping configuration, on same hardware.
 
-Note 2: I was unable to find a profiling for kmonad. The profiling of KeyShift is based on average time spent in `Process(int, int)` on the commit
-(91452b4901be3db50da95c42df36bb4991844387) based on an artificial load (see profile.cpp), on an i9-9900k.
+Note 2: The profiling of KeyShift is based on average time spent in `Process(int, int)` on the commit 62f3421, based on an artificial load (see
+profile.cpp), on an i9-9900k.
 
 # Philosophy
 
-## Simplicity and Performance
+## Performance
 
-An important goal is to achieve both high performance and simplicity in our code. This encompasses optimizing for speed, minimizing memory usage, and efficiently managing threads.
+An important goal is to achieve high performance. This encompasses optimizing for speed, minimizing memory usage, and efficiently managing threads.
 
 The choice of programming language is crucial to this objective. Although no language can guarantee top-tier performance on its own, it significantly influences the maximum performance potential we can reach. In balancing performance and simplicity, we have selected C++ as our language of choice.
 
+Some amount of latency, e.g. communicating with the hardware, will be unavoidable. Our goal will be to keep any additional latency well below a reasonable budget.
+
+Latency goals -
+- Measuring: Knowing the latency will help us track and reduce it.
+- Budget: IMHO, for competitive gaming <2ms is an acceptable tolerance. We will attempt to keep the additional overhead below that.
+
+
+## Simplicity & Power
+
+The program should be powerful to express all basic needs from a keyboard remapping software. Please see the "Use Cases" section below.
+
+The configuration system should be as simple and intuitive as it can be, but no simpler.
+
 ## Linux First
 
-The current scope of the project is restricted only to Linux. This helps with our first goal of simplicity.
+The current scope of the project is restricted only to Linux.
 
 That said, a large part of the codebase is re-usable OS independent, meaning it may come to other OS eventually.
 
@@ -66,10 +81,9 @@ Following c++ libraries are needed -
 Run the following commands to build and test -
 
 ```sh
-cd src
 mkdir -p build
 cd build
-cmake ..
+cmake ../src
 make -j
 ctest
 ```
@@ -88,13 +102,13 @@ ctest
 
 ## Example configuration
 
-I asked ChatGPT to read this without any other explanation, and it understood what the configuration below does. See if you can too!
+We intend to keep the configuration language simple and intuitive. Below is an example. See also the examples/ directory.
 
 ```
 CAPSLOCK + 1 = F1
 CAPSLOCK + 2 = F2
 
-CAPSLOCK + TAB = CAPSLOCK
+CAPSLOCK + LEFTSHIFT = CAPSLOCK
 
 // The line below enables the button explicitly, even if it also activates other keys.
 ^RIGHTCTRL = ^RIGHTCTRL
@@ -107,7 +121,7 @@ RIGHTCTRL + * = *  // Any key not defined is passed thru.
 LEFTSHIFT + ESC = GRAVE  // GRAVE is backtick/tilde key.
 LEFTSHIFT + * = *
 
-// Snap tap.
+// Snap tap - pressing A will release D first, and vice versa.
 ^D = ~A ^D
 ^A = ~D ^A
 
@@ -126,10 +140,14 @@ Locate your keyboard in "/dev/input/by-id".
 Then try this -
 
 ```sh
-keyboard_remap "/dev/input/by-id/...-kbd" --config-string "A=B;B=A"
+keyboard_remap "/dev/input/by-id/...-kbd" --config "A=B;B=A"
 ```
 
 Verify that this swaps the keys A and B as long as it is running. You can exit out of it with Ctrl+C.
+
+You can also load the configuration from a file instead with `--config-file /path/to/config.keyshift`.
+
+Once you are happy with a configuration, you can add it to your startup. Or, you can add it to udev so that it activates whenever a particular keyboard is plugged in.
 
 ## How to find keycodes
 
@@ -140,7 +158,9 @@ sudo evtest /dev/input/by-id/...-kbd
 
 Then press any key that you want to know the id of.
 
-## Examples
+All keycodes [defined in linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) are supported. You can also look for a keycode there to map to, which is not available on your keyboard.
+
+## Example Tasks
 
 - Remap keys
 ```
@@ -163,7 +183,7 @@ CAPSLOCK + EQUAL = F12
 
 // The capslock key is now will no longer function as itself.
 // We can however use an alternative way to trigger it.
-CAPSLOCK + TAB = CAPSLOCK
+CAPSLOCK + LEFTSHIFT = CAPSLOCK
 
 // Capslock passthrus.
 CAPSLOCK + LEFTALT = *  // Since we want CAPSLOCK+LEFTALT+4 = Alt+F4.
@@ -232,6 +252,6 @@ If you lock yourself out due to a bad configuration, don't fret. There is a kill
 
 `KEYSHIFTRESERVEDCMDKILL`
 
-Don't worry if you modified the keys with a configuration. The keys have to be what you type in the original hardware.
+Don't worry if you modified those keys with a configuration, the combo acts on actual keys.
 
-You will see a std::runtime_error, which is normal.
+You will see a std::runtime_error, which is normal in this case and confirms deactivation.

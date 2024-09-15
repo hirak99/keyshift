@@ -49,8 +49,12 @@ target_link_libraries(keyshift OpenSSL::SSL OpenSSL::Crypto)
 set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--strip-all")
 
 # How to profile -
-# 1. Run ./profile, which will stress test the remapper and generate gmon.out since it is built with -pg.
-# 2. Check `gprof profile | less`.
+# 1. Run `./profile && { gprof profile | less }`
+# 2. Scroll down to "Call graph".
+# 3. Check the correct function, e.g. Remapper::Process.
+#   - index should match with function number, e.g. index [2] Remapper::Process [2],
+#   - check seconds under children, which is total time including this function,
+#   - divide by number of times called.
 add_executable(profile profile.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
 set_target_properties(profile PROPERTIES COMPILE_FLAGS "-pg" LINK_FLAGS "-pg")
 # target_link_libraries(profile ${Boost_LIBRARIES})
