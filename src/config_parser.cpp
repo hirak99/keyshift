@@ -137,6 +137,9 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
   std::vector<Action> actions;
   try {
     std::vector<string> tokens = SplitString(assignment, ' ');
+    if (tokens.size() == 1 && tokens[0] == "*") {
+      tokens[0] = key_str;
+    }
     // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
     if (left_prefix == 0) {
       int n_tokens = tokens.size();

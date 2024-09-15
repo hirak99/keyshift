@@ -155,8 +155,7 @@ SCENARIO("Custom tests") {
   GIVEN("KEY + X = X") {
     REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"}));
 
-    THEN("Dump is as expected") {
-      REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
   Other keys: Allow
   On: (KEY_CAPSLOCK Press)
     Layer Change: 1
@@ -167,7 +166,6 @@ State #1
   On: (KEY_LEFTALT Press)
     Key: (KEY_LEFTALT Press)
 )");
-    }
   }
 
   GIVEN("Simple remap test") {
@@ -253,11 +251,24 @@ State #1
     }
   }
 
-  GIVEN("invalid keycode") {
-    REQUIRE_FALSE(config_parser.Parse({"ABC = A"}));
-  }
+  GIVEN("invalid keycode") { REQUIRE_FALSE(config_parser.Parse({"ABC = A"})); }
 
   GIVEN("^A=^A after layer") {
     REQUIRE_FALSE(config_parser.Parse({"A + 1 = F1", "^A = ^A"}));
+  }
+
+  GIVEN("* on right") {
+    REQUIRE(config_parser.Parse({"A + 1 = *"}));
+    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+  Other keys: Allow
+  On: (KEY_A Press)
+    Layer Change: 1
+State #1
+  Other keys: Block
+  On: (KEY_1 Release)
+    Key: (KEY_1 Release)
+  On: (KEY_1 Press)
+    Key: (KEY_1 Press)
+)");
   }
 }
