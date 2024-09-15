@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <expected>
 #include <fstream>
 #include <iostream>
 
@@ -33,7 +34,7 @@ void DisableEcho() {
 
 namespace po = boost::program_options;
 
-[[nodiscard]] po::variables_map ParseArgs(int argc, char** argv) {
+std::optional<po::variables_map> ParseArgs(int argc, char** argv) {
   po::options_description desc("Allowed options");
   desc.add_options()("help", "Show a short help.")(
       "kbd", po::value<std::string>(),
@@ -55,7 +56,7 @@ namespace po = boost::program_options;
   const bool arg_help = args.count("help") > 0;
   if (arg_help) {
     std::cout << desc << std::endl;
-    exit(0);
+    return std::nullopt;
   }
   return args;
 }
@@ -78,15 +79,13 @@ std::string GetRequiredArg(const po::variables_map& args,
   return args[name].as<std::string>();
 }
 
-Remapper GetRemapper(std::optional<std::string> config,
-                     std::optional<std::string> config_file) {
+std::expected<Remapper, std::string> GetRemapper(
+    std::optional<std::string> config, std::optional<std::string> config_file) {
   std::vector<std::string> lines;
   if (config_file.has_value()) {
     std::ifstream file(config_file.value());
     if (!file.is_open()) {
-      std::cerr << "ERROR: Could not open file " << config_file.value()
-                << std::endl;
-      exit(1);
+      return std::unexpected("Could not open file " + config_file.value());
     }
     std::string line;
     while (std::getline(file, line)) {
@@ -101,13 +100,15 @@ Remapper GetRemapper(std::optional<std::string> config,
   Remapper remapper;
   ConfigParser config_parser(&remapper);
   if (!config_parser.Parse(lines)) {
-    exit(1);
+    return std::unexpected("Failed to parse file");
   }
   return remapper;
 }
 
 int main(int argc, char** argv) {
-  auto args = ParseArgs(argc, argv);
+  auto args_opt = ParseArgs(argc, argv);
+  if (!args_opt) return 0;
+  auto args = args_opt.value();
   const bool dump_parsed_configs = args.count("dump-parsed-configs") > 0;
   const bool arg_dry_run = args.count("dry-run") > 0;
   const std::optional<std::string> arg_config =
@@ -115,7 +116,11 @@ int main(int argc, char** argv) {
   const std::optional<std::string> arg_config_file =
       GetOptionalArg(args, "config-file");
 
-  Remapper remapper = GetRemapper(arg_config, arg_config_file);
+  auto remapper_exc = GetRemapper(arg_config, arg_config_file);
+  if (!remapper_exc) {
+    return 1;
+  }
+  Remapper remapper = remapper_exc.value();
   if (dump_parsed_configs) {
     remapper.DumpConfig();
     return 0;
