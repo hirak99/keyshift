@@ -124,13 +124,15 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  const std::string arg_kbd = GetRequiredArg(args, "kbd");
-  InputDevice device(arg_kbd.c_str());
-  VirtualDevice out_device;
-
   printf("Wating a sec, release all keys!\n");
   sleep(1);
   printf("Starting now...\n");
+
+  // Open the device after a small delay, so that udev gets a chance to put it
+  // on the path.
+  const std::string arg_kbd = GetRequiredArg(args, "kbd");
+  InputDevice device(arg_kbd.c_str());
+  VirtualDevice out_device;
 
   if (arg_dry_run) {
     DisableEcho();
