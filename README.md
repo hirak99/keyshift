@@ -10,12 +10,14 @@ Also, configuring kmonad has a learning curve to it.
 
 For these reasons I decided to start a new project. My goal was to not compromise on anything I was already doing with kmonad, and focus on performance.
 
-Table below is a comparison of few properties.
+Keeping these in mind, table below lists and compares a few properties.
 
 | .                               | Kmonad              | KeyShift                                           |
 | ------------------------------- | ------------------- | -------------------------------------------------- |
-| Threads                         | 34                  | 1                                                  |
-| RAM                             | 1024G               | < 10mb                                             |
+| Binary size                     | ~13mb               | ~400k                                              |
+| Threads ¹                       | 34                  | 1                                                  |
+| RAM ¹                           | 1024G               | < 10mb                                             |
+| Latency ²                       | Unknown             | ~0.015 ms / key                                    |
 | Language                        | Haskell             | C++ 23                                             |
 | Functionality: Lead keys        | ✓                   | ✓ E.g. `DELETE+END=VOLUMEUP;DELETE+nothing=DELETE` |
 | Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                             |
@@ -23,9 +25,11 @@ Table below is a comparison of few properties.
 | Functionality: Key timeouts     | ✓                   | ✗                                                  |
 | OS Support                      | Linux, Windows, Mac | Linux only                                         |
 
-Note 1: Threads & RAM usage were measured on same configuration, on same hardware.
+Note 1: Threads & RAM usage were measured on equivalent key-mapping configuration, on same hardware. Threads may increase if timeouts are
+implemented, but it is unlikely to grow higher than 2 depending on the implementation.
 
-Note 2: I left out some other functionalities. Please see the tutorial for more.
+Note 2: I was unable to find a profiling for kmonad. The profiling of KeyShift is based on average time spent in `Process(int, int)` on the commit
+(91452b4901be3db50da95c42df36bb4991844387) based on an artificial load (see profile.cpp), on an i9-9900k.
 
 # Philosophy
 
@@ -37,13 +41,9 @@ The choice of programming language is crucial to this objective. Although no lan
 
 ## Linux First
 
-We make this work only on Linux. This helps with our first goal of simplicity.
+The current scope of the project is restricted only to Linux. This helps with our first goal of simplicity.
 
-That said, a part of the code may be re-usable for other operating systems. But other operating systems will not be in our scope for a long time.
-
-## Maintainable
-
-As part of maintainability, we will keep the code readable. We will for now follow Google style guide for c++.
+That said, a large part of the codebase is re-usable OS independent, meaning it may come to other OS eventually.
 
 # Bugs / Feature Requests
 
