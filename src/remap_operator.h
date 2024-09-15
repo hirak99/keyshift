@@ -85,10 +85,7 @@ struct ActionLayerChange {
   int layer_index;
 };
 
-// Explicit action to deactivate a layer.
-struct ActionDeactivateLayer {};
-
-using Action = std::variant<KeyEvent, ActionLayerChange, ActionDeactivateLayer>;
+using Action = std::variant<KeyEvent, ActionLayerChange>;
 
 // KeyEvent to which action they are mapped.
 using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,
@@ -104,9 +101,6 @@ struct KeyboardState {
   ActionMap action_map;
   // If true, keys not in ActionMap are allowed.
   bool allow_other_keys = true;
-  // If true, when invoking this layer we note down the deactivation condition.
-  // Set automatically to false if action_deactivate_layer is explicitly added.
-  bool auto_deactivate_layer = true;
   // If no interesting event such as keypress occurs while in this state, null
   // events are activated.
   std::vector<Action> null_event_actions;
@@ -164,7 +158,6 @@ class Remapper {
   bool DeactivateLayerByKey(KeyEvent key_event);
 
   void DeactivateNLayers(int n);
-  void DeactivateCurrentLayer();
 
   void ProcessKeyEvent(KeyEvent key_event);
 

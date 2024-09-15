@@ -59,13 +59,6 @@ void Remapper::AddMapping(const std::string& state_name, KeyEvent key_event,
   } else {
     keyboard_state.action_map[key_event] = actions;
   }
-
-  // Do not auto deactivate if there is any explicit deactivation request.
-  if (std::any_of(actions.begin(), actions.end(), [](Action action) {
-        return std::holds_alternative<ActionDeactivateLayer>(action);
-      })) {
-    keyboard_state.auto_deactivate_layer = false;
-  }
 }
 
 void Remapper::SetNullEventActions(const std::string& state_name,
@@ -116,8 +109,6 @@ void Remapper::DumpConfig(std::ostream& os) const {
         } else if (std::holds_alternative<ActionLayerChange>(action)) {
           const auto& layer_change = std::get<ActionLayerChange>(action);
           os << "    Layer Change: " << layer_change.layer_index << std::endl;
-        } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
-          os << "    Deactivate Layer" << std::endl;
         } else {
           perror("WARNING: Unknown action.");
         }
@@ -217,8 +208,6 @@ void Remapper::DeactivateNLayers(int n) {
   }
 }
 
-void Remapper::DeactivateCurrentLayer() { DeactivateNLayers(1); }
-
 void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
     keys_held_[key_event.key_code] = event_seq_num_++;
@@ -277,18 +266,14 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
       if (it != all_states_.end()) {
         auto new_state = it->second;
         if (new_state.activate()) {
-          if (new_state.auto_deactivate_layer && key_event.has_value()) {
-            active_layers_.push_back(
-                LayerActivation{event_seq_num_++, *key_event, new_state});
-          }
+          active_layers_.push_back(
+              LayerActivation{event_seq_num_++, *key_event, new_state});
         }
       } else {
         perror(
             "WARNING: Invalid keyboard_state code. This is unexpected, please "
             "report a bug.");
       }
-    } else if (std::holds_alternative<ActionDeactivateLayer>(action)) {
-      DeactivateCurrentLayer();
     } else {
       perror("WARNING: Unknown action.");
     }
