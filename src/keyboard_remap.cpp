@@ -39,7 +39,7 @@ namespace po = boost::program_options;
       "kbd", po::value<std::string>(),
       "Address of the -kbd device to remap in `/dev/input/by-path/`.")(
       "config-string", po::value<std::string>(),
-      "Config as a string, e.g. 'A=B;B=A'.")(
+      "Config as a semi-colon delimited strings, e.g. 'A=B;B=A'.")(
       "config-file", po::value<std::string>(),
       "File with remapping configuration.")(
       "dump-parsed-configs",
