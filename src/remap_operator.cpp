@@ -236,23 +236,32 @@ void Remapper::ProcessKeyEvent(const KeyEvent& key_event) {
 
 const std::vector<Action> Remapper::ExpandToActions(
     const KeyEvent& key_event) const {
-  // Iterate: active_layers_.reverse() + {default_state_}.
-  for (int layer_index = active_layers_.size() - 1; layer_index >= -1;
-       --layer_index) {
-    const auto& this_state = layer_index >= 0
-                                 ? active_layers_[layer_index].this_state
-                                 : default_state_;
+  std::vector<Action> result;
+  // Returns true if a decision is reached and no more KeyboardState needs to be
+  // examined.
+  auto operate = [&](const KeyboardState& this_state) {
     const auto it = this_state.action_map.find(key_event);
     if (it != this_state.action_map.end()) {
       // Return the remapped actions.
-      return it->second;
+      result = it->second;
+      return true;
     }
 
     // Not remapped but all other keys not allowed.
     if (!this_state.allow_other_keys) {
-      return {};
+      // result = {};  // No need, result is already empty.
+      return true;
     }
+    return false;
+  };
+
+  // Iterate: active_layers_.reverse() + {default_state_}.
+  for (auto it = active_layers_.rbegin(); it != active_layers_.rend(); ++it) {
+    if (operate(it->this_state)) return result;
   }
+  if (operate(default_state_)) return result;
+
+  // Nothing matched or blocked.
   return {key_event};
 }
 
