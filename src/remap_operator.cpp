@@ -78,10 +78,10 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
 }
 
 void Remapper::Process(const int key_code_int, const int value) {
-  KeyEvent key_event{key_code_int, KeyEventType(value)};
+  const KeyEvent key_event{key_code_int, KeyEventType(value)};
   ProcessCombos(key_event);
   // Check if key_event is in activated keyboard_state stack.
-  if (DeactivateLayerByKey(key_event)) {
+  if (DeactivateLayerByKey(key_event)) [[unlikely]] {
     return;
   }
 
@@ -101,7 +101,7 @@ void Remapper::DumpConfig(std::ostream& os) const {
     os << "State #" << id << std::endl;
     os << "  Other keys: " << (state.allow_other_keys ? "Allow" : "Block")
        << std::endl;
-    auto ShowActions = [&os](const std::vector<Action>& actions) {
+    const auto ShowActions = [&os](const std::vector<Action>& actions) {
       for (const auto& action : actions) {
         if (std::holds_alternative<KeyEvent>(action)) {
           const auto& key_event = std::get<KeyEvent>(action);
@@ -239,7 +239,7 @@ const std::vector<Action> Remapper::ExpandToActions(
   std::vector<Action> result;
   // Returns true if a decision is reached and no more KeyboardState needs to be
   // examined.
-  auto operate = [&](const KeyboardState& this_state) {
+  const auto operate = [&key_event, &result](const KeyboardState& this_state) {
     const auto it = this_state.action_map.find(key_event);
     if (it != this_state.action_map.end()) {
       // Return the remapped actions.
