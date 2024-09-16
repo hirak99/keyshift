@@ -30,7 +30,7 @@ class InputDevice {
         ioctl(fd, EVIOCGRAB, 0);
       }
       close(fd);
-      perror("Closed the input device.");
+      std::cerr << "Closed the input device." << std::endl;
     }
   }
 

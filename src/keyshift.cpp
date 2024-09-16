@@ -3,6 +3,7 @@
 // So, to test, run this with `sudo timeout 20s ./<binary>`.
 //
 #include <linux/input.h>
+#include <poll.h>
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
@@ -21,6 +22,12 @@
 #include "remap_operator.h"
 #include "version.h"
 #include "virtual_device.h"
+
+// How long to poll for reads before looking for interruptions.
+const int kReadTimeoutMS = 1500;
+
+// Set to true on interrupts.
+std::atomic<bool> kInterrupted(false);
 
 // Disable echoing input when run in terminal.
 void DisableEcho() {
@@ -87,7 +94,8 @@ std::string GetRequiredArg(const po::variables_map& args,
 }
 
 std::expected<Remapper, std::string> GetRemapper(
-    std::optional<std::string> config, std::optional<std::string> config_file) {
+    const std::optional<std::string>& config,
+    const std::optional<std::string>& config_file) {
   std::vector<std::string> lines;
   if (config_file.has_value()) {
     std::ifstream file(config_file.value());
@@ -112,27 +120,55 @@ std::expected<Remapper, std::string> GetRemapper(
   return remapper;
 }
 
-std::atomic<bool> kInterrupted(false);
-void SignalHandler(int signum) {
+void SignalHandler(const int signum) {
   std::cerr << "Interruption signal (" << signum << ") received, terminating."
             << std::endl;
   kInterrupted.store(true);
 }
-void MainLoop(InputDevice& device, Remapper& remapper) {
+
+int MainLoop(InputDevice& device, Remapper& remapper) {
+  // Set up handlers which will set kInterrupded on any error.
   std::signal(SIGINT, SignalHandler);
   std::signal(SIGTERM, SignalHandler);
   std::signal(SIGHUP, SignalHandler);
+
+  // Most of the mess below is to set up timeouts. Had we not needed that, we'd
+  // just change the if to while and put the kInterrupted detection within it.
+  // However, without this, SIGTERM will wait indefinitely during poweroff until
+  // a key is pressed - we don't want that.
+  const int fd = device.get_fd();
+
+  struct pollfd fds[1];
+  fds[0].fd = fd;
+  fds[0].events = POLLIN;
+
   struct input_event ie;
-  while (read(device.get_fd(), &ie, sizeof(struct input_event)) > 0) {
+
+  while (true) {
     // Gracefully exit on interruption.
     if (kInterrupted.load()) [[unlikely]]
-      return;
+      return 2;
 
-    if (ie.type != EV_KEY) continue;
+    const int poll_ret = poll(fds, 1, kReadTimeoutMS);
+    switch (poll_ret) {
+      [[unlikely]] case -1:
+        perror("ERROR in polling");
+        return 1;
+      case 0:
+        // Timeout.
+        break;
+      default:
+        // There is data to be read, and the read is no longer blocking.
+        if (read(fd, &ie, sizeof(struct input_event)) > 0) [[likely]] {
+          if (ie.type != EV_KEY) continue;
 
-    // This will call the function set with SetCallback() as new key events are
-    // generated.
-    remapper.Process(ie.code, ie.value);
+          // This will call the function set with SetCallback() as new key
+          // events are generated.
+          remapper.Process(ie.code, ie.value);
+        } else [[unlikely]] {
+          std::cerr << "WARNING: Failed read" << std::endl;
+        }
+    }
   }
 }
 
@@ -187,7 +223,6 @@ int main(int argc, char** argv) {
     printf("Processing enabled.\n");
   }
 
-  MainLoop(device, remapper);
-  // Control reaches below only if interrupted or killed.
-  return 2;
+  // Control returns from MainLoop only if interrupted or killed.
+  return MainLoop(device, remapper);
 }
