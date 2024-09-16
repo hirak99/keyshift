@@ -41,7 +41,7 @@ int main() {
     throw std::runtime_error("Could not parse the config!");
   }
 
-  for (int i = 0; i < 1000000; ++i) {
+  for (int i = 0; i < 2000000; ++i) {
     for (int j = 0; j < 5; ++j) {
       for (const int keycode :
            {KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_1, KEY_2}) {
