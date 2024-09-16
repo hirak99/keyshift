@@ -7,8 +7,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <csignal>
 #include <expected>
 #include <fstream>
 #include <iostream>
@@ -110,6 +112,29 @@ std::expected<Remapper, std::string> GetRemapper(
   return remapper;
 }
 
+std::atomic<bool> kInterrupted(false);
+void SignalHandler(int signum) {
+  std::cerr << "Interruption signal (" << signum << ") received, terminating." << std::endl;
+  kInterrupted.store(true);
+}
+void MainLoop(InputDevice& device, Remapper& remapper) {
+  std::signal(SIGINT, SignalHandler);
+  std::signal(SIGTERM, SignalHandler);
+  std::signal(SIGHUP, SignalHandler);
+  struct input_event ie;
+  while (read(device.get_fd(), &ie, sizeof(struct input_event)) > 0) {
+    // Gracefully exit on interruption.
+    if (kInterrupted.load()) [[unlikely]]
+      return;
+
+    if (ie.type != EV_KEY) continue;
+
+    // This will call the function set with SetCallback() as new key events are
+    // generated.
+    remapper.Process(ie.code, ie.value);
+  }
+}
+
 int main(int argc, char** argv) {
   auto args_opt = ParseArgs(argc, argv);
   if (!args_opt) return 0;
@@ -157,18 +182,7 @@ int main(int argc, char** argv) {
     printf("Processing enabled.\n");
   }
 
-  struct input_event ie;
-  while (read(device.get_fd(), &ie, sizeof(struct input_event)) > 0) {
-    if (ie.type != EV_KEY) continue;
-
-    if (arg_dry_run) {
-      std::cout << "In: " << ie.value << " " << keyCodeToName(ie.code)
-                << std::endl;
-    }
-
-    // This will call the function set with SetCallback() as new key events are
-    // generated.
-    remapper.Process(ie.code, ie.value);
-  }
-  return 0;
+  MainLoop(device, remapper);
+  // Control reaches below only if interrupted or killed.
+  return 2;
 }
