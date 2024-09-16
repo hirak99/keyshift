@@ -114,7 +114,8 @@ std::expected<Remapper, std::string> GetRemapper(
 
 std::atomic<bool> kInterrupted(false);
 void SignalHandler(int signum) {
-  std::cerr << "Interruption signal (" << signum << ") received, terminating." << std::endl;
+  std::cerr << "Interruption signal (" << signum << ") received, terminating."
+            << std::endl;
   kInterrupted.store(true);
 }
 void MainLoop(InputDevice& device, Remapper& remapper) {
@@ -169,8 +170,12 @@ int main(int argc, char** argv) {
   if (arg_dry_run) {
     DisableEcho();
     auto echo_on_emit_fn = [](int key_code, int press) {
-      std::cout << "  Out: " << (press ? "P " : "R ") << keyCodeToName(key_code)
-                << std::endl;
+      std::cout << "  Out: ";
+      std::cout << (press == 1   ? "P "
+                    : press == 0 ? "R "
+                                 : "T ")
+                << keyCodeToName(key_code);
+      std::cout << std::endl;
     };
     remapper.SetCallback(echo_on_emit_fn);
     printf("Dryrun - processing disabled, echo enabled.\n");
