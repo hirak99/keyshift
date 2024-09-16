@@ -53,7 +53,7 @@ void Remapper::AddMapping(const std::string& state_name, KeyEvent key_event,
   auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
 
   // If exists, append. Else set.
-  auto it = keyboard_state.action_map.find(key_event);
+  const auto it = keyboard_state.action_map.find(key_event);
   if (it != keyboard_state.action_map.end()) {
     it->second.insert(it->second.end(), actions.begin(), actions.end());
   } else {
@@ -77,7 +77,7 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
   return ActionLayerChange{StateNameToIndex(state_name)};
 }
 
-void Remapper::Process(int key_code_int, int value) {
+void Remapper::Process(const int key_code_int, const int value) {
   KeyEvent key_event{key_code_int, KeyEventType(value)};
   ProcessCombos(key_event);
   // Check if key_event is in activated keyboard_state stack.
@@ -128,16 +128,16 @@ void Remapper::DumpConfig(std::ostream& os) const {
 // PRIVATE
 
 // Finds index of keyboard_state name. If it doesn't exist, adds it.
-int Remapper::StateNameToIndex(std::string state_name) {
-  auto result = MapLookup(state_name_to_index_, state_name);
+int Remapper::StateNameToIndex(const std::string& state_name) {
+  const auto result = MapLookup(state_name_to_index_, state_name);
   if (result.has_value()) return *result;
 
-  int index = state_name_to_index_.size();
+  const int index = state_name_to_index_.size();
   state_name_to_index_.emplace(state_name, index);
   return index;
 }
 
-void Remapper::EmitKeyCode(KeyEvent key_event) {
+void Remapper::EmitKeyCode(const KeyEvent& key_event) {
   // std::cout << "Emit "
   //           << (key_event.value == KeyEventType::kKeyPress ? "P" : "R")
   //           << key_event.key_code << std::endl;
@@ -148,7 +148,7 @@ void Remapper::EmitKeyCode(KeyEvent key_event) {
 
 // Check if any layer was activated by the current key_code, and if so,
 // deactivate it.
-bool Remapper::DeactivateLayerByKey(KeyEvent key_event) {
+bool Remapper::DeactivateLayerByKey(const KeyEvent& key_event) {
   if (key_event.value != KeyEventType::kKeyRelease) return false;
   if (active_layers_.empty()) return false;
 
@@ -167,13 +167,13 @@ bool Remapper::DeactivateLayerByKey(KeyEvent key_event) {
   return false;
 }
 
-void Remapper::DeactivateNLayers(int n) {
+void Remapper::DeactivateNLayers(const int n) {
   for (int deactivate_count = 0; deactivate_count < n; ++deactivate_count) {
     if (active_layers_.empty()) {
       perror("WARNING: Trying to deactivate when no layer is active.");
       return;
     }
-    auto layer_to_deactivate = active_layers_.back();
+    const auto layer_to_deactivate = active_layers_.back();
     active_layers_.pop_back();
 
     auto state_to_deactivate = layer_to_deactivate.this_state;
@@ -182,7 +182,7 @@ void Remapper::DeactivateNLayers(int n) {
       ProcessActions(state_to_deactivate.null_event_actions, std::nullopt);
     }
     // Get all the currently pressed keys after this was activated.
-    int threshold = layer_to_deactivate.event_seq_num;
+    const int threshold = layer_to_deactivate.event_seq_num;
     std::vector<std::pair<int, int>> removed_keys;
     // Erase keys held after the layer was activated.
     for (auto it = keys_held_.begin(); it != keys_held_.end();) {
@@ -208,7 +208,7 @@ void Remapper::DeactivateNLayers(int n) {
   }
 }
 
-void Remapper::ProcessKeyEvent(KeyEvent key_event) {
+void Remapper::ProcessKeyEvent(const KeyEvent& key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
     keys_held_[key_event.key_code] = event_seq_num_++;
     EmitKeyCode(key_event);
@@ -234,14 +234,15 @@ void Remapper::ProcessKeyEvent(KeyEvent key_event) {
   }
 }
 
-std::vector<Action> Remapper::ExpandToActions(const KeyEvent& key_event) {
+const std::vector<Action> Remapper::ExpandToActions(
+    const KeyEvent& key_event) const {
   // Iterate: active_layers_.reverse() + {default_state_}.
   for (int layer_index = active_layers_.size() - 1; layer_index >= -1;
        --layer_index) {
     const auto& this_state = layer_index >= 0
                                  ? active_layers_[layer_index].this_state
                                  : default_state_;
-    auto it = this_state.action_map.find(key_event);
+    const auto it = this_state.action_map.find(key_event);
     if (it != this_state.action_map.end()) {
       // Return the remapped actions.
       return it->second;
@@ -262,7 +263,7 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
       ProcessKeyEvent(std::get<KeyEvent>(action));
     } else if (std::holds_alternative<ActionLayerChange>(action)) {
       const auto& layer_change = std::get<ActionLayerChange>(action);
-      auto it = all_states_.find(layer_change.layer_index);
+      const auto it = all_states_.find(layer_change.layer_index);
       if (it != all_states_.end()) {
         auto new_state = it->second;
         if (new_state.activate()) {

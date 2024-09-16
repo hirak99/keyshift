@@ -142,32 +142,32 @@ class Remapper {
   // AddMapping().
   ActionLayerChange ActionActivateState(std::string state_name);
 
-  void Process(int key_code_int, int value);
+  void Process(const int key_code_int, const int value);
 
   // Prints the existing config to terminal.
   void DumpConfig(std::ostream& os = std::cout) const;
 
  private:
   // Finds index of keyboard_state name. If it doesn't exist, adds it.
-  int StateNameToIndex(std::string state_name);
+  int StateNameToIndex(const std::string& state_name);
 
-  void EmitKeyCode(KeyEvent key_event);
+  void EmitKeyCode(const KeyEvent& key_event);
 
   // Check if any layer was activated by the current key_code, and if so,
   // deactivate it.
-  bool DeactivateLayerByKey(KeyEvent key_event);
+  bool DeactivateLayerByKey(const KeyEvent& key_event);
 
-  void DeactivateNLayers(int n);
+  void DeactivateNLayers(const int n);
 
-  void ProcessKeyEvent(KeyEvent key_event);
+  void ProcessKeyEvent(const KeyEvent& key_event);
 
   // Expands an user-keypress into actions to be processed.
-  std::vector<Action> ExpandToActions(const KeyEvent& key_event);
+  const std::vector<Action> ExpandToActions(const KeyEvent& key_event) const;
 
   void ProcessActions(const std::vector<Action>& actions,
                       const std::optional<KeyEvent> key_event);
 
-  void ProcessCombos(const KeyEvent& key_event);
+  void ProcessCombos(const KeyEvent& key_event) ;
 
   // TODO: Optimization to keep the active state updated in a variable.
   inline KeyboardState& active_state() {
