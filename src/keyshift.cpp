@@ -10,12 +10,12 @@
 
 #include <atomic>
 #include <boost/algorithm/string.hpp>
-#include <boost/program_options.hpp>
 #include <csignal>
 #include <expected>
 #include <fstream>
 #include <iostream>
 
+#include "argparse.h"
 #include "config_parser.h"
 #include "input_device.h"
 #include "keycode_lookup.h"
@@ -42,55 +42,34 @@ void DisableEcho() {
   }
 }
 
-namespace po = boost::program_options;
-
-std::optional<po::variables_map> ParseArgs(int argc, char** argv) {
-  po::options_description desc("Allowed options");
-  desc.add_options()("help", "Show a short help.")(
-      "kbd", po::value<std::string>(),
-      "Address of the -kbd device to remap in `/dev/input/by-path/`.")(
-      "config", po::value<std::string>(),
-      "Config as a semi-colon delimited strings, e.g. 'A=B;B=A'.")(
-      "config-file", po::value<std::string>(),
-      "File with remapping configuration.")(
-      "dump", "Show internal representation of the parsed config, and exit.")(
+std::optional<ArgumentParser> ParseArgs(int argc, char** argv) {
+  ArgumentParser parser;
+  parser.AddBool("help", "Show a short help.");
+  parser.AddString(
+      "kbd", "Address of the -kbd device to remap in `/dev/input/by-path/`.");
+  parser.AddString("config",
+                   "Config as a semi-colon delimited strings, e.g. 'A=B;B=A'.");
+  parser.AddString("config-file", "File with remapping configuration.");
+  parser.AddBool(
+      "dump", "Show internal representation of the parsed config, and exit.");
+  parser.AddBool(
       "dry-run",
-      "If passed, will not start a service but will only show previews.")(
-      "version", "Display commit id and exit.");
+      "If passed, will not start a service but will only show previews.");
+  parser.AddBool("version", "Display commit id and exit.");
 
-  po::variables_map args;
-  po::store(po::parse_command_line(argc, argv, desc), args);
-  po::notify(args);
+  parser.Parse(argc, argv);
 
-  const bool arg_help = args.count("help") > 0;
+  const bool arg_help = parser.GetBool("help");
   if (arg_help) {
-    std::cout << desc << std::endl;
+    parser.ShowHelp();
     return std::nullopt;
   }
-  const bool arg_version = args.count("version") > 0;
+  const bool arg_version = parser.GetBool("version");
   if (arg_version) {
     std::cout << "Commit id: " << GIT_COMMIT_ID << std::endl;
     return std::nullopt;
   }
-  return args;
-}
-
-std::optional<std::string> GetOptionalArg(const po::variables_map& args,
-                                          const std::string& name) {
-  if (!args.count(name)) {
-    return std::nullopt;
-  }
-  return args[name].as<std::string>();
-}
-
-std::string GetRequiredArg(const po::variables_map& args,
-                           const std::string& name) {
-  if (!args.count(name)) {
-    std::cerr << "ERROR: Required argument " << name << " is missing."
-              << std::endl;
-    throw std::invalid_argument("Mandatory argument missing.");
-  }
-  return args[name].as<std::string>();
+  return parser;
 }
 
 std::expected<Remapper, std::string> GetRemapper(
@@ -176,11 +155,11 @@ int main(int argc, char** argv) {
   auto args_opt = ParseArgs(argc, argv);
   if (!args_opt) return 0;
   auto args = args_opt.value();
-  const bool arg_dump = args.count("dump") > 0;
-  const bool arg_dry_run = args.count("dry-run") > 0;
-  const std::optional<std::string> arg_config = GetOptionalArg(args, "config");
+  const bool arg_dump = args.GetBool("dump");
+  const bool arg_dry_run = args.GetBool("dry-run");
+  const std::optional<std::string> arg_config = args.GetString("config");
   const std::optional<std::string> arg_config_file =
-      GetOptionalArg(args, "config-file");
+      args.GetString("config-file");
 
   auto remapper_exc = GetRemapper(arg_config, arg_config_file);
   if (!remapper_exc) {
@@ -199,7 +178,7 @@ int main(int argc, char** argv) {
 
   // Open the device after a small delay, so that udev gets a chance to put it
   // on the path.
-  const std::string arg_kbd = GetRequiredArg(args, "kbd");
+  const std::string arg_kbd = args.GetRequiredString("kbd");
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
 
