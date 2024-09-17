@@ -4,7 +4,9 @@ project(KeyShift)
 # Set the C++ standard and compiler flags
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -finline-functions -funroll-loops")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+# Release options.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions -funroll-loops")
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -39,6 +41,8 @@ include_directories(${CMAKE_BINARY_DIR})
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 target_link_libraries(keyshift ${Boost_LIBRARIES})
+# Strip debugging info.
+set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--strip-all")
 
 # How to profile -
 # 1. Run ./profile, which will stress test the remapper and generate gmon.out since it is built with -pg.
