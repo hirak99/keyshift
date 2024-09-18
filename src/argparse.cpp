@@ -10,19 +10,31 @@
 
 using std::string;
 
+const std::size_t kMaxCol1Width = 32;
+
 void ArgumentParser::AddBool(const string& name, const string& desc) {
   argument_types_[name] = ArgType::BOOLEAN;
   AddHelp("--" + name, desc);
 }
 void ArgumentParser::AddString(const string& name, const string& desc) {
   argument_types_[name] = ArgType::STRING;
-  AddHelp("--" + name + " arg", desc);
+  AddHelp("--" + name + "=STRING", desc);
 }
 
 void ArgumentParser::ShowHelp() {
   std::cout << "Allowed options:" << std::endl;
-  for (const auto& line : help_lines_) {
-    std::cout << line << std::endl;
+  std::size_t max_option_len = 0;
+  for (const auto& [option, desc] : help_lines_) {
+    if (option.size() > max_option_len) {
+      max_option_len = option.size();
+    }
+  }
+  int col1_width = std::min(max_option_len + 2, kMaxCol1Width - 1);
+  for (const auto& [option, desc] : help_lines_) {
+    int gap = col1_width - 1 - option.size();
+    if (gap < 0) gap = 0;
+    const string spaces(gap, ' ');
+    std::cout << option << spaces << " " << desc << std::endl;
   }
 }
 
@@ -84,7 +96,7 @@ string ArgumentParser::GetRequiredString(const string& name) {
 // Private.
 
 void ArgumentParser::AddHelp(const string& option, const string& description) {
-  help_lines_.push_back(std::format("{}: {}", option, description));
+  help_lines_.push_back({" " + option, description});
 }
 
 void ArgumentParser::ConfirmType(const string& name, const ArgType arg_type) {

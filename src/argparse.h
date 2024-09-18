@@ -32,7 +32,7 @@ class ArgumentParser {
 
   std::unordered_map<std::string, ArgType> argument_types_;
   std::unordered_map<std::string, std::string> argument_values_;
-  std::vector<std::string> help_lines_;
+  std::vector<std::pair<std::string, std::string>> help_lines_;
 };
 
 #endif  // __ARGPARSE_H
