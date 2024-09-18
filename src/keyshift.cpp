@@ -42,7 +42,7 @@ void DisableEcho() {
   }
 }
 
-std::optional<ArgumentParser> ParseArgs(int argc, char** argv) {
+std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
   ArgumentParser parser;
   parser.AddBool("help", "Show a short help.");
   parser.AddString(
@@ -151,7 +151,7 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
   }
 }
 
-int main(int argc, char** argv) {
+int main(const int argc, const char** argv) {
   auto args_opt = ParseArgs(argc, argv);
   if (!args_opt) return 0;
   auto args = args_opt.value();

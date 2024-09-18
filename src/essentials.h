@@ -1,3 +1,6 @@
+#ifndef __ESSENTIALS_H
+#define __ESSENTIALS_H
+
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
@@ -62,3 +65,5 @@ std::vector<std::pair<T, U>> Sorted(const std::unordered_map<T, U>& input) {
             });
   return result;
 }
+
+#endif  // __ESSENTIALS_H

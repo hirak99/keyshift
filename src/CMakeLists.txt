@@ -39,7 +39,7 @@ configure_file(
 include_directories(${CMAKE_BINARY_DIR})
 
 add_executable(demo_send_keys demo_send_keys.cpp)
-add_executable(keyshift config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
+add_executable(keyshift argparse.cpp config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 # target_link_libraries(keyshift ${Boost_LIBRARIES})
 # Strip debugging info.
 set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--strip-all")
