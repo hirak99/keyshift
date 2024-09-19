@@ -19,6 +19,7 @@
 #include "config_parser.h"
 #include "input_device.h"
 #include "keycode_lookup.h"
+#include "os_level_mutex.h"
 #include "remap_operator.h"
 #include "version.h"
 #include "virtual_device.h"
@@ -164,15 +165,20 @@ int main(const int argc, const char** argv) {
   auto remapper_exc = GetRemapper(arg_config, arg_config_file);
   if (!remapper_exc) {
     std::cerr << "ERROR: " << remapper_exc.error() << std::endl;
-    return 1;
+    return EXIT_FAILURE;
   }
   Remapper remapper = std::move(remapper_exc.value());
   if (arg_dump) {
     remapper.DumpConfig();
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   const std::string arg_kbd = args.GetRequiredString("kbd");
+  auto mutex = AcquireOSMutex("keyshift_" + arg_kbd);
+  if (!mutex) {
+    std::cerr << "Another instance is starting for specified kbd, exiting." << std::endl;
+    return EXIT_FAILURE;
+  }
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
 
@@ -193,6 +199,12 @@ int main(const int argc, const char** argv) {
       out_device.DoKeyEvent(code, value);
     });
     device.Grab();
+    // Preserve the mutex only until a device has been grabbed.
+    // This helps to not maintain the file in /dev/shm.
+    // Also it is sufficeint to ensure if multiple calls happen during
+    // initialization, e.g. because of udev rules matching multiple times, they
+    // are blocked.
+    mutex.reset();
     printf("Processing enabled.\n");
   }
 
