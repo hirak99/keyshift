@@ -11,7 +11,7 @@ const int kOpenRetryDurationMs = 2500;
 
 class InputDevice {
  public:
-  InputDevice(const char *device) {
+  InputDevice(const char* device) {
     const auto start_time = std::chrono::steady_clock::now();
     while (true) {
       fd_ = open(device, O_RDONLY);
@@ -26,6 +26,10 @@ class InputDevice {
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
+
+  // Movable but not copyable.
+  InputDevice(InputDevice&& other) = default;
+  InputDevice& operator=(InputDevice&& other) = default;
 
   // Hides the device will from the operating system, so no other applications
   // process the events.

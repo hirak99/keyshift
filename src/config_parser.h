@@ -15,6 +15,10 @@ class ConfigParser {
   ConfigParser(Remapper* remapper);
   [[nodiscard]] bool Parse(const std::vector<string>& lines);
 
+  // Movable but not copyable.
+  ConfigParser(ConfigParser&& other) = default;
+  ConfigParser& operator=(ConfigParser&& other) = default;
+
  private:
   // Converts a string like "~D ^A" to actions.
   std::vector<Action> AssignmentToActions(const string& assignment);

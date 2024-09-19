@@ -166,7 +166,7 @@ int main(const int argc, const char** argv) {
     std::cerr << "ERROR: " << remapper_exc.error() << std::endl;
     return 1;
   }
-  Remapper remapper = remapper_exc.value();
+  Remapper remapper = std::move(remapper_exc.value());
   if (arg_dump) {
     remapper.DumpConfig();
     return 0;

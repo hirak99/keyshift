@@ -127,6 +127,10 @@ class Remapper {
  public:
   Remapper();
 
+  // Movable but not copyable.
+  Remapper(Remapper&& other) = default;
+  Remapper& operator=(Remapper&& other) = default;
+
   void SetCallback(std::function<void(int, int)> emit_key_code);
 
   // Default state_name is "".
@@ -167,7 +171,7 @@ class Remapper {
   void ProcessActions(const std::vector<Action>& actions,
                       const std::optional<KeyEvent> key_event);
 
-  void ProcessCombos(const KeyEvent& key_event) ;
+  void ProcessCombos(const KeyEvent& key_event);
 
   // TODO: Optimization to keep the active state updated in a variable.
   inline KeyboardState& active_state() {

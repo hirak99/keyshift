@@ -71,6 +71,10 @@ class VirtualDevice {
     close(file_descriptor_);
   }
 
+  // Movable but not copyable.
+  VirtualDevice(VirtualDevice&& other) = default;
+  VirtualDevice& operator=(VirtualDevice&& other) = default;
+
   inline int IsOpen() const { return file_descriptor_ >= 0; }
 
   void DoKeyEvent(unsigned int code, int value) const {
