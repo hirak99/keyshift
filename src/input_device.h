@@ -7,13 +7,23 @@
 #include <chrono>
 #include <thread>
 
+const int kOpenRetryDurationMs = 2500;
+
 class InputDevice {
  public:
   InputDevice(const char *device) {
-    // Open the input device
-    fd_ = open(device, O_RDONLY);
-    if (fd_ < 0) {
-      throw std::runtime_error("Error opening device");
+    const auto start_time = std::chrono::steady_clock::now();
+    while (true) {
+      fd_ = open(device, O_RDONLY);
+      // Return if succeeded.
+      if (fd_ >= 0) return;
+      // Not succeeded. Retry if within retry-duration.
+      const auto elapsed = std::chrono::steady_clock::now() - start_time;
+      if (elapsed >= std::chrono::milliseconds(kOpenRetryDurationMs)) {
+        throw std::runtime_error("Error opening device");
+      }
+      // std::cerr << "Open failed. Retrying..." << std::endl;
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
 
@@ -44,7 +54,6 @@ class InputDevice {
         ioctl(fd_, EVIOCGRAB, 0);
       }
       close(fd_);
-      std::cerr << "Closed the input device." << std::endl;
     }
   }
 
