@@ -172,12 +172,6 @@ int main(const int argc, const char** argv) {
     return 0;
   }
 
-  printf("Wating a sec, release all keys!\n");
-  sleep(1);
-  printf("Starting now...\n");
-
-  // Open the device after a small delay, so that udev gets a chance to put it
-  // on the path.
   const std::string arg_kbd = args.GetRequiredString("kbd");
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
