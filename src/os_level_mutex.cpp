@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <openssl/sha.h>
 #include <semaphore.h>
 
 #include <cstring>
@@ -10,6 +9,8 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+
+#include "thirdparty/digestpp/digestpp.hpp"
 
 // Custom exception for semaphore already exists
 class SemaphoreExistsException : public std::runtime_error {
@@ -19,16 +20,7 @@ class SemaphoreExistsException : public std::runtime_error {
 };
 
 std::string GenerateSHA1(const std::string& input) {
-  unsigned char hash[SHA_DIGEST_LENGTH];
-  SHA1(reinterpret_cast<const unsigned char*>(input.c_str()), input.size(),
-       hash);
-
-  std::stringstream ss;
-  for (int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
-    ss << std::hex << std::setw(2) << std::setfill('0')
-       << static_cast<int>(hash[i]);
-  }
-  return ss.str();
+  return digestpp::sha1().absorb(input).hexdigest();
 }
 
 OSMutex::OSMutex(const char* name) : sem_(nullptr) {

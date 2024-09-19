@@ -8,8 +8,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # Release options.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions -funroll-loops")
 
-find_package(OpenSSL REQUIRED)
-
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -43,8 +41,6 @@ include_directories(${CMAKE_BINARY_DIR})
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift os_level_mutex.cpp argparse.cpp config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 # target_link_libraries(keyshift ${Boost_LIBRARIES})
-# Note: OpenSSL is a fairly common library. It's part of core in Arch.
-target_link_libraries(keyshift OpenSSL::SSL OpenSSL::Crypto)
 # Strip debugging info.
 set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--strip-all")
 
