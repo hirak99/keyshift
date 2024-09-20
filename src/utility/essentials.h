@@ -8,6 +8,14 @@
 
 // Strings.
 
+inline std::string ToLowerCase(const std::string& str) {
+  std::string result = str;
+  for (char& c : result) {
+    c = std::tolower(static_cast<unsigned char>(c));
+  }
+  return result;
+}
+
 inline bool StartsWith(const std::string& str, const std::string& prefix) {
   return str.compare(0, prefix.length(), prefix) == 0;
 }

@@ -71,6 +71,20 @@ SCENARIO("Correctness of argument parsing") {
     CHECK(parser.GetBool("help"));
     CHECK_FALSE(parser.GetString("name").has_value());
   }
+  THEN("Bool = form") {
+    GIVEN("=true") {
+      CallParse(parser, {"COMMAND", "--help=true"});
+      CHECK(parser.GetBool("help"));
+    }
+    GIVEN("=yes") {
+      CallParse(parser, {"COMMAND", "--help=yes"});
+      CHECK(parser.GetBool("help"));
+    }
+    GIVEN("=anything_else") {
+      CallParse(parser, {"COMMAND", "--help=false"});
+      CHECK_FALSE(parser.GetBool("help"));
+    }
+  }
   THEN("Only string argument") {
     CallParse(parser, {"COMMAND", "--name", "hello"});
     CHECK_FALSE(parser.GetBool("help"));

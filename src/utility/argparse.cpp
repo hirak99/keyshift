@@ -65,7 +65,14 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
         throw std::invalid_argument(std::format("Unknown argument {}", token));
       }
       if (it->second == ArgType::BOOLEAN) {
-        argument_values_[token] = "";
+        if (value) {
+          value = ToLowerCase(value.value());
+          if (value == "true" || value == "yes") {
+            argument_values_[token] = "";
+          }
+        } else {
+          argument_values_[token] = "";
+        }
       } else {
         if (value) {
           argument_values_[token] = value.value();
