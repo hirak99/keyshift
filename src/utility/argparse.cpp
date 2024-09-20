@@ -51,6 +51,14 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       } else {
         throw std::invalid_argument("Cannot parse argument " + token);
       }
+
+      std::optional<string> value;
+      std::size_t eq_pos = token.find('=');
+      if (eq_pos != std::string::npos) {
+        value = token.substr(eq_pos + 1);
+        token = token.substr(0, eq_pos);
+      }
+
       // Next arg should be argument name.
       auto it = argument_types_.find(token);
       if (it == argument_types_.end()) {
@@ -59,8 +67,12 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       if (it->second == ArgType::BOOLEAN) {
         argument_values_[token] = "";
       } else {
-        this_arg.emplace(token);
-        this_arg_type = it->second;
+        if (value) {
+          argument_values_[token] = value.value();
+        } else {
+          this_arg.emplace(token);
+          this_arg_type = it->second;
+        }
       }
     } else {
       // Next arg should be argument value.

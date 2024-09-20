@@ -76,4 +76,14 @@ SCENARIO("Correctness of argument parsing") {
     CHECK_FALSE(parser.GetBool("help"));
     CHECK(parser.GetString("name") == "hello");
   }
+  THEN("Both arguments") {
+    CallParse(parser, {"COMMAND", "--name", "hello", "--help"});
+    CHECK(parser.GetBool("help"));
+    CHECK(parser.GetString("name") == "hello");
+  }
+  THEN("Both arguments, using 'arg=value' format") {
+    CallParse(parser, {"COMMAND", "--name=hello", "--help"});
+    CHECK(parser.GetBool("help"));
+    CHECK(parser.GetString("name") == "hello");
+  }
 }
