@@ -132,7 +132,9 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
     const int poll_ret = poll(fds, 1, kReadTimeoutMS);
     switch (poll_ret) {
       [[unlikely]] case -1:
-        perror("ERROR in polling");
+        // This can also occur when the interrupt happens amidst system call.
+        // perror(x) will show "x: Interrupted system call".
+        perror("ERROR reading device");
         return 1;
       case 0:
         // Timeout.
