@@ -76,17 +76,9 @@ Following c++ libraries are needed -
 - Boost
 - Catch2 (for tests only)
 
-## Build
+## Commands to Build
 
-Run the following commands to build and test -
-
-```sh
-mkdir -p build
-cd build
-cmake ../src
-make -j
-ctest
-```
+Run `build.sh`.
 
 # Remapping Needs
 
