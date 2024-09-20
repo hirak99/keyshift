@@ -90,6 +90,7 @@ bool ArgumentParser::GetBool(const string& name) {
 }
 
 std::optional<string> ArgumentParser::GetString(const string& name) {
+  ConfirmType(name, ArgType::STRING);
   return MapLookup(argument_values_, name);
 }
 
