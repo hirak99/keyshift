@@ -174,10 +174,15 @@ int main(const int argc, const char** argv) {
   }
 
   const std::string arg_kbd = args.GetRequiredString("kbd");
-  auto mutex = AcquireOSMutex("keyshift_" + arg_kbd);
-  if (!mutex) {
-    std::cerr << "Another instance is starting for specified kbd, exiting." << std::endl;
-    return EXIT_FAILURE;
+  std::optional<OSMutex> mutex;
+  // Use mutex only if this is not dry-run and we intend to grab the device.
+  if (!arg_dry_run) {
+    mutex = AcquireOSMutex("keyshift_" + arg_kbd);
+    if (!mutex) {
+      std::cerr << "Another instance is starting for specified kbd, exiting."
+                << std::endl;
+      return EXIT_FAILURE;
+    }
   }
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
