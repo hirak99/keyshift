@@ -15,12 +15,12 @@
 #include <fstream>
 #include <iostream>
 
-#include "argparse.h"
 #include "config_parser.h"
 #include "input_device.h"
 #include "keycode_lookup.h"
-#include "os_level_mutex.h"
 #include "remap_operator.h"
+#include "utility/argparse.h"
+#include "utility/os_level_mutex.h"
 #include "version.h"
 #include "virtual_device.h"
 

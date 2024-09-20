@@ -13,8 +13,8 @@
 #include <variant>
 #include <vector>
 
-#include "essentials.h"
 #include "keycode_lookup.h"
+#include "utility/essentials.h"
 
 const std::string kKillCombo = "KEYSHIFTRESERVEDCMDKILL";
 

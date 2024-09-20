@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "essentials.h"
 #include "keycode_lookup.h"
 #include "remap_operator.h"
+#include "utility/essentials.h"
 
 using std::string;
 

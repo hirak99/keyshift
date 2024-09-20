@@ -10,7 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "thirdparty/digestpp/digestpp.hpp"
+#include "../thirdparty/digestpp/digestpp.hpp"
 
 // Custom exception for semaphore already exists
 class SemaphoreExistsException : public std::runtime_error {
