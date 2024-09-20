@@ -64,3 +64,7 @@ add_test(NAME remap_operator_test COMMAND remap_operator_test)
 add_executable(config_parser_test config_parser_test.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
 target_link_libraries(config_parser_test PRIVATE Catch2::Catch2WithMain)
 add_test(NAME config_parser_test COMMAND config_parser_test)
+
+add_executable(argparse_test utility/argparse_test.cpp utility/argparse.cpp)
+target_link_libraries(argparse_test PRIVATE Catch2::Catch2WithMain)
+add_test(NAME argparse_test COMMAND argparse_test)

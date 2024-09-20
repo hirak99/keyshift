@@ -64,6 +64,10 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       }
     } else {
       // Next arg should be argument value.
+      if (token.size() >= 1 && token[0] == '-') {
+        throw std::invalid_argument("Expecting value for " + this_arg.value() +
+                                    " but found " + token);
+      }
       switch (this_arg_type) {
         case ArgType::STRING:
           argument_values_[*this_arg] = token;
@@ -73,6 +77,10 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       }
       this_arg = std::nullopt;
     }
+  }
+  if (this_arg.has_value()) {
+    throw std::invalid_argument("Value of argument not found: " +
+                                this_arg.value());
   }
 }
 
