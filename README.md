@@ -4,36 +4,24 @@ A fast, simple and powerful keyboard remapping and layering software.
 
 This emulates Fn key of your laptop on any keyboard, and a lot more.
 
-# Inspiration: Kmonad
+# Quick Start
 
-Kmonad is excellent. It is unbeatable in functionality. If you are happy with kmonad, by all means use it!
+Locate your keyboard in "/dev/input/by-id".
 
-This was inspired by kmonad, as a performant, easy to use alternative.
+Then run this -
 
-I needed something for gaming - and it wanted it to be performant and powerful.
+```sh
+sudo keyshift "/dev/input/by-id/...-kbd" --config "A=B;B=A"
+```
 
-For these reasons I decided to experiment, and it grew into a new project. Along with performance, this now also offers a simple and easy to use config language which is different from kmonad.
+This will swap the A and B keys.
 
-Keeping these in mind, table below lists and compares a few properties.
+You can build more powerful config and store it in a file. When fully
+configured, this is intended to run in the background covering the session.
 
-| .                               | Kmonad              | KeyShift                                         |
-| ------------------------------- | ------------------- | ------------------------------------------------ |
-| Threads ¹                       | 34                  | 1                                                |
-| RAM ¹                           | 52M (RES)           | < 10M (RES)                                       |
-| Latency overhead ²              | Unknown             | < 0.02 ms                                        |
-| Language                        | Haskell             | C++ 23                                           |
-| Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                           |
-| Functionality: Dual function    | ✓                   | ✓ E.g. `CAPSLOCK+1=F1;CAPSLOCK+nothing=CAPSLOCK` |
-| Functionality: Snap tap         | ✓                   | ✓ E.g. `^A=~D ^A;^D=~A ^D`                       |
-| Functionality: Key timeouts     | ✓                   | ✗                                                |
-| OS Support                      | Linux, Windows, Mac | Linux only                                       |
+For now you can exit pressing Ctrl+C.
 
-Note 1: Threads & RAM usage were measured on equivalent key-mapping configuration, on same hardware.
-
-Note 2: The profiling of KeyShift is based on average time spent in `Process(int, int)` on the commit 62f3421, based on an artificial load (see
-profile.cpp), on an i9-9900k.
-
-# Philosophy
+# Goals
 
 ## Performance
 
@@ -60,6 +48,48 @@ The current scope of the project is restricted only to Linux.
 
 That said, a large part of the codebase is re-usable OS independent, meaning it may come to other OS eventually.
 
+# Inspiration: KMonad
+
+KMonad is a fantastic tool with great functionality, and if it works well for
+you, I encourage you to continue using it!
+
+This new project was inspired by a desire to create an alternative that focuses
+on performance and simplicity.
+
+My aim was to develop something specifically for gaming - efficient and
+powerful.
+
+As I experimented, this idea evolved into a new project. In addition to enhanced
+performance, it now features a user-friendly configuration language that offers
+a different approach from KMonad. For these reasons I decided to experiment, and
+it grew into a new project. Along with performance, this now also offers a
+simple and easy to use config language which is different from kmonad.
+
+## Comparison with KMonad
+
+Both KMonad and KeyShift offer unique advantages tailored to different user
+needs. While KMonad excels in various areas, KeyShift aims to provide a more
+streamlined experience for gaming. Below is a comparison of some key properties:
+
+
+|                                 | KMonad              | KeyShift                                         |
+| ------------------------------- | ------------------- | ------------------------------------------------ |
+| Functionality: Layering support | ✓                   | ✓ E.g. `CAPSLOCK+1=F1`                           |
+| Functionality: Dual function    | ✓                   | ✓ E.g. `CAPSLOCK+1=F1;CAPSLOCK+nothing=CAPSLOCK` |
+| Functionality: Snap tap         | ✓                   | ✓ E.g. `^A=~D ^A;^D=~A ^D`                       |
+| Functionality: Key timeouts     | ✓                   | ✗                                                |
+| Threads ¹                       | 34                  | 1                                                |
+| RAM ¹                           | 52M (RES)           | < 10M (RES)                                      |
+| Latency overhead ²              | Unknown             | < 0.02 ms                                        |
+| Language                        | Haskell             | C++ 23                                           |
+| OS Support                      | Linux, Windows, Mac | Linux only                                       |
+
+Note 1: Threads & RAM usage were measured on equivalent key-mapping configuration, on same hardware.
+
+Note 2: The profiling of KeyShift is based on average time spent in
+`Process(int, int)` on the commit 62f3421, based on an artificial load (see
+profile.cpp), on an i9-9900k.
+
 # Bugs / Feature Requests
 
 If you encounter any issues or find that something isn't working as expected, please open an issue here.
@@ -74,34 +104,43 @@ While not all feature requests can be implemented, I will review each request to
 
 Following c++ libraries are needed -
 - Boost
-- Catch2 (for tests only)
+- Catch2 (only for tests, not required for building the production binary)
 
 ## Commands to Build
 
-Run `build.sh`.
+See `build.sh`.
 
 # Remapping Needs
 
 ## Use Cases
-- E.g. NUM-MINUS to Volume Up button.
-- E.g. CAPSLOCK when held, activates certain mapping layer.
-- E.g. Shift when held, Esc acts as Backtick (resulting in Shift+Backtick = ~).
-- E.g. Ctrl when held, 1 leads to F1 (_not_ Ctrl+F1), but every other key work as Ctrl+key.
-- E.g. Del when held, if any other key pressed it uses some specified mapping. If nothing else pressed, output Del.
-- Macros: E.g. (SHIFT + CAPSLOCK) -> "H E L L O".
-- (TBD) Pause within macros (will require threading).
-- (TBD) Hold ESC for 500ms to act as backtick.
+
+As a design principle, we start with our desired outcomes first. These help to work backward from there and build the configuration language elements and a system to implement them.
+
+Below are the classes of use cases considered.
+
+| Class            | Example Usage                                                                                                                                      | Status      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Simple Remap     | E.g. NUM-STAR/MINUS to Volume Up/Down buttons.                                                                                                     | ✓           |
+| Layers           | E.g. CAPSLOCK held converts numbers to function keys.                                                                                              | ✓           |
+| Around           | E.g. Shift operates as is, but also when held, Esc acts as Backtick (resulting in Shift+Backtick = ~).                                             | ✓           |
+| Multi Functional | E.g. Ctrl when held acts as Ctrl. But when 1 is pressed, F1 is emitted without Ctrl - and same for other numbers.                                  | ✓           |
+| Normal or Layer  | E.g. if Del is tapped, it acts as Del. But when Del when held and another key is pressed, it acts as a layering key and Del itself is not emitted. | ✓           |
+| Macros           | E.g. (SHIFT + CAPSLOCK) -> "H E L L O".                                                                                                            | ✓           |
+| Pause in Macro   | E.g. "H 50ms E 50ms L 50ms L 50ms O".                                                                                                              | Not planned |
+| Timed Function   | E.g. hold ESC for 500ms to act as backtick.                                                                                                        | Not planned |
 
 ## Example configuration
 
-We intend to keep the configuration language simple and intuitive. Below is an example. See also the examples/ directory.
-
+Note: Supported keycodes can be found in [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h)
 ```
+// == Layers ==
 CAPSLOCK + 1 = F1
 CAPSLOCK + 2 = F2
+// ...
 
-CAPSLOCK + LEFTSHIFT = CAPSLOCK
+CAPSLOCK + LEFTSHIFT = CAPSLOCK  // Make it also possible to trigger CAPSLOCK itself.
 
+// == Multi Functional ==
 // The line below enables the button explicitly, even if it also activates other keys.
 ^RIGHTCTRL = ^RIGHTCTRL
 RIGHTCTRL + 1 = ~RIGHTCTRL F1
@@ -132,7 +171,7 @@ Locate your keyboard in "/dev/input/by-id".
 Then try this -
 
 ```sh
-keyboard_remap "/dev/input/by-id/...-kbd" --config "A=B;B=A"
+sudo keyshift "/dev/input/by-id/...-kbd" --config "A=B;B=A"
 ```
 
 Verify that this swaps the keys A and B as long as it is running. You can exit out of it with Ctrl+C.
@@ -150,11 +189,11 @@ sudo evtest /dev/input/by-id/...-kbd
 
 Then press any key that you want to know the id of.
 
-All keycodes [defined in linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) are supported. You can also look for a keycode there to map to, which is not available on your keyboard.
+All keycodes [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) are supported. You can also look for a keycode there to map to, which is not available on your keyboard.
 
 ## Example Tasks
 
-- Remap keys
+- **Remap keys**
 ```
 // Remap menu key (KEY_PASTE) into Right Win key.
 PASTE = RIGHTMETA
@@ -164,7 +203,16 @@ A = B
 B = A
 ```
 
-- Make CAPSLOCK to behave as Fn key
+- **Create a macro**
+
+```
+LEFTCTRL + H = H E L L O
+
+// You can also insert pauses, such as -
+LEFTCTRL + H = H 50ms E 50ms L 50ms L 50ms O
+```
+
+- **Make CAPSLOCK behave as Fn key**
 
 ```
 CAPSLOCK + 1 = F1
@@ -183,7 +231,7 @@ CAPSLOCK + RIGHTALT = *
 CAPSLOCK + LEFTCTRL = *
 ```
 
-- Make Left Shift + Esc = ~, leave shift as is otherwise
+- **Make Left Shift + Esc = ~, and leave shift as is otherwise.**
 
 ```
 ^LEFTSHIFT = ^LEFTSHIFT  // Holding shift will actually press shift.
@@ -191,14 +239,14 @@ LEFTSHIFT + ESC = GRAVE  // And reassign other keys. GRAVE is the `/~ key.
 LEFTSHIFT + * = *        // All other keys while holding shift are unaltered.
 ```
 
-- Make Right Ctrl behave as is, except Ctrl+0 as F10 _without_ Ctrl.
+- **Make Right Ctrl behave as is, except Ctrl+0 as F10 _without_ Ctrl.**
 ```
 ^RIGHTCTRL = ^RIGHTCTRL
 RIGHTCTRL + 0 = ~RIGHTCTRL F10  // Leave the key and press F10.
 RIGHTCTRL + * = *               // Let anything else pass thru.
 ```
 
-- DEL itself is DEL, but DEL+END is Volume Up
+- **Leave DEL by itself is DEL, but make DEL+END trigger Volume Up.**
 
 ```
 DELETE + END =  VOLUMEUP
@@ -208,7 +256,7 @@ DELETE + END =  VOLUMEUP
 DELETE + nothing = DELETE
 ```
 
-- Snap Tap
+- **Snap Tap**
   - Snaptap is a feature where pressing a key immediately deactivates some other key.
   - WARNING: For Counter Strike, this was used with A and D keys, as in the example below. This is now banned in Counter Strike 2 for official servers.
 
@@ -219,10 +267,26 @@ DELETE + nothing = DELETE
 ^D = ~A ^D
 ```
 
+## Comments
+
+You can use either `#` or `//` for line comments.
+
+Block comments are not supported.
+
+Example -
+
+```
+// This is a comment.
+
+# This is also a comment.
+
+A = B  // Make A act as the B key.
+```
+
 ## Statement Reference
 
 - Available keycodes
-  - You can use any keycode [defined here](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h). You can omit the "KEY_" prefix.
+  - You can use any keycode [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h). You can omit the "KEY_" prefix.
   - As special tokens, you can use `*` and `nothing`. See descriptions below.
 
 - Basic remapping
@@ -230,6 +294,7 @@ DELETE + nothing = DELETE
   - `~KEY1 = [TOKEN ...]` - The `~` indicates release of a key. On KEY1 release, tokens on the right will be performed.
   - `KEY1 = [TOKEN ...] FINAL_TOKEN` - Equivalent to `^KEY1 = [TOKEN ...] ^FINAL_TOKEN`, `~KEY1 = ~FINAL_TOKEN`. Example: `A = B` will make the A key act exactly like B.
   - `KEY1 = nothing` - Blocks the key. E.g. `DELETE = nothing`.
+  - `... = KEY1 50ms KEY2` - A number with suffix ms, such as `50ms`, indicates a desired pause in milli-seconds.
 
 - Layering
   - `KEY1 + KEY2 = [TOKEN ...]` - Only if KEY1 is held, KEY2 will activate the tokens.
@@ -247,3 +312,13 @@ If you lock yourself out due to a bad configuration, don't fret. There is a kill
 Don't worry if you modified those keys with a configuration, the combo acts on actual keys.
 
 You will see a std::runtime_error, which is normal in this case and confirms deactivation.
+
+# FAQ
+
+## Will there be versions for Mac / Windows?
+
+*Short answer: Not in the immediate future.*
+
+While I have great respect for those operating systems, I do not use them myself, which makes it challenging for me to create and maintain releases for them. Therefore, there won’t be versions available in the foreseeable future.
+
+However, I’d be open to considering this if someone is willing to take responsibility for setting up compilation for those OSes. Please note that I have some guidelines for contributions to ensure quality and consistency, so feel free to reach out if you’re interested!
