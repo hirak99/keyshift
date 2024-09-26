@@ -305,3 +305,25 @@ State #1
     }
   }
 }
+
+SCENARIO("Helper functions") {
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
+  const string expected_dump = R"(State #0
+  Other keys: Allow
+  On: (KEY_A Release)
+    Key: (KEY_B Release)
+  On: (KEY_A Press)
+    Key: (KEY_B Press)
+)";
+  GIVEN("// comment") {
+    REQUIRE(config_parser.Parse(
+        {"// This whole line is a comment.", "A = B // Make A act as B."}));
+    REQUIRE(GetRemapperConfigDump(remapper) == expected_dump);
+  }
+  GIVEN("# comment") {
+    REQUIRE(config_parser.Parse(
+        {"# This whole line is a comment.", "A = B # Make A act as B."}));
+    REQUIRE(GetRemapperConfigDump(remapper) == expected_dump);
+  }
+}

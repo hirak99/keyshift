@@ -32,10 +32,13 @@ std::vector<string> SplitString(const string& str, char delimiter) {
   return tokens;
 }
 
-string RemoveComment(const string& line) {
-  auto pos = line.find("//");
-  if (pos != string::npos) {
-    return line.substr(0, pos);
+string RemoveComment(string line) {
+  // Support both // or # as comment begin.
+  for (const string comment_marker : {"//", "#"}) {
+    auto pos = line.find(comment_marker);
+    if (pos != string::npos) {
+      line = line.substr(0, pos);
+    }
   }
   return line;
 }
