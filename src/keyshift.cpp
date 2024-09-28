@@ -148,7 +148,10 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
           // events are generated.
           remapper.Process(ie.code, ie.value);
         } else [[unlikely]] {
-          std::cerr << "WARNING: Failed read" << std::endl;
+          // Happens at an alarming rate sometimes!
+          // Counted 1102381 lines in log.
+          // We can re-enable logging but need to do log every n secs.
+          // std::cerr << "WARNING: Failed read" << std::endl;
         }
     }
   }
