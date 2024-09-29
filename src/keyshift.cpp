@@ -20,6 +20,7 @@
 #include "keycode_lookup.h"
 #include "remap_operator.h"
 #include "utility/argparse.h"
+#include "utility/every_n_ms.h"
 #include "utility/os_level_mutex.h"
 #include "version.h"
 #include "virtual_device.h"
@@ -152,6 +153,7 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
           // Counted 1102381 lines in log.
           // We can re-enable logging but need to do log every n secs.
           // std::cerr << "WARNING: Failed read" << std::endl;
+          EVERY_N_MS(500, perror("Failed read"));
         }
     }
   }
