@@ -38,6 +38,8 @@ configure_file(
 # Needed to include the version.h.
 include_directories(${CMAKE_BINARY_DIR})
 
+add_executable(every_n_ms_demo utility/every_n_ms_demo.cpp)
+
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift utility/os_level_mutex.cpp utility/argparse.cpp config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
 # target_link_libraries(keyshift ${Boost_LIBRARIES})
