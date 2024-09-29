@@ -11,7 +11,7 @@
 //                            << suppressed_count << " count(s)\n");
 //
 #define EVERY_N_MS(ms, code)                                                 \
-  do {                                                                       \
+  {                                                                          \
     static std::chrono::steady_clock::time_point lastExecution =             \
         std::chrono::steady_clock::now() - std::chrono::hours(10000);        \
     ;                                                                        \
@@ -28,7 +28,7 @@
     } else {                                                                 \
       ++suppressed_count;                                                    \
     }                                                                        \
-  } while (0)
+  };
 
 // Same as EVERY_N_MS, but also adds a header if calls were suppressed.
 // The header looks like this -
