@@ -150,10 +150,9 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
           remapper.Process(ie.code, ie.value);
         } else [[unlikely]] {
           // Happens at an alarming rate sometimes!
-          // Counted 1102381 lines in log.
-          // We can re-enable logging but need to do log every n secs.
-          // std::cerr << "WARNING: Failed read" << std::endl;
-          EVERY_N_MS(500, perror("Failed read"));
+          // Counted 1102381 lines in log in a few minites.
+          // EVEY_N_MS ensures we do not spam the journal.
+          EVERY_N_MS_W_SUPPRESSED(500, perror("Failed read"));
         }
     }
   }
