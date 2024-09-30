@@ -131,9 +131,9 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
   if (!left_key.has_value()) return false;
   if (layer_name == kDefaultLayerName &&
       known_layers_.contains(LayerNameFromKey(left_key.value()))) {
-    perror(
-        "ERROR: Key assignments like KEY = ... must precede layer assignments "
-        "KEY + OTHER_KEY = ...");
+    std::cerr << "ERROR: Key assignments like KEY = ... must precede layer "
+                 "assignments KEY + OTHER_KEY = ..."
+              << std::endl;
     return false;
   }
 
@@ -178,7 +178,8 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
                                         const string& assignment) {
   const auto [layer_prefix, layer_key] = SplitKeyPrefix(layer_key_str);
   if (layer_prefix != 0) {
-    perror("ERROR: Prefix (^ or ~) for layer keys is not supported yet.");
+    std::cerr << "ERROR: Prefix (^ or ~) for layer keys is not supported yet."
+              << std::endl;
     return false;
   }
   if (!layer_key.has_value()) {
@@ -204,7 +205,8 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   // Handle SHIFT + * = *.
   if (key_str == "*") {
     if (assignment != "*") {
-      perror("ERROR: Must be a * on the right side of for KEY + * = *");
+      std::cerr << "ERROR: Must be a * on the right side of for KEY + * = *"
+                << std::endl;
       return false;
     }
     remapper_->SetAllowOtherKeys(layer_name, true);

@@ -110,7 +110,7 @@ void Remapper::DumpConfig(std::ostream& os) const {
           const auto& layer_change = std::get<ActionLayerChange>(action);
           os << "    Layer Change: " << layer_change.layer_index << std::endl;
         } else {
-          perror("WARNING: Unknown action.");
+          std::cerr << "WARNING: Unknown action." << std::endl;
         }
       }
     };
@@ -170,7 +170,8 @@ bool Remapper::DeactivateLayerByKey(const KeyEvent& key_event) {
 void Remapper::DeactivateNLayers(const int n) {
   for (int deactivate_count = 0; deactivate_count < n; ++deactivate_count) {
     if (active_layers_.empty()) {
-      perror("WARNING: Trying to deactivate when no layer is active.");
+      std::cerr << "WARNING: Trying to deactivate when no layer is active."
+                << std::endl;
       return;
     }
     const auto layer_to_deactivate = active_layers_.back();
@@ -280,12 +281,12 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
               LayerActivation{event_seq_num_++, *key_event, new_state});
         }
       } else {
-        perror(
-            "WARNING: Invalid keyboard_state code. This is unexpected, please "
-            "report a bug.");
+        std::cerr << "WARNING: Invalid keyboard_state code. This is "
+                     "unexpected, please report a bug."
+                  << std::endl;
       }
     } else {
-      perror("WARNING: Unknown action.");
+      std::cerr << "WARNING: Unknown action." << std::endl;
     }
   }
 }
