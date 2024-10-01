@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 find_package(Catch2 3 REQUIRED)
 
-# Get the Git commit ID
+# Get the Git commit ID.
 execute_process(
     COMMAND git rev-parse HEAD
     OUTPUT_VARIABLE GIT_COMMIT_ID
@@ -30,6 +30,12 @@ execute_process(
 if (GIT_STATUS)
     set(GIT_COMMIT_ID "${GIT_COMMIT_ID}-dirty")
 endif()
+# Commit time.
+execute_process(
+    COMMAND git log -1 --format=%cd
+    OUTPUT_VARIABLE GIT_COMMIT_TIME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 # Create the version header file
 configure_file(
     ${CMAKE_SOURCE_DIR}/version.h.in

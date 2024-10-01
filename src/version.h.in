@@ -2,5 +2,6 @@
 #define VERSION_H
 
 #define GIT_COMMIT_ID "@GIT_COMMIT_ID@"
+#define GIT_COMMIT_TIME "@GIT_COMMIT_TIME@"
 
 #endif // VERSION_H
