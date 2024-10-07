@@ -39,7 +39,7 @@ class InputDevice {
     // Wait until all keys are released. Otherwise the release event for any
     // already held key will get blocked once this device is grabbed.
     while (IsAnyKeyPressed()) {
-      std::cerr << "Wating a sec, release all keys!" << std::endl;
+      std::cerr << "Waiting for all keys to be released..." << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
