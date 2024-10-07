@@ -111,15 +111,29 @@ struct KeyboardState {
 
   // Called before activation. Activation is ignored if returns false.
   [[nodiscard]] bool activate() {
-    if (is_active_) return false;
+    if (is_active_) {
+      std::cerr
+          << "WARNING: Attempt to activate an already active layer. Denied."
+          << std::endl;
+      return false;
+    }
+    // std::cerr << "Activated" << this << "\n";
     is_active_ = true;
     null_event_applicable = true;
     return true;
   }
   // Called on deactivation.
-  void deactivate() { is_active_ = false; }
+  void deactivate() {
+    // std::cerr << "Deactivated" << this << "\n";
+    is_active_ = false;
+  }
 
  private:
+  // Double activation is not expected.
+  // The error below makes complexity of managing is_active_ is justified,
+  // because it will help us catch unexpected double activations.
+  // E.g. due to logical errors, or due to things like the same key pressed
+  // twice (though reasonably that seems impossible).
   bool is_active_;
 };
 
@@ -175,7 +189,7 @@ class Remapper {
 
   // TODO: Optimization to keep the active state updated in a variable?
   inline KeyboardState& active_state() {
-    return active_layers_.size() > 0 ? active_layers_.back().this_state
+    return active_layers_.size() > 0 ? *active_layers_.back().this_state
                                      : all_states_[0];
   }
 
@@ -183,7 +197,7 @@ class Remapper {
   struct LayerActivation {
     int event_seq_num;         // When the layer was activated.
     const KeyEvent key_event;  // key_code that activated this layer.
-    KeyboardState this_state;
+    KeyboardState* this_state = nullptr;
   };
 
   // Do not use this directly, use StateNameToIndex().

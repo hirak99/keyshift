@@ -185,13 +185,12 @@ void Remapper::DeactivateNLayers(const int n) {
                 << std::endl;
       return;
     }
-    const auto layer_to_deactivate = active_layers_.back();
-    active_layers_.pop_back();
+    auto& layer_to_deactivate = active_layers_.back();
 
-    auto state_to_deactivate = layer_to_deactivate.this_state;
-    state_to_deactivate.deactivate();
-    if (state_to_deactivate.null_event_applicable) {
-      ProcessActions(state_to_deactivate.null_event_actions, std::nullopt);
+    auto& state_to_deactivate = layer_to_deactivate.this_state;
+    state_to_deactivate->deactivate();
+    if (state_to_deactivate->null_event_applicable) {
+      ProcessActions(state_to_deactivate->null_event_actions, std::nullopt);
     }
     // Get all the currently pressed keys after this was activated.
     const int threshold = layer_to_deactivate.event_seq_num;
@@ -217,6 +216,8 @@ void Remapper::DeactivateNLayers(const int n) {
     for (auto it = removed_keys.rbegin(); it != removed_keys.rend(); ++it) {
       EmitKeyCode({it->first, KeyEventType::kKeyRelease});
     }
+    // Done at the very end because .pop_back() invalidates .back().
+    active_layers_.pop_back();
   }
 }
 
@@ -269,7 +270,7 @@ const std::vector<Action> Remapper::ExpandToActions(
 
   // Iterate: active_layers_.reverse() + {default_state_}.
   for (auto it = active_layers_.rbegin(); it != active_layers_.rend(); ++it) {
-    if (operate(it->this_state)) return result;
+    if (operate(*it->this_state)) return result;
   }
   if (operate(all_states_[0])) return result;
 
@@ -285,10 +286,10 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
     } else if (std::holds_alternative<ActionLayerChange>(action)) {
       const auto& layer_change = std::get<ActionLayerChange>(action);
       if (layer_change.layer_index < (int)all_states_.size()) {
-        auto new_state = all_states_[layer_change.layer_index];
-        if (new_state.activate()) {
+        auto* new_state = &all_states_[layer_change.layer_index];
+        if (new_state->activate()) {
           active_layers_.push_back(
-              LayerActivation{event_seq_num_++, *key_event, new_state});
+              LayerActivation{event_seq_num_++, key_event.value(), new_state});
         }
       } else {
         std::cerr << "WARNING: Invalid keyboard_state code. This is "
