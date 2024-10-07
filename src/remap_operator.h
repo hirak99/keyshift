@@ -173,10 +173,10 @@ class Remapper {
 
   void ProcessCombos(const KeyEvent& key_event);
 
-  // TODO: Optimization to keep the active state updated in a variable.
+  // TODO: Optimization to keep the active state updated in a variable?
   inline KeyboardState& active_state() {
     return active_layers_.size() > 0 ? active_layers_.back().this_state
-                                     : default_state_;
+                                     : all_states_[0];
   }
 
   // These will be stored in a stack as new layers get activated.
@@ -189,12 +189,9 @@ class Remapper {
   // Do not use this directly, use StateNameToIndex().
   std::unordered_map<std::string, int> state_name_to_index_;
 
-  // Outer key is a lookup from the keyboard_state name.
-  // Inner key is the condition, a key_code. Negative indicates on release.
-  std::unordered_map<int, KeyboardState> all_states_;
+  // Index can be looked up from state name with StateToNameIndex().
+  std::vector<KeyboardState> all_states_;
 
-  // Contains state 0, which is default by convention.
-  KeyboardState& default_state_;
   // Previous mappings. This is used as mappings get deactivated.
   // Pair of key_code, mapping_index.
   std::vector<LayerActivation> active_layers_;

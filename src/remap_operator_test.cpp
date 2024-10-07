@@ -130,7 +130,6 @@ SCENARIO("Del+Bksp is Print, but Del alone is Del") {
     remapper.SetNullEventActions(
         "del_layer", {KeyPressEvent(KEY_DELETE), KeyReleaseEvent(KEY_DELETE)});
 
-    // WIP - Does not pass yet.
     THEN("Del+End does VolumeUp") {
       REQUIRE(
           GetOutcomes(

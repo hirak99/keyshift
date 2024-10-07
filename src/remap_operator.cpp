@@ -26,11 +26,18 @@ KeyEvent KeyReleaseEvent(int key_code) {
   return KeyEvent{key_code, KeyEventType::kKeyRelease};
 }
 
-Remapper::Remapper() : default_state_(all_states_[0]) {
-  // Make "" to have index 0.
+Remapper::Remapper() {
+  // Ensure "" has index 0.
   if (StateNameToIndex("") != 0) {
     // Should not happen!
     throw std::runtime_error("Could not assert first index to be 0");
+  }
+
+  // StateNameToIndex("") should have added an element to all_states_.
+  // We will henceforth use all_state_[0] without checking.
+  if (all_states_.size() != 1) {
+    // Should not happen!
+    throw std::runtime_error("Unexpected all_states_ init failure");
   }
 
   // Initialize kill combo keycodes from string.
@@ -97,8 +104,9 @@ void Remapper::Process(const int key_code_int, const int value) {
 }
 
 void Remapper::DumpConfig(std::ostream& os) const {
-  for (const auto& [id, state] : Sorted(all_states_)) {
-    os << "State #" << id << std::endl;
+  for (std::size_t state_id = 0; state_id < all_states_.size(); ++state_id) {
+    const auto& state = all_states_[state_id];
+    os << "State #" << state_id << std::endl;
     os << "  Other keys: " << (state.allow_other_keys ? "Allow" : "Block")
        << std::endl;
     const auto ShowActions = [&os](const std::vector<Action>& actions) {
@@ -128,11 +136,14 @@ void Remapper::DumpConfig(std::ostream& os) const {
 // PRIVATE
 
 // Finds index of keyboard_state name. If it doesn't exist, adds it.
+// This function should be used only to set up, and should not be called during
+// operation.
 int Remapper::StateNameToIndex(const std::string& state_name) {
   const auto result = MapLookup(state_name_to_index_, state_name);
   if (result.has_value()) return *result;
 
   const int index = state_name_to_index_.size();
+  all_states_.push_back(KeyboardState{});
   state_name_to_index_.emplace(state_name, index);
   return index;
 }
@@ -260,7 +271,7 @@ const std::vector<Action> Remapper::ExpandToActions(
   for (auto it = active_layers_.rbegin(); it != active_layers_.rend(); ++it) {
     if (operate(it->this_state)) return result;
   }
-  if (operate(default_state_)) return result;
+  if (operate(all_states_[0])) return result;
 
   // Nothing matched or blocked.
   return {key_event};
@@ -273,9 +284,8 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
       ProcessKeyEvent(std::get<KeyEvent>(action));
     } else if (std::holds_alternative<ActionLayerChange>(action)) {
       const auto& layer_change = std::get<ActionLayerChange>(action);
-      const auto it = all_states_.find(layer_change.layer_index);
-      if (it != all_states_.end()) {
-        auto new_state = it->second;
+      if (layer_change.layer_index < (int)all_states_.size()) {
+        auto new_state = all_states_[layer_change.layer_index];
         if (new_state.activate()) {
           active_layers_.push_back(
               LayerActivation{event_seq_num_++, *key_event, new_state});
