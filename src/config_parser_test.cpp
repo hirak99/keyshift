@@ -304,6 +304,20 @@ State #1
                                                "Out: P KEY_2", "Out: R KEY_2"});
     }
   }
+
+  GIVEN("Pause 50ms") {
+    REQUIRE(config_parser.Parse({"A = B 50ms C"}));
+    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+  Other keys: Allow
+  On: (KEY_A Release)
+    Key: (KEY_C Release)
+  On: (KEY_A Press)
+    Key: (KEY_B Press)
+    Key: (KEY_B Release)
+    Wait: 50ms
+    Key: (KEY_C Press)
+)");
+  }
 }
 
 SCENARIO("Helper functions") {

@@ -16,6 +16,9 @@ using std::string;
 
 const string kDefaultLayerName = "";
 
+// Any wait larger than this will not be allowed.
+const int kMaxWaitMs = 1000;
+
 // When on left, sets a default assignment e.g. "DELETE + nothing = DELETE".
 // When on right, blocks a key e.g. "DELETE = nothing".
 const string kNothingToken = "nothing";
@@ -53,6 +56,8 @@ string StringTrim(const string& line) {
   return line.substr(start, end - start + 1);
 }
 
+// Splits a token like "^A", "~A" or "A" into prefix "^", "~", "" respectively,
+// with the suffix as "A".
 std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
   static const string prefixes = "~^";
   char prefix = 0;
@@ -104,15 +109,25 @@ std::vector<Action> ConfigParser::AssignmentToActions(
     const std::vector<string>& tokens) {
   std::vector<Action> actions;
 
-  for (const auto& token : tokens) {
+  for (const string& token : tokens) {
     if (token == kNothingToken || token == "^" + kNothingToken ||
         token == "~" + kNothingToken) {
       continue;
     }
+    if (token.ends_with("ms")) {
+      // This raises std::invalid_argument if number is invalid.
+      int ms = std::stoi(token.substr(0, token.size() - 2));
+      if (ms <= 0 || ms > kMaxWaitMs) {
+        throw std::invalid_argument(
+            std::format("Out of range wait time {}ms", ms));
+      }
+      actions.push_back(ActionWait{ms});
+      continue;
+    }
     const auto [right_prefix, right_key] = SplitKeyPrefix(token);
     if (!right_key.has_value()) {
-      std::cerr << "ERROR: Could not parse token " << token << std::endl;
-      throw std::invalid_argument("Invalid keycode.");
+      throw std::invalid_argument(
+          std::format("Invalid keycode in token {}.", token));
     };
     if (right_prefix == 0 || right_prefix == '^') {
       actions.push_back(KeyPressEvent(*right_key));

@@ -85,7 +85,11 @@ struct ActionLayerChange {
   int layer_index;
 };
 
-using Action = std::variant<KeyEvent, ActionLayerChange>;
+struct ActionWait {
+  int milli_seconds;
+};
+
+using Action = std::variant<KeyEvent, ActionLayerChange, ActionWait>;
 
 // KeyEvent to which action they are mapped.
 using ActionMap = std::unordered_map<KeyEvent, std::vector<Action>,

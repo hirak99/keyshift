@@ -3,12 +3,14 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <stack>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -114,6 +116,9 @@ void Remapper::DumpConfig(std::ostream& os) const {
         if (std::holds_alternative<KeyEvent>(action)) {
           const auto& key_event = std::get<KeyEvent>(action);
           os << "    Key: " << key_event << std::endl;
+        } else if (std::holds_alternative<ActionWait>(action)) {
+          const auto& wait = std::get<ActionWait>(action);
+          os << "    Wait: " << wait.milli_seconds << "ms" << std::endl;
         } else if (std::holds_alternative<ActionLayerChange>(action)) {
           const auto& layer_change = std::get<ActionLayerChange>(action);
           os << "    Layer Change: " << layer_change.layer_index << std::endl;
@@ -283,6 +288,10 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
   for (const Action& action : actions) {
     if (std::holds_alternative<KeyEvent>(action)) {
       ProcessKeyEvent(std::get<KeyEvent>(action));
+    } else if (std::holds_alternative<ActionWait>(action)) {
+      const auto& wait = std::get<ActionWait>(action);
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds(wait.milli_seconds));
     } else if (std::holds_alternative<ActionLayerChange>(action)) {
       const auto& layer_change = std::get<ActionLayerChange>(action);
       if (layer_change.layer_index < (int)all_states_.size()) {
