@@ -25,7 +25,7 @@ std::vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
       } else {
         throw std::runtime_error("Unexpected value");
       }
-      oss << keyCodeToName(abs(keycode));
+      oss << KeyCodeToName(abs(keycode));
       outcomes.push_back(oss.str());
     }
     remapper.Process(keycode, value);
@@ -48,7 +48,7 @@ std::vector<string> GetOutcomes(Remapper& remapper, bool keep_incoming,
         press_str = "U ";
         break;
     }
-    oss << "Out: " << press_str << keyCodeToName(keycode);
+    oss << "Out: " << press_str << KeyCodeToName(keycode);
     outcomes.push_back(oss.str());
   });
 

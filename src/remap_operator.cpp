@@ -44,7 +44,7 @@ Remapper::Remapper() {
 
   // Initialize kill combo keycodes from string.
   for (const char c : kKillCombo) {
-    auto key_code = nameToKeyCode(std::string("KEY_") + c);
+    auto key_code = NameToKeyCode(std::string("KEY_") + c);
     if (!key_code.has_value()) {
       throw std::runtime_error("Cannot create combo for kKillCombo");
     }

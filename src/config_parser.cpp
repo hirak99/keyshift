@@ -65,8 +65,8 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
     prefix = name[0];
     name = name.substr(1);
   }
-  const auto& keycode = StartsWith(name, "KEY_") ? nameToKeyCode(name)
-                                                 : nameToKeyCode("KEY_" + name);
+  const auto& keycode = StartsWith(name, "KEY_") ? NameToKeyCode(name)
+                                                 : NameToKeyCode("KEY_" + name);
   if (!keycode.has_value()) {
     std::cerr << "ERROR: Unknown key code " << name << std::endl;
   }
@@ -74,7 +74,7 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
 }
 
 std::string LayerNameFromKey(int keycode) {
-  return keyCodeToName(keycode) + "_layer";
+  return KeyCodeToName(keycode) + "_layer";
 }
 
 // Class methods.

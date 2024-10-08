@@ -310,8 +310,8 @@ class KeyCodes {
 
 // For convenience.
 
-std::string keyCodeToName(int key_code);
+std::string KeyCodeToName(int key_code);
 
-std::optional<int> nameToKeyCode(std::string name);
+std::optional<int> NameToKeyCode(std::string name);
 
 #endif  // __KEYCODE_LOOKUP_H

@@ -201,7 +201,7 @@ int main(const int argc, const char** argv) {
       std::cout << (press == 1   ? "P "
                     : press == 0 ? "R "
                                  : "T ")
-                << keyCodeToName(key_code);
+                << KeyCodeToName(key_code);
       std::cout << std::endl;
     };
     remapper.SetCallback(echo_on_emit_fn);

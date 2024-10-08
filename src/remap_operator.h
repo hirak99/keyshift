@@ -36,7 +36,7 @@ struct KeyEvent {
   KeyEventType value;
 
   friend std::ostream& operator<<(std::ostream& os, const KeyEvent& key_event) {
-    os << "(" << keyCodeToName(key_event.key_code) << " ";
+    os << "(" << KeyCodeToName(key_event.key_code) << " ";
     switch (key_event.value) {
       case KeyEventType::kKeyPress:
         os << "Press";
