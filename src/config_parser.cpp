@@ -105,6 +105,7 @@ std::vector<Action> ConfigParser::AssignmentToActions(
   return AssignmentToActions(tokens);
 }
 
+// Converts a vector<string> like ["B", "^C"] into vector<Action>.
 std::vector<Action> ConfigParser::AssignmentToActions(
     const std::vector<string>& tokens) {
   std::vector<Action> actions;
@@ -139,6 +140,8 @@ std::vector<Action> ConfigParser::AssignmentToActions(
   return actions;
 }
 
+// Given a key and string representing what it should do, adds relevant mappings
+// to remapper_.
 bool ConfigParser::ParseAssignment(const string& layer_name,
                                    const string& key_str,
                                    const string& assignment) {
@@ -152,13 +155,13 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
     return false;
   }
 
-  std::vector<Action> actions;
   try {
     std::vector<string> tokens = SplitString(assignment, ' ');
     if (tokens.size() == 1 && tokens[0] == "*") {
       tokens[0] = key_str;
     }
     // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
+    // And convert A = B C to [^A = B ^C, ~A = ~C].
     if (left_prefix == 0) {
       int n_tokens = tokens.size();
       string last_token = tokens[n_tokens - 1];
