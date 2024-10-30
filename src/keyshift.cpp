@@ -108,7 +108,7 @@ void SignalHandler(const int signum) {
   kInterrupted.store(true);
 }
 
-int MainLoop(InputDevice& device, Remapper& remapper) {
+int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
   // Set up handlers which will set kInterrupded on any error.
   std::signal(SIGINT, SignalHandler);
   std::signal(SIGTERM, SignalHandler);
@@ -145,6 +145,15 @@ int MainLoop(InputDevice& device, Remapper& remapper) {
         // There is data to be read, and the read is no longer blocking.
         if (read(fd, &ie, sizeof(struct input_event)) > 0) [[likely]] {
           if (ie.type != EV_KEY) continue;
+
+          if (echo_inputs) [[unlikely]] {
+            std::cout << "In: ";
+            std::cout << (ie.value == 1   ? "P "
+                          : ie.value == 0 ? "R "
+                                          : "T ")
+                      << KeyCodeToName(ie.code);
+            std::cout << std::endl;
+          }
 
           // This will call the function set with SetCallback() as new key
           // events are generated.
@@ -221,5 +230,5 @@ int main(const int argc, const char** argv) {
   }
 
   // Control returns from MainLoop only if interrupted or killed.
-  return MainLoop(device, remapper);
+  return MainLoop(device, remapper, arg_dry_run);
 }
