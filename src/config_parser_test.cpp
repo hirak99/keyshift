@@ -155,11 +155,7 @@ SCENARIO("All mappings") {
                          {KEY_1, 2},
                          {KEY_CAPSLOCK, 0},
                          {KEY_1, 0}}) ==
-            vector<string>{"Out: P KEY_F1",
-                           // Note: In current config, the mapped key does not
-                           // repeat. However, repeating this also should be
-                           // okay. "Out: T KEY_F1",
-                           "Out: R KEY_F1"});
+            vector<string>{"Out: P KEY_F1", "Out: T KEY_F1", "Out: R KEY_F1"});
     }
   }
 }
