@@ -313,6 +313,16 @@ Don't worry if you modified those keys with a configuration, the combo acts on a
 
 You will see a std::runtime_error, which is normal in this case and confirms deactivation.
 
+# Acknowledgements
+
+## Kmonad
+
+Before developing this project, I used KMonad, which offered valuable insights into the design of keyboard remapping software. While this project diverges from KMonad in key ways, studying its structure influenced some of my initial design decisions. I’m grateful for the inspiration KMonad provided.
+
+## Google
+
+This project was initiated during my time at Google, though it was developed independently on personal equipment and is unrelated to Google’s core work. I would like to acknowledge Google for the opportunity to grow as a developer, which contributed to the skills I applied in this project.
+
 # FAQ
 
 ## Will there be versions for Mac / Windows?
