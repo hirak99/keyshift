@@ -158,3 +158,26 @@ SCENARIO("Del+Bksp is Print, but Del alone is Del") {
     }
   }
 }
+
+SCENARIO("Must repeat - both mapped and passthru keys") {
+  GIVEN("Set A=B") {
+    Remapper remapper;
+
+    remapper.AddMapping("", KeyPressEvent(KEY_A), {KeyPressEvent(KEY_B)});
+    remapper.AddMapping("", KeyReleaseEvent(KEY_A), {KeyReleaseEvent(KEY_B)});
+
+    THEN("Repeat A repeats B") {
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_A, 1}, {KEY_A, 2}, {KEY_A, 2}, {KEY_A, 0}}) ==
+            vector<string>{"Out: P KEY_B", "Out: T KEY_B", "Out: T KEY_B",
+                           "Out: R KEY_B"});
+    }
+
+    THEN("Repeat C repeats C") {
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_C, 1}, {KEY_C, 2}, {KEY_C, 2}, {KEY_C, 0}}) ==
+            vector<string>{"Out: P KEY_C", "Out: T KEY_C", "Out: T KEY_C",
+                           "Out: R KEY_C"});
+    }
+  }
+}

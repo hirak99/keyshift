@@ -268,6 +268,7 @@ void Remapper::ProcessKeyEvent(const KeyEvent& key_event) {
   }
 }
 
+// Responsible for mapping user-input to desired outcome actions.
 const std::vector<Action> Remapper::ExpandToActions(
     const KeyEvent& key_event) const {
   std::vector<Action> result;
@@ -279,6 +280,34 @@ const std::vector<Action> Remapper::ExpandToActions(
       // Return the remapped actions.
       result = it->second;
       return true;
+    }
+
+    // If it's a repeat, it must be treated similar to release.
+    // Not press, since press can do multiple things; release is simpler.
+    // So we search for release events, but modify the output to repeat.
+    if (key_event.value == KeyEventType::kKeyRepeat) {
+      KeyEvent key_event_as_release = key_event;
+      key_event_as_release.value = KeyEventType::kKeyRelease;
+      const auto it = this_state.action_map.find(key_event_as_release);
+      if (it != this_state.action_map.end()) {
+        std::cout << "Found " << key_event_as_release << std::endl;
+        for (auto action : it->second) {
+          if (std::holds_alternative<KeyEvent>(action)) {
+            KeyEvent new_action = std::get<KeyEvent>(action);
+
+            // Move ahead only if the mapped event is release.
+            if (new_action.value != KeyEventType::kKeyRelease) continue;
+
+            // Change it to repeat, and emit.
+            new_action.value = KeyEventType::kKeyRepeat;
+            result.push_back(new_action);
+            // Note: It's kind of ambiguous what happens if release does multiple things.
+            // To break this ambiguity, we just repeat the first release action.
+            break;
+          }
+        }
+        return true;
+      }
     }
 
     // Not remapped but all other keys not allowed.
@@ -327,6 +356,7 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
   }
 }
 
+// Keep track of the special combination to kill the program.
 void Remapper::ProcessCombos(const KeyEvent& key_event) {
   if (key_event.value != KeyEventType::kKeyPress) return;
   if (key_event.key_code == combo_kill_keycodes_[combo_kill_progress_])
