@@ -6,6 +6,29 @@ This emulates Fn key of your laptop on any keyboard, and a lot more.
 
 # Quick Start
 
+## Installing
+
+### Archlinux
+[Available in AUR](https://aur.archlinux.org/packages/keyshift), you can use your favorite AUR manager to install -
+
+`yay -S keyshift`
+
+### Others
+```sh
+git clone https://github.com/hirak99/keyshift
+cd keyshift
+
+# Note: You may need to install "boost" for your distribution if the build fails.
+./build.sh
+
+# Use it locally.
+./build/keyshift --help
+# Or copy the binary to your system.
+install -Dm 755 ./build/keyshift /usr/local/bin/keyshift
+```
+
+## Trying
+
 Locate your keyboard in "/dev/input/by-id".
 
 Then run this -
