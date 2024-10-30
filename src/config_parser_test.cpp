@@ -109,41 +109,41 @@ SCENARIO("All mappings") {
     REQUIRE(config_parser.Parse(config_lines));
 
     THEN("Dump is as expected") {
-      REQUIRE(GetRemapperConfigDump(remapper) == kExpectedDump);
+      CHECK(GetRemapperConfigDump(remapper) == kExpectedDump);
     }
 
     // Functional tests.
     THEN("Test outcome CAPSLOCK+Fn") {
-      REQUIRE(
+      CHECK(
           GetOutcomes(
               remapper, false,
               {{KEY_CAPSLOCK, 1}, {KEY_1, 1}, {KEY_1, 0}, {KEY_CAPSLOCK, 0}}) ==
           vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
-      REQUIRE(
+      CHECK(
           GetOutcomes(
               remapper, false,
               {{KEY_CAPSLOCK, 1}, {KEY_1, 1}, {KEY_CAPSLOCK, 0}, {KEY_1, 0}}) ==
           vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
     }
     THEN("Test repeat of keys") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_X, 1}, {KEY_X, 2}, {KEY_X, 2}, {KEY_X, 0}}) ==
-              vector<string>{"Out: P KEY_X", "Out: T KEY_X", "Out: T KEY_X",
-                             "Out: R KEY_X"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_X, 1}, {KEY_X, 2}, {KEY_X, 2}, {KEY_X, 0}}) ==
+            vector<string>{"Out: P KEY_X", "Out: T KEY_X", "Out: T KEY_X",
+                           "Out: R KEY_X"});
     }
     THEN("Test repeat of CAPSLOCK (lead) and 1 (mapped to F1)") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_CAPSLOCK, 1},
-                           {KEY_CAPSLOCK, 2},
-                           {KEY_1, 1},
-                           {KEY_1, 2},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_1, 0}}) ==
-              vector<string>{"Out: P KEY_F1",
-                             // Note: In current config, the mapped key does not
-                             // repeat. However, repeating this also should be
-                             // okay. "Out: T KEY_F1",
-                             "Out: R KEY_F1"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_CAPSLOCK, 1},
+                         {KEY_CAPSLOCK, 2},
+                         {KEY_1, 1},
+                         {KEY_1, 2},
+                         {KEY_CAPSLOCK, 0},
+                         {KEY_1, 0}}) ==
+            vector<string>{"Out: P KEY_F1",
+                           // Note: In current config, the mapped key does not
+                           // repeat. However, repeating this also should be
+                           // okay. "Out: T KEY_F1",
+                           "Out: R KEY_F1"});
     }
   }
 }
@@ -155,7 +155,7 @@ SCENARIO("Custom tests") {
   GIVEN("KEY + X = X") {
     REQUIRE(config_parser.Parse({"CAPSLOCK + LEFTALT = LEFTALT"}));
 
-    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+    CHECK(GetRemapperConfigDump(remapper) == R"(State #0
   Other keys: Allow
   On: (KEY_CAPSLOCK Press)
     Layer Change: 1
@@ -170,40 +170,40 @@ State #1
 
   GIVEN("Simple remap test") {
     REQUIRE(config_parser.Parse({"A = X", "KEY_B = KEY_Y"}));
-    REQUIRE(GetOutcomes(remapper, false,
-                        {
-                            {KEY_A, 1},
-                            {KEY_A, 0},
-                            {KEY_B, 1},
-                            {KEY_B, 0},
-                        }) == vector<string>{"Out: P KEY_X", "Out: R KEY_X",
-                                             "Out: P KEY_Y", "Out: R KEY_Y"});
+    CHECK(GetOutcomes(remapper, false,
+                      {
+                          {KEY_A, 1},
+                          {KEY_A, 0},
+                          {KEY_B, 1},
+                          {KEY_B, 0},
+                      }) == vector<string>{"Out: P KEY_X", "Out: R KEY_X",
+                                           "Out: P KEY_Y", "Out: R KEY_Y"});
   }
 
   GIVEN("ALT + CAPS + 4 = ALT F4") {
     REQUIRE(config_parser.Parse(
         {"CAPSLOCK + LEFTALT = LEFTALT", "CAPSLOCK + 4 = F4"}));
     THEN("CAPS + ALT + 4") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_CAPSLOCK, 1},
-                           {KEY_LEFTALT, 1},
-                           {KEY_4, 1},
-                           {KEY_LEFTALT, 0},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_4, 0}}) ==
-              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_CAPSLOCK, 1},
+                         {KEY_LEFTALT, 1},
+                         {KEY_4, 1},
+                         {KEY_LEFTALT, 0},
+                         {KEY_CAPSLOCK, 0},
+                         {KEY_4, 0}}) ==
+            vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                           "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
     THEN("ALT + CAPS + 4") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_LEFTALT, 1},
-                           {KEY_CAPSLOCK, 1},
-                           {KEY_4, 1},
-                           {KEY_LEFTALT, 0},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_4, 0}}) ==
-              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_LEFTALT, 1},
+                         {KEY_CAPSLOCK, 1},
+                         {KEY_4, 1},
+                         {KEY_LEFTALT, 0},
+                         {KEY_CAPSLOCK, 0},
+                         {KEY_4, 0}}) ==
+            vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                           "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
   }
 
@@ -215,39 +215,39 @@ State #1
                                  "CAPSLOCK + 4 = F4", "^LEFTALT = ^LEFTALT",
                                  "LEFTALT + * = *"}));
     THEN("CAPS + ALT + 4") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_CAPSLOCK, 1},
-                           {KEY_LEFTALT, 1},
-                           {KEY_4, 1},
-                           {KEY_LEFTALT, 0},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_4, 0}}) ==
-              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_CAPSLOCK, 1},
+                         {KEY_LEFTALT, 1},
+                         {KEY_4, 1},
+                         {KEY_LEFTALT, 0},
+                         {KEY_CAPSLOCK, 0},
+                         {KEY_4, 0}}) ==
+            vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                           "Out: R KEY_LEFTALT", "Out: R KEY_F4"});
     }
     THEN("ALT + CAPS + 4") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {{KEY_LEFTALT, 1},
-                           {KEY_CAPSLOCK, 1},
-                           {KEY_4, 1},
-                           {KEY_LEFTALT, 0},
-                           {KEY_CAPSLOCK, 0},
-                           {KEY_4, 0}}) ==
-              vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
-                             "Out: R KEY_F4", "Out: R KEY_LEFTALT"});
+      CHECK(GetOutcomes(remapper, false,
+                        {{KEY_LEFTALT, 1},
+                         {KEY_CAPSLOCK, 1},
+                         {KEY_4, 1},
+                         {KEY_LEFTALT, 0},
+                         {KEY_CAPSLOCK, 0},
+                         {KEY_4, 0}}) ==
+            vector<string>{"Out: P KEY_LEFTALT", "Out: P KEY_F4",
+                           "Out: R KEY_F4", "Out: R KEY_LEFTALT"});
     }
   }
 
   GIVEN("'nothing' on right") {
     REQUIRE(config_parser.Parse({"A = nothing"}));
     THEN("'nothing' should be blocked") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {
-                              {KEY_A, 1},
-                              {KEY_A, 0},
-                              {KEY_B, 1},
-                              {KEY_B, 0},
-                          }) == vector<string>{"Out: P KEY_B", "Out: R KEY_B"});
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_A, 0},
+                            {KEY_B, 1},
+                            {KEY_B, 0},
+                        }) == vector<string>{"Out: P KEY_B", "Out: R KEY_B"});
     }
   }
 
@@ -259,7 +259,7 @@ State #1
 
   GIVEN("* on right") {
     REQUIRE(config_parser.Parse({"A + 1 = *"}));
-    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+    CHECK(GetRemapperConfigDump(remapper) == R"(State #0
   Other keys: Allow
   On: (KEY_A Press)
     Layer Change: 1
@@ -276,38 +276,38 @@ State #1
     REQUIRE(config_parser.Parse({"A + 1 = F1", "A + * = *", "B + 2 = F2"}));
 
     THEN("~A ~B") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {
-                              {KEY_A, 1},
-                              {KEY_B, 1},
-                              {KEY_A, 0},
-                              {KEY_B, 0},
-                              {KEY_1, 1},
-                              {KEY_1, 0},
-                              {KEY_2, 1},
-                              {KEY_2, 0},
-                          }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
-                                               "Out: P KEY_2", "Out: R KEY_2"});
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_B, 1},
+                            {KEY_A, 0},
+                            {KEY_B, 0},
+                            {KEY_1, 1},
+                            {KEY_1, 0},
+                            {KEY_2, 1},
+                            {KEY_2, 0},
+                        }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
+                                             "Out: P KEY_2", "Out: R KEY_2"});
     }
     THEN("~B ~A") {
-      REQUIRE(GetOutcomes(remapper, false,
-                          {
-                              {KEY_A, 1},
-                              {KEY_B, 1},
-                              {KEY_B, 0},
-                              {KEY_A, 0},
-                              {KEY_1, 1},
-                              {KEY_1, 0},
-                              {KEY_2, 1},
-                              {KEY_2, 0},
-                          }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
-                                               "Out: P KEY_2", "Out: R KEY_2"});
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_B, 1},
+                            {KEY_B, 0},
+                            {KEY_A, 0},
+                            {KEY_1, 1},
+                            {KEY_1, 0},
+                            {KEY_2, 1},
+                            {KEY_2, 0},
+                        }) == vector<string>{"Out: P KEY_1", "Out: R KEY_1",
+                                             "Out: P KEY_2", "Out: R KEY_2"});
     }
   }
 
   GIVEN("Pause 50ms") {
     REQUIRE(config_parser.Parse({"A = B 50ms C"}));
-    REQUIRE(GetRemapperConfigDump(remapper) == R"(State #0
+    CHECK(GetRemapperConfigDump(remapper) == R"(State #0
   Other keys: Allow
   On: (KEY_A Release)
     Key: (KEY_C Release)
@@ -333,11 +333,11 @@ SCENARIO("Helper functions") {
   GIVEN("// comment") {
     REQUIRE(config_parser.Parse(
         {"// This whole line is a comment.", "A = B // Make A act as B."}));
-    REQUIRE(GetRemapperConfigDump(remapper) == expected_dump);
+    CHECK(GetRemapperConfigDump(remapper) == expected_dump);
   }
   GIVEN("# comment") {
     REQUIRE(config_parser.Parse(
         {"# This whole line is a comment.", "A = B # Make A act as B."}));
-    REQUIRE(GetRemapperConfigDump(remapper) == expected_dump);
+    CHECK(GetRemapperConfigDump(remapper) == expected_dump);
   }
 }

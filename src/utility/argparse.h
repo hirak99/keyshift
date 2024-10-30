@@ -27,6 +27,7 @@ class ArgumentParser {
 
  private:
   enum ArgType { UNKNOWN, BOOLEAN, STRING };
+
   void AddHelp(const std::string& option, const std::string& description);
   void ConfirmType(const std::string& name, const ArgType arg_type);
 
