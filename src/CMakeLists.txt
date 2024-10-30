@@ -17,6 +17,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 find_package(Catch2 3 REQUIRED)
 
 # Get the Git commit ID.
+# Note: The version will be the PKGBUILD version if compiled in Arch.
+# This is because it Arch package uses a tagged release.
 execute_process(
     COMMAND git rev-parse HEAD
     OUTPUT_VARIABLE GIT_COMMIT_ID
@@ -27,8 +29,10 @@ execute_process(
     OUTPUT_VARIABLE GIT_STATUS
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+# Check if it is dirty.
 if (GIT_STATUS)
-    set(GIT_COMMIT_ID "${GIT_COMMIT_ID}-dirty")
+    # Dash indicates dirty.
+    set(GIT_COMMIT_ID "${GIT_COMMIT_ID}-")
 endif()
 # Commit time.
 execute_process(
