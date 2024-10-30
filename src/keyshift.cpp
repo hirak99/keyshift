@@ -205,7 +205,15 @@ int main(const int argc, const char** argv) {
     return EXIT_SUCCESS;
   }
 
-  const std::string arg_kbd = args.GetRequiredString("kbd");
+  const auto arg_kbd_opt = args.GetString("kbd");
+  if (!arg_kbd_opt.has_value()) {
+    std::cout << "No arguments provided. Please run with --help to see a short "
+                 "help on supported options."
+              << std::endl;
+    return -1;
+  }
+
+  const std::string arg_kbd = arg_kbd_opt.value();
   std::optional<OSMutex> mutex;
   // Use mutex only if this is not dry-run and we intend to grab the device.
   if (!arg_dry_run) {
