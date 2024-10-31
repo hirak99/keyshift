@@ -38,13 +38,14 @@ inline bool StartsWith(const std::string& str, const std::string& prefix) {
   return str.compare(0, prefix.length(), prefix) == 0;
 }
 
-// Replacement for boost::algorithms::split().
+// Split by one or more characters.
+// Replacement for boost::algorithms::split() with boost::anyof.
 inline std::vector<std::string> StringSplit(const std::string& str,
                                             const char* delimiters) {
   std::vector<std::string> tokens;
   std::string token;
-  size_t start = 0;
-  size_t end;
+  std::size_t start = 0;
+  std::size_t end;
 
   while (start < str.size()) {
     end = str.find_first_of(delimiters, start);
@@ -55,14 +56,21 @@ inline std::vector<std::string> StringSplit(const std::string& str,
       break;
     }
 
-    if (end > start) {  // Ensure there is something to add
-      tokens.push_back(str.substr(start, end - start));
-    }
-
+    tokens.push_back(str.substr(start, end - start));
     start = end + 1;
   }
 
   return tokens;
+}
+
+inline std::vector<std::string> StringSplit(const std::string& str,
+                                            const char delimiter) {
+  // Uhh... using char instead of string. Check this carefully.
+  // Justified since str.find_first_of() works with character array.
+  char delimiters[2];
+  delimiters[0] = delimiter;
+  delimiters[1] = 0;
+  return StringSplit(str, delimiters);
 }
 
 // Let's bring some sanity to maps.

@@ -41,16 +41,6 @@ const string kNothingToken = "nothing";
 
 // Utility functions.
 
-std::vector<string> SplitString(const string& str, char delimiter) {
-  std::vector<string> tokens;
-  string token;
-  std::istringstream token_stream(str);
-  while (std::getline(token_stream, token, delimiter)) {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
-
 string RemoveComment(string line) {
   // Support both // or # as comment begin.
   for (const string comment_marker : {"//", "#"}) {
@@ -117,7 +107,7 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
 // Converts a string like "~D ^A" to actions.
 std::vector<Action> ConfigParser::AssignmentToActions(
     const string& assignment) {
-  const auto tokens = SplitString(assignment, ' ');
+  const auto tokens = StringSplit(assignment, ' ');
   return AssignmentToActions(tokens);
 }
 
@@ -172,7 +162,7 @@ bool ConfigParser::ParseAssignment(const string& layer_name,
   }
 
   try {
-    std::vector<string> tokens = SplitString(assignment, ' ');
+    std::vector<string> tokens = StringSplit(assignment, ' ');
     if (tokens.size() == 1 && tokens[0] == "*") {
       tokens[0] = key_str;
     }
@@ -269,7 +259,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   }
 
   // Split the config line into the key combination and the action.
-  auto parts = SplitString(line, '=');
+  auto parts = StringSplit(line, '=');
   if (parts.size() != 2) {
     std::cerr << "ERROR: Not of the form A = B" << std::endl;
     return false;
@@ -279,7 +269,7 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   string action = StringTrim(parts[1]);
 
   // Split key combination by '+', e.g., "DEL + END"
-  auto keys = SplitString(key_combo, '+');
+  auto keys = StringSplit(key_combo, '+');
   if (keys.size() == 1) {
     return ParseAssignment(kDefaultLayerName, StringTrim(keys[0]), action);
   } else if (keys.size() == 2) {
