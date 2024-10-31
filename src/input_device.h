@@ -21,6 +21,7 @@
 #include <linux/input.h>
 
 #include <chrono>
+#include <cstring>  // Needed for memset()
 #include <thread>
 
 const int kOpenRetryDurationMs = 2500;

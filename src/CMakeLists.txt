@@ -10,9 +10,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # Release options.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions -funroll-loops")
 
-find_package(Boost)
-include_directories(${Boost_INCLUDE_DIRS})
-
 # Specify the output directories for executables and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -52,7 +49,6 @@ add_executable(every_n_ms_demo utility/every_n_ms_demo.cpp)
 
 add_executable(demo_send_keys demo_send_keys.cpp)
 add_executable(keyshift utility/os_level_mutex.cpp utility/argparse.cpp config_parser.cpp keyshift.cpp remap_operator.cpp keycode_lookup.cpp)
-# target_link_libraries(keyshift ${Boost_LIBRARIES})
 # Strip debugging info.
 set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--strip-all")
 
@@ -65,7 +61,6 @@ set_target_properties(keyshift PROPERTIES LINK_FLAGS "-Wl,--gc-sections -Wl,--st
 #   - divide by number of times called.
 add_executable(profile profile.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
 set_target_properties(profile PROPERTIES COMPILE_FLAGS "-pg" LINK_FLAGS "-pg")
-# target_link_libraries(profile ${Boost_LIBRARIES})
 
 if(ENABLE_TESTS)
     find_package(Catch2 3 REQUIRED)
@@ -83,6 +78,10 @@ if(ENABLE_TESTS)
     add_executable(argparse_test utility/argparse_test.cpp utility/argparse.cpp)
     target_link_libraries(argparse_test PRIVATE Catch2::Catch2WithMain)
     add_test(NAME argparse_test COMMAND argparse_test)
+
+    add_executable(essentials_test utility/essentials_test.cpp)
+    target_link_libraries(essentials_test PRIVATE Catch2::Catch2WithMain)
+    add_test(NAME essentials_test COMMAND essentials_test)
 else()
     message("Skipping tests.")
 endif()

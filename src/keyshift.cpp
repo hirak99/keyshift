@@ -25,7 +25,6 @@
 #include <unistd.h>
 
 #include <atomic>
-#include <boost/algorithm/string.hpp>
 #include <csignal>
 #include <expected>
 #include <fstream>
@@ -107,7 +106,7 @@ std::expected<Remapper, std::string> GetRemapper(
     file.close();
   }
   if (config.has_value()) {
-    boost::algorithm::split(lines, config.value(), boost::is_any_of(";\r\n"));
+    lines = StringSplit(config.value(), ";\r\n");
   }
 
   Remapper remapper;

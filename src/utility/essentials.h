@@ -19,7 +19,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // Strings.
@@ -34,6 +36,33 @@ inline std::string ToLowerCase(const std::string& str) {
 
 inline bool StartsWith(const std::string& str, const std::string& prefix) {
   return str.compare(0, prefix.length(), prefix) == 0;
+}
+
+// Replacement for boost::algorithms::split().
+inline std::vector<std::string> StringSplit(const std::string& str,
+                                            const char* delimiters) {
+  std::vector<std::string> tokens;
+  std::string token;
+  size_t start = 0;
+  size_t end;
+
+  while (start < str.size()) {
+    end = str.find_first_of(delimiters, start);
+
+    // If no more delimiters are found, take the rest of the string.
+    if (end == std::string::npos) {
+      tokens.push_back(str.substr(start));
+      break;
+    }
+
+    if (end > start) {  // Ensure there is something to add
+      tokens.push_back(str.substr(start, end - start));
+    }
+
+    start = end + 1;
+  }
+
+  return tokens;
 }
 
 // Let's bring some sanity to maps.

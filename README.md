@@ -126,7 +126,6 @@ While not all feature requests can be implemented, I will review each request to
 ## Dependencies
 
 Following c++ libraries are needed -
-- Boost
 - Catch2 (only for tests, not required for building the production binary)
 
 ## Commands to Build
