@@ -140,16 +140,16 @@ As a design principle, we start with our desired outcomes first. These help to w
 
 Below are the classes of use cases considered.
 
-| Class            | Example Usage                                                                                                                                      | Status      |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| Simple Remap     | E.g. NUM-STAR/MINUS to Volume Up/Down buttons.                                                                                                     | ✓           |
-| Layers           | E.g. CAPSLOCK held converts numbers to function keys.                                                                                              | ✓           |
-| Around           | E.g. Shift operates as is, but also when held, Esc acts as Backtick (resulting in Shift+Backtick = ~).                                             | ✓           |
-| Multi Functional | E.g. Ctrl when held acts as Ctrl. But when 1 is pressed, F1 is emitted without Ctrl - and same for other numbers.                                  | ✓           |
-| Normal or Layer  | E.g. if Del is tapped, it acts as Del. But when Del when held and another key is pressed, it acts as a layering key and Del itself is not emitted. | ✓           |
-| Macros           | E.g. (SHIFT + CAPSLOCK) -> "H E L L O".                                                                                                            | ✓           |
-| Pause in Macro   | E.g. "H 50ms E 50ms L 50ms L 50ms O".                                                                                                              | Not planned |
-| Timed Function   | E.g. hold ESC for 500ms to act as backtick.                                                                                                        | Not planned |
+| Class            | Example Usage                                                                                                        | Status      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Simple Remap     | E.g. NUM-STAR/MINUS to Volume Up/Down buttons.                                                                       | ✓           |
+| Layers           | E.g. CAPSLOCK held converts numbers to function keys.                                                                | ✓           |
+| Around           | E.g. Shift operates as is, but also when held, Esc acts as Backtick (resulting in Shift+Backtick = ~).               | ✓           |
+| Multi Functional | E.g. Ctrl when held acts as Ctrl. But when 1 is pressed, F1 is emitted without Ctrl - and same for other numbers.    | ✓           |
+| Normal or Layer  | E.g. if Del is tapped, it acts as Del. But when Del when held and another key is pressed, it acts as a layering key. | ✓           |
+| Macros           | E.g. (SHIFT + CAPSLOCK) -> "H E L L O".                                                                              | ✓           |
+| Pause in Macro   | E.g. "H 50ms E 50ms L 50ms L 50ms O".                                                                                | ✓           |
+| Timed Function   | E.g. hold ESC for 500ms to act as backtick.                                                                          | Not planned |
 
 ## Example configuration
 
