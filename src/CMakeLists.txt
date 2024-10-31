@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 project(KeyShift)
 
+option(ENABLE_TESTS "Enable building tests" ON)
+
 # Set the C++ standard and compiler flags
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -13,8 +15,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # Specify the output directories for executables and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
-find_package(Catch2 3 REQUIRED)
 
 # Get the Git commit ID.
 # Note: The version will be the PKGBUILD version if compiled in Arch.
@@ -67,16 +67,22 @@ add_executable(profile profile.cpp config_parser.cpp remap_operator.cpp keycode_
 set_target_properties(profile PROPERTIES COMPILE_FLAGS "-pg" LINK_FLAGS "-pg")
 # target_link_libraries(profile ${Boost_LIBRARIES})
 
-# Add the tests.
-enable_testing()
-add_executable(remap_operator_test remap_operator_test.cpp remap_operator.cpp keycode_lookup.cpp)
-target_link_libraries(remap_operator_test PRIVATE Catch2::Catch2WithMain)
-add_test(NAME remap_operator_test COMMAND remap_operator_test)
+if(ENABLE_TESTS)
+    find_package(Catch2 3 REQUIRED)
 
-add_executable(config_parser_test config_parser_test.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
-target_link_libraries(config_parser_test PRIVATE Catch2::Catch2WithMain)
-add_test(NAME config_parser_test COMMAND config_parser_test)
+    # Add the tests.
+    enable_testing()
+    add_executable(remap_operator_test remap_operator_test.cpp remap_operator.cpp keycode_lookup.cpp)
+    target_link_libraries(remap_operator_test PRIVATE Catch2::Catch2WithMain)
+    add_test(NAME remap_operator_test COMMAND remap_operator_test)
 
-add_executable(argparse_test utility/argparse_test.cpp utility/argparse.cpp)
-target_link_libraries(argparse_test PRIVATE Catch2::Catch2WithMain)
-add_test(NAME argparse_test COMMAND argparse_test)
+    add_executable(config_parser_test config_parser_test.cpp config_parser.cpp remap_operator.cpp keycode_lookup.cpp)
+    target_link_libraries(config_parser_test PRIVATE Catch2::Catch2WithMain)
+    add_test(NAME config_parser_test COMMAND config_parser_test)
+
+    add_executable(argparse_test utility/argparse_test.cpp utility/argparse.cpp)
+    target_link_libraries(argparse_test PRIVATE Catch2::Catch2WithMain)
+    add_test(NAME argparse_test COMMAND argparse_test)
+else()
+    message("Skipping tests.")
+endif()

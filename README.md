@@ -18,13 +18,13 @@ This emulates Fn key of your laptop on any keyboard, and a lot more.
 git clone https://github.com/hirak99/keyshift
 cd keyshift
 
-# Note: You may need to install "boost" for your distribution if the build fails.
-./build.sh
+./build_minimal.sh
 
-# Use it locally.
+# Test it locally.
 ./build/keyshift --help
-# Or copy the binary to your system.
-install -Dm 755 ./build/keyshift /usr/local/bin/keyshift
+
+# Optionally copy the binary to your system.
+install -Dm 755 ./build/keyshift /usr/bin/keyshift
 ```
 
 ## Trying
