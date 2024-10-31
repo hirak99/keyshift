@@ -15,7 +15,7 @@ This emulates Fn key of your laptop on any keyboard, and a lot more.
 
 ### Others
 ```sh
-git clone https://github.com/hirak99/keyshift
+git clone --recursive https://github.com/hirak99/keyshift
 cd keyshift
 
 ./build_minimal.sh
