@@ -1,8 +1,9 @@
-# Keyboard Remapper
+# Keyshift
 
-A fast, simple and powerful keyboard remapping and layering software.
+A keyboard remapping & layering utility for Linux, with focus on performance and ease.
 
-This emulates Fn key of your laptop on any keyboard, and a lot more.
+## What is Keyboard Layering?
+Keyboard layering allows you to create multiple sets of key functions that can be accessed through different states or modes of the keyboard. This means that pressing a specific key or combination can switch to a new layer, enabling different key mappings and shortcuts without the need for additional physical keys. It enhances productivity and customization, making it easier to perform various tasks efficiently.
 
 # Quick Start
 
@@ -39,8 +40,8 @@ sudo keyshift "/dev/input/by-id/...-kbd" --config "A=B;B=A"
 
 This will swap the A and B keys.
 
-You can build more powerful config and store it in a file. When fully
-configured, this is intended to run in the background covering the session.
+You can build more powerful config and store it in a file. When fully configured, this is intended to run in the background covering the session.
+Ideally, you will start this on boot with a systemd service, or add it to udev so that it activates whenever a keyboard is plugged in.
 
 For now you can exit pressing Ctrl+C.
 
