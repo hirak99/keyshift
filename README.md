@@ -28,7 +28,7 @@ cd keyshift
 install -Dm 755 ./build/keyshift /usr/bin/keyshift
 ```
 
-## Trying
+## Trying Out
 
 Locate your keyboard in "/dev/input/by-id".
 
@@ -44,6 +44,28 @@ You can build more powerful config and store it in a file. When fully configured
 Ideally, you will start this on boot with a systemd service, or add it to udev so that it activates whenever a keyboard is plugged in.
 
 For now you can exit pressing Ctrl+C.
+
+# Make it Permanent for your Keyboard
+
+## Option 1. Systemd Service
+
+Follow these steps -
+
+- **Create a Config for your keyboard:** See example `examples/65perc.keyshift`. Place it in `/opt/`.
+- **Create a Service:** Edit `examples/systemd/keyshift.service`, and place it in `/etc/systemd/system`.
+- **Enable the Service:**
+```sh
+sudo systemctl enable --now keyshift
+```
+
+## Option 2. Udev
+
+The advantage of doing this via udev is that it will activate automatically when you attach a particular keyboard.
+
+- **Create a Config for your keyboard:** See example `examples/65perc.keyshift`. Place it in `/opt/`.
+- **Create a udev rule:** See example `examples/udev/50-keyshift.rules`. Place it in `/etc/udev/rules.d/`.
+- **Activate the rules:**
+  - You can activate the rules without rebooting, with `sudo udevadm control --reload-rules && sudo udevadm trigger`
 
 # Goals
 

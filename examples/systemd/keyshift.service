@@ -1,0 +1,17 @@
+# /etc/systemd/system/keyshift.service
+
+[Unit]
+Description=My Custom Daemon
+After=network.target
+
+[Service]
+# 1- Locate your keyboard in `ls /dev/input/by-id`.
+#    Usually you should be able to see the keyboard manufacturer name there.
+#    It should be a file ending with '-kbd'.
+# 2- Create a keyshift config, and place it in /opt/.
+ExecStart=/usr/bin/keyshift --kbd /dev/input/by-id/1-YOUR_KEYBOARD_FILE-kbd --config-file /opt/2-YOUR-KEYSHIFT-CONFIG.keyshift
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

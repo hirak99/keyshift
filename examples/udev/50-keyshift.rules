@@ -1,0 +1,11 @@
+# /etc/udev/rules.d/50-keyshift.rules
+
+# 1- Locate your keyboard in `ls /dev/input/by-id`.
+#    Usually you should be able to see the keyboard manufacturer name there.
+#    It should be a file ending with '-kbd'.
+# 2- Create a keyshift config, and place it in /opt/.
+# 3- Locate your device in `lsusb`.
+#    It should have a line like -
+#    Bus 00x Device 00y: ID abcd:efgh Keyboard Manufacturer
+#    If the ID is abcd:efgh, put "abcd" and "efgh" in the "----" placeholders below.
+SUBSYSTEM=="usb", ATTRS{idVendor}=="----", ATTRS{idProduct}=="----", ACTION=="add", RUN+="/usr/bin/keyshift --kbd /dev/input/by-id/1-YOUR_KEYBOARD_FILE-kbd --config-file /opt/2-YOUR-KEYSHIFT-CONFIG.keyshift"
