@@ -119,14 +119,14 @@ void Remapper::Process(const int key_code_int, const int value) {
     // deactivation.
     active_state().null_event_applicable = false;
 
-    ProcessActions(actions, key_event);
+    ProcessActions(actions);
   }
 
   // If a key is released which is not processed otherwise, still send the
   // release event. This resolves Issue #5.
   if (key_event.value == KeyEventType::kKeyRelease &&
       MapContains(keys_held_, key_event.key_code)) {
-    ProcessActions({KeyReleaseEvent(key_event.key_code)}, key_event);
+    ProcessActions({KeyReleaseEvent(key_event.key_code)});
   }
 }
 
@@ -220,7 +220,7 @@ void Remapper::DeactivateNLayers(const int n) {
     auto& state_to_deactivate = layer_to_deactivate.this_state;
     state_to_deactivate->deactivate();
     if (state_to_deactivate->null_event_applicable) {
-      ProcessActions(state_to_deactivate->null_event_actions, std::nullopt);
+      ProcessActions(state_to_deactivate->null_event_actions);
     }
     // Get all the currently pressed keys after this was activated.
     const int threshold = layer_to_deactivate.event_seq_num;
@@ -341,8 +341,7 @@ const std::vector<Action> Remapper::ExpandToActions(
   return {key_event};
 }
 
-void Remapper::ProcessActions(const std::vector<Action>& actions,
-                              const std::optional<KeyEvent> key_event) {
+void Remapper::ProcessActions(const std::vector<Action>& actions) {
   for (const Action& action : actions) {
     if (std::holds_alternative<KeyEvent>(action)) {
       ProcessKeyEvent(std::get<KeyEvent>(action));
@@ -355,8 +354,8 @@ void Remapper::ProcessActions(const std::vector<Action>& actions,
       if (layer_change.layer_index < (int)all_states_.size()) {
         auto* new_state = &all_states_[layer_change.layer_index];
         if (new_state->activate()) {
-          active_layers_.push_back(
-              LayerActivation{event_seq_num_++, key_event.value(), new_state});
+          active_layers_.push_back(LayerActivation{
+              event_seq_num_++, currently_processing_, new_state});
         }
       } else {
         std::cerr << "WARNING: Invalid keyboard_state code. This is "

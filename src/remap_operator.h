@@ -202,8 +202,7 @@ class Remapper {
   // Expands an user-keypress into actions to be processed.
   const std::vector<Action> ExpandToActions(const KeyEvent& key_event) const;
 
-  void ProcessActions(const std::vector<Action>& actions,
-                      const std::optional<KeyEvent> key_event);
+  void ProcessActions(const std::vector<Action>& actions);
 
   void ProcessCombos(const KeyEvent& key_event);
 
