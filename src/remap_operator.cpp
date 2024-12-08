@@ -104,6 +104,7 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
 
 void Remapper::Process(const int key_code_int, const int value) {
   const KeyEvent key_event{key_code_int, KeyEventType(value)};
+  currently_processing_ = key_event;
   ProcessCombos(key_event);
   // Check if key_event is in activated keyboard_state stack.
   if (DeactivateLayerByKey(key_event)) [[unlikely]] {
@@ -215,11 +216,13 @@ void Remapper::DeactivateNLayers(const int n) {
     }
     // Get all the currently pressed keys after this was activated.
     const int threshold = layer_to_deactivate.event_seq_num;
+    // Key Code to Event Sequence Number.
     std::vector<std::pair<int, int>> removed_keys;
     // Erase keys held after the layer was activated.
     for (auto it = keys_held_.begin(); it != keys_held_.end();) {
-      if (it->second > threshold) {
-        removed_keys.push_back({it->first, it->second});
+      if (it->second.event_seq_num > threshold &&
+          it->second.key_origin != it->first) {
+        removed_keys.push_back({it->first, it->second.event_seq_num});
         it = keys_held_.erase(it);
       } else {
         ++it;
@@ -244,7 +247,8 @@ void Remapper::DeactivateNLayers(const int n) {
 
 void Remapper::ProcessKeyEvent(const KeyEvent& key_event) {
   if (key_event.value == KeyEventType::kKeyPress) {
-    keys_held_[key_event.key_code] = event_seq_num_++;
+    keys_held_[key_event.key_code] =
+        KeyHeldInfo{currently_processing_.key_code, event_seq_num_++};
     EmitKeyCode(key_event);
   } else if (key_event.value == KeyEventType::kKeyRepeat) {
     // If the repeating key was used to activate a layer, do nothing.
@@ -301,8 +305,9 @@ const std::vector<Action> Remapper::ExpandToActions(
             // Change it to repeat, and emit.
             new_action.value = KeyEventType::kKeyRepeat;
             result.push_back(new_action);
-            // Note: It's kind of ambiguous what happens if release does multiple things.
-            // To break this ambiguity, we just repeat the first release action.
+            // Note: It's kind of ambiguous what happens if release does
+            // multiple things. To break this ambiguity, we just repeat the
+            // first release action.
             break;
           }
         }

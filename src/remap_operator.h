@@ -233,7 +233,14 @@ class Remapper {
   // Current keys being held. Maps to event_seq_num, i.e. when it was held.
   // If somehow a key is pressed multiple times (e.g. repeats maybe?) then this
   // holds the last occurrence, as per the event_seq_num.
-  std::unordered_map<int, int> keys_held_;
+  struct KeyHeldInfo {
+    // Which physical key resulted in this event.
+    // Used while deactivation of a parent layer, to check if this key should
+    // also be released.
+    int key_origin;
+    int event_seq_num;
+  };
+  std::unordered_map<int, KeyHeldInfo> keys_held_;
 
   // Can only increase.
   int event_seq_num_ = 0;
@@ -244,6 +251,9 @@ class Remapper {
   // Progress to typing the kill combo.
   std::vector<int> combo_kill_keycodes_;
   std::size_t combo_kill_progress_ = 0;
+
+  // The original key event being processed. Set on process().
+  KeyEvent currently_processing_;
 };
 
 #endif  // __REMAP_OPERATOR_H

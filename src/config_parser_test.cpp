@@ -353,3 +353,50 @@ SCENARIO("Helper functions") {
     CHECK(GetRemapperConfigDump(remapper) == expected_dump);
   }
 }
+
+// Test the fix for Issue #8.
+SCENARIO("Unmodified keys are not released") {
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
+  GIVEN("Modified key") {
+    REQUIRE(
+        config_parser.Parse({"^LEFTSHIFT=^LEFTSHIFT", "LEFTSHIFT+LEFTCTRL=A"}));
+    CHECK(GetOutcomes(remapper, false,
+                      {
+                          {KEY_LEFTSHIFT, 1},
+                          {KEY_LEFTCTRL, 1},
+                          {KEY_LEFTSHIFT, 0},
+                          {KEY_X, 1},
+                          {KEY_X, 0},
+                          {KEY_LEFTCTRL, 0},
+                      }) == vector<string>{
+                                "Out: P KEY_LEFTSHIFT",
+                                "Out: P KEY_A",
+                                "Out: R KEY_A",
+                                "Out: R KEY_LEFTSHIFT",
+                                "Out: P KEY_X",
+                                "Out: R KEY_X",
+                            });
+  }
+  GIVEN("Unmodified key") {
+    // This is the example from
+    // https://github.com/hirak99/keyshift/issues/8#issuecomment-2526145703
+    REQUIRE(config_parser.Parse({"^LEFTSHIFT=^LEFTSHIFT", "LEFTSHIFT+*=*"}));
+    CHECK(GetOutcomes(remapper, false,
+                      {
+                          {KEY_LEFTSHIFT, 1},
+                          {KEY_LEFTCTRL, 1},
+                          {KEY_LEFTSHIFT, 0},
+                          {KEY_X, 1},
+                          {KEY_X, 0},
+                          {KEY_LEFTCTRL, 0},
+                      }) == vector<string>{
+                                "Out: P KEY_LEFTSHIFT",
+                                "Out: P KEY_LEFTCTRL",
+                                "Out: R KEY_LEFTSHIFT",
+                                "Out: P KEY_X",
+                                "Out: R KEY_X",
+                                "Out: R KEY_LEFTCTRL",
+                            });
+  }
+}

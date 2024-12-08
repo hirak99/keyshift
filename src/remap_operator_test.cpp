@@ -120,8 +120,8 @@ TEST_CASE("RCtrl deactivates around F-keys", "[remapper]") {
   CHECK(GetOutcomes(
             remapper, false,
             {{KEY_RIGHTCTRL, 1}, {KEY_B, 1}, {KEY_RIGHTCTRL, 0}, {KEY_B, 0}}) ==
-        vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_B", "Out: R KEY_B",
-                       "Out: R KEY_RIGHTCTRL"});
+        vector<string>{"Out: P KEY_RIGHTCTRL", "Out: P KEY_B",
+                       "Out: R KEY_RIGHTCTRL", "Out: R KEY_B"});
   // However, as defined releases CTRL before F1.
   CHECK(GetOutcomes(
             remapper, false,
