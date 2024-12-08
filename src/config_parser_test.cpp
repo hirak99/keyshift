@@ -400,3 +400,22 @@ SCENARIO("Unmodified keys are not released") {
                             });
   }
 }
+
+// Test fix for Issue #5.
+SCENARIO("Rpeating key should be releasable after layer activation") {
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
+  REQUIRE(config_parser.Parse({"A+B=C"}));
+  CHECK(GetOutcomes(remapper, false,
+                    {
+                        {KEY_B, 1},
+                        {KEY_B, 2},
+                        {KEY_A, 1},
+                        {KEY_B, 0},
+                        {KEY_A, 0},
+                    }) == vector<string>{
+                              "Out: P KEY_B",
+                              "Out: T KEY_B",
+                              "Out: R KEY_B",
+                          });
+}

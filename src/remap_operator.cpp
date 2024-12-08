@@ -105,6 +105,7 @@ ActionLayerChange Remapper::ActionActivateState(std::string state_name) {
 void Remapper::Process(const int key_code_int, const int value) {
   const KeyEvent key_event{key_code_int, KeyEventType(value)};
   currently_processing_ = key_event;
+
   ProcessCombos(key_event);
   // Check if key_event is in activated keyboard_state stack.
   if (DeactivateLayerByKey(key_event)) [[unlikely]] {
@@ -119,6 +120,13 @@ void Remapper::Process(const int key_code_int, const int value) {
     active_state().null_event_applicable = false;
 
     ProcessActions(actions, key_event);
+  }
+
+  // If a key is released which is not processed otherwise, still send the
+  // release event. This resolves Issue #5.
+  if (key_event.value == KeyEventType::kKeyRelease &&
+      MapContains(keys_held_, key_event.key_code)) {
+    ProcessActions({KeyReleaseEvent(key_event.key_code)}, key_event);
   }
 }
 
