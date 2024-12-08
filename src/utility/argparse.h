@@ -17,6 +17,22 @@
 // Simple argument parser.
 // Boost program_options does not appear to do a lot more, but requires linking
 // to a library. Might as well roll our own for simple tasks.
+//
+// Member functions should be self evident.
+// Usage example -
+//
+// int main(const int argc, const char** argv) {
+//   ArgumentParser parser;
+//   parser.AddBool("help", "Show a short help.");
+//   parser.AddString("filename", "Set filename");
+//   parser.Parse(argc, argv);
+//   if (arg_help) {
+//     parser.ShowHelp();
+//     return;
+//   }
+//   std::cout << parser.GetString("filename").value();
+// }
+//
 #ifndef __ARGPARSE_H
 #define __ARGPARSE_H
 
