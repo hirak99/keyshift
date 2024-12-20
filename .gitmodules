@@ -1,3 +1,3 @@
 [submodule "src/thirdparty/digestpp"]
 	path = src/thirdparty/digestpp
-	url = https://github.com/kerukuro/digestpp
+	url = https://github.com/hirak99/digestpp
