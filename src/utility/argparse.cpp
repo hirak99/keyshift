@@ -55,7 +55,8 @@ void ArgumentParser::ShowHelp() {
   }
 }
 
-void ArgumentParser::Parse(const int argc, const char** argv) {
+std::expected<void, std::string> ArgumentParser::Parse(const int argc,
+                                                       const char** argv) {
   // If clear, next token will be argument.
   // If populated, next token is the value.
   std::optional<string> this_arg;
@@ -66,7 +67,7 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       if (token.size() >= 2 && token.substr(0, 2) == "--") {
         token = token.substr(2);
       } else {
-        throw std::invalid_argument("Cannot parse argument " + token);
+        return std::unexpected("Cannot parse argument " + token);
       }
 
       std::optional<string> value;
@@ -79,7 +80,7 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
       // Next arg should be argument name.
       auto it = argument_types_.find(token);
       if (it == argument_types_.end()) {
-        throw std::invalid_argument(std::format("Unknown argument {}", token));
+        return std::unexpected(std::format("Unknown argument {}", token));
       }
       if (it->second == ArgType::BOOLEAN) {
         if (value) {
@@ -101,23 +102,24 @@ void ArgumentParser::Parse(const int argc, const char** argv) {
     } else {
       // Next arg should be argument value.
       if (token.size() >= 1 && token[0] == '-') {
-        throw std::invalid_argument("Expecting value for " + this_arg.value() +
-                                    " but found " + token);
+        return std::unexpected("Expecting value for " + this_arg.value() +
+                               " but found " + token);
       }
       switch (this_arg_type) {
         case ArgType::STRING:
           argument_values_[*this_arg] = token;
           break;
         default:
-          throw std::runtime_error("Unexpected argument type");
+          return std::unexpected("Unexpected argument type");
       }
       this_arg = std::nullopt;
     }
   }
   if (this_arg.has_value()) {
-    throw std::invalid_argument("Value of argument not found: " +
-                                this_arg.value());
+    return std::unexpected("Value of argument not found: " + this_arg.value());
   }
+  // Success.
+  return {};
 }
 
 bool ArgumentParser::GetBool(const string& name) {

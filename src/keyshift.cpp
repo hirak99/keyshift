@@ -59,6 +59,7 @@ void DisableEcho() {
   }
 }
 
+// Null is returned on error after displaying an error message.
 std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
   ArgumentParser parser;
   parser.AddBool("help", "Show a short help.");
@@ -74,7 +75,13 @@ std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
       "If passed, will not start a service but will only show previews.");
   parser.AddBool("version", "Display commit id and exit.");
 
-  parser.Parse(argc, argv);
+  {
+    auto status = parser.Parse(argc, argv);
+    if (!status) {
+      std::cerr << "Error: " << status.error() << std::endl;
+      return std::nullopt;
+    }
+  }
 
   const bool arg_help = parser.GetBool("help");
   if (arg_help) {
