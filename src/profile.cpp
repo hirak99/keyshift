@@ -39,9 +39,9 @@ DELETE + nothing = DELETE
 2 = 1
 )";
 
-std::vector<string> SplitLines(const string& str) {
-  std::vector<string> lines;
-  string line;
+std::vector<std::string> SplitLines(const std::string& str) {
+  std::vector<std::string> lines;
+  std::string line;
   std::istringstream line_stream(str);
   while (std::getline(line_stream, line, '\n')) {
     lines.push_back(line);

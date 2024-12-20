@@ -24,33 +24,34 @@
 #include "keycode_lookup.h"
 #include "remap_operator.h"
 
-using std::string;
-
 class ConfigParser {
  public:
   ConfigParser(Remapper* remapper);
-  [[nodiscard]] bool Parse(const std::vector<string>& lines);
+  [[nodiscard]] bool Parse(const std::vector<std::string>& lines);
 
   // Movable but not copyable.
   ConfigParser(ConfigParser&& other) = default;
   ConfigParser& operator=(ConfigParser&& other) = default;
 
  private:
-  // Converts a string like "~D ^A" to actions.
-  std::vector<Action> AssignmentToActions(const string& assignment);
+  // Converts a std::string like "~D ^A" to actions.
+  std::vector<Action> AssignmentToActions(const std::string& assignment);
 
-  std::vector<Action> AssignmentToActions(const std::vector<string>& tokens);
+  std::vector<Action> AssignmentToActions(
+      const std::vector<std::string>& tokens);
 
-  bool ParseAssignment(const string& layer_name, const string& key_str,
-                       const string& assignment);
+  bool ParseAssignment(const std::string& layer_name,
+                       const std::string& key_str,
+                       const std::string& assignment);
 
-  bool ParseLayerAssignment(const string& layer_key_str, const string& key_str,
-                            const string& assignment);
+  bool ParseLayerAssignment(const std::string& layer_key_str,
+                            const std::string& key_str,
+                            const std::string& assignment);
 
-  [[nodiscard]] bool ParseLine(const string& original_line);
+  [[nodiscard]] bool ParseLine(const std::string& original_line);
 
   Remapper* remapper_;
   // To keep track of which layers have been seen. Used to do one time actions,
   // such as disallow other keys.
-  std::set<string> known_layers_;
+  std::set<std::string> known_layers_;
 };
