@@ -52,6 +52,7 @@ class ArgumentParser {
 
   void ShowHelp();
 
+  [[nodiscard]]
   std::expected<void, std::string> Parse(const int argc, const char** argv);
 
   bool GetBool(const std::string& name);

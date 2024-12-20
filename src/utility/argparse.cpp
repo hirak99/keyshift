@@ -55,6 +55,7 @@ void ArgumentParser::ShowHelp() {
   }
 }
 
+[[nodiscard]]
 std::expected<void, std::string> ArgumentParser::Parse(const int argc,
                                                        const char** argv) {
   // If clear, next token will be argument.
