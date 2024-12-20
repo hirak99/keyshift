@@ -16,7 +16,7 @@
 
 // How to use -
 // int main() {
-//   auto mutex = GetMutex("my_app_" + ANY_DYNAMIC_STRING);
+//   auto mutex = AcquireOSMutex("my_app_" + ANY_DYNAMIC_STRING);
 //   if (!mutex) {
 //     exit(-1);
 //   }
