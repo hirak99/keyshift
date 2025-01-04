@@ -43,14 +43,20 @@ Once you are happy with a configuration, you can add it to your startup. Or, you
 
 ## How to find keycodes
 
+### Method 1.
+All keycodes in [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) are supported.
+
+Keycodes start with `#define ...`. For example, `#define KEY_NUMLOCK ...`.
+
+You should remove the prefix `KEY_`. For example, to refer to the key `#define KEY_NUMLOCK ...`, you should use just `NUMLOCK`. E.g. `keyshift ... --config "CAPSLOCK + N = NUMLOCK"`.
+
+### Method 2.
 Run -
 ```sh
 sudo evtest /dev/input/by-id/...-kbd
 ```
 
 Then press any key that you want to know the id of.
-
-All keycodes [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) are supported. You can also look for a keycode there to map to, which is not available on your keyboard.
 
 ## Comments
 

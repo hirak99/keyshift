@@ -1,4 +1,4 @@
-# Make it Permanent for your Keyboard
+# Make it Permanent for Your Keyboard
 
 Keyshift is designed to clean up if it is interrupted or stopped.
 

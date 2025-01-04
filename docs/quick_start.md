@@ -43,5 +43,6 @@ This will swap the A and B keys.
 You can build more powerful config and store it in a file. When fully configured, this is intended to run in the background covering the session.
 Ideally, you will start this on boot with a systemd service, or add it to udev so that it activates whenever a keyboard is plugged in.
 
-For now you can exit pressing Ctrl+C.
+You can exit pressing Ctrl+C.
 
+Note that once you exit, the changes will no longer remain in effect. To make it permanent, you can [follow this guide](./making_it_permanent.md).
