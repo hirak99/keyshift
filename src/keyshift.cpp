@@ -44,7 +44,7 @@
 const int kReadTimeoutMS = 1500;
 
 // Set to true on interrupts.
-std::atomic<bool> kInterrupted(false);
+std::atomic<bool> kExitMainloopNow(false);
 
 // Disable echoing input when run in terminal.
 void DisableEcho() {
@@ -127,7 +127,7 @@ std::expected<Remapper, std::string> GetRemapper(
 void SignalHandler(const int signum) {
   std::cerr << "Interruption signal (" << signum << ") received, terminating."
             << std::endl;
-  kInterrupted.store(true);
+  kExitMainloopNow.store(true);
 }
 
 int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
@@ -137,9 +137,9 @@ int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
   std::signal(SIGHUP, SignalHandler);
 
   // Most of the mess below is to set up timeouts. Had we not needed that, we'd
-  // just change the if to while and put the kInterrupted detection within it.
-  // However, without this, SIGTERM will wait indefinitely during poweroff until
-  // a key is pressed - we don't want that.
+  // just change the if to while and put the kExitMainloopNow detection within
+  // it. However, without this, SIGTERM will wait indefinitely during poweroff
+  // until a key is pressed - we don't want that.
   const int fd = device.get_fd();
 
   struct pollfd fds[1];
@@ -150,7 +150,7 @@ int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
 
   while (true) {
     // Gracefully exit on interruption.
-    if (kInterrupted.load()) [[unlikely]]
+    if (kExitMainloopNow.load()) [[unlikely]]
       return 2;
 
     const int poll_ret = poll(fds, 1, kReadTimeoutMS);
@@ -181,10 +181,16 @@ int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
           // events are generated.
           remapper.Process(ie.code, ie.value);
         } else [[unlikely]] {
-          // Happens at an alarming rate sometimes!
-          // Counted 1102381 lines in log in a few minites.
-          // EVEY_N_MS ensures we do not spam the journal.
-          EVERY_N_MS_W_SUPPRESSED(500, perror("Failed read"));
+          if (errno == ENODEV) {
+            // This can happen if the keyboard USB was disconnected.
+            perror("Exiting as device no longer exits");
+            kExitMainloopNow.store(true);
+          } else {
+            // Happens at an alarming rate sometimes!
+            // Counted 1102381 lines in log in a few minites.
+            // EVEY_N_MS ensures we do not spam the journal.
+            EVERY_N_MS_W_SUPPRESSED(500, perror("Failed read"));
+          }
         }
     }
   }
