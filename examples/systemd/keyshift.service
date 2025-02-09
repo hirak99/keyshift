@@ -10,6 +10,13 @@ After=network.target
 #    It should be a file ending with '-kbd'.
 # 2- Create a keyshift config, and place it in /opt/.
 ExecStart=/usr/bin/keyshift --kbd /dev/input/by-id/1-YOUR_KEYBOARD_FILE-kbd --config-file /opt/2-YOUR-KEYSHIFT-CONFIG.keyshift
+
+# Set high priority. See `man systemd.exec`.
+Nice=-20
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
+
+# Ensure the service restarts in case of failure.
 Restart=always
 RestartSec=1
 
