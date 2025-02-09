@@ -1,11 +1,7 @@
 # Quick Start
 
-## What does this do?
-This is a keyboard layering software.
-
-Keyboard layering allows you to create multiple sets of key functions that can be accessed through different states or modes of the keyboard. This means that pressing a specific key or combination can switch to a new layer, enabling different key mappings and shortcuts without the need for additional physical keys. It enhances productivity and customization, making it easier to perform various tasks efficiently.
-
-You can also see [here](remapping_needs.md) for some concrete examples of what it can do.
+## Examples
+You can check [this doc](remapping_needs.md) and [this example config](../examples/65perc.keyshift) to get a taste of what this can do.
 
 ## Installing
 
@@ -28,7 +24,7 @@ cd keyshift
 install -Dm 755 ./build/keyshift /usr/bin/keyshift
 ```
 
-## Trying Out
+## Trying
 
 Locate your keyboard in "/dev/input/by-id".
 

@@ -1,5 +1,11 @@
 # Remapping Needs
 
+This is a keyboard layering software.
+
+Keyboard layering allows you to create multiple sets of key functions that can be accessed through different states or modes of the keyboard. This means that pressing a specific key or combination can switch to a new layer, enabling different key mappings and shortcuts without the need for additional physical keys.
+
+In other words, this enables you to (1) remap keys, and (2) to define `Fn`-like keys that change how other keys behave.
+
 ## Use Cases
 
 As a design principle, we start with our desired outcomes first. These help to work backward from there and build the configuration language elements and a system to implement them.
