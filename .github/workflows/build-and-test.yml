@@ -19,7 +19,13 @@ jobs:
           submodules: recursive  # Pull digestpp
 
       - name: Install CMake
-        run: sudo apt-get update && sudo apt-get install -y cmake catch2
+        run: sudo apt-get update && sudo apt-get install -y cmake
 
-      - name: Run build and test script
+      - name: Build succeeds (without Catch2)
+        run: ./build_minimal.sh
+
+      - name: Install Catch2
+        run: sudo apt-get install -y catch2
+
+      - name: Run full build and test script
         run: ./build_all_and_test.sh
