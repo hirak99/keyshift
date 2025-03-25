@@ -231,9 +231,11 @@ int main(const int argc, const char** argv) {
   if (!arg_dry_run) {
     mutex = AcquireOSMutex("keyshift_" + arg_kbd);
     if (!mutex) {
-      std::cerr << "Another instance is starting for specified kbd, exiting."
-                << std::endl;
-      return EXIT_FAILURE;
+      std::cerr
+          << "Keyshift: Another instance is starting for same kbd, exiting."
+          << std::endl;
+      // Normal exit.
+      return EXIT_SUCCESS;
     }
   }
   InputDevice device(arg_kbd.c_str());
