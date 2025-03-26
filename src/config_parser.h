@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <expected>
 #include <iostream>
 #include <map>
 #include <set>
@@ -35,20 +36,22 @@ class ConfigParser {
 
  private:
   // Converts a std::string like "~D ^A" to actions.
-  std::vector<Action> AssignmentToActions(const std::string& assignment);
+  std::expected<std::vector<Action>, std::string> AssignmentToActions(
+      const std::string& assignment);
 
-  std::vector<Action> AssignmentToActions(
+  std::expected<std::vector<Action>, std::string> AssignmentToActions(
       const std::vector<std::string>& tokens);
 
-  bool ParseAssignment(const std::string& layer_name,
-                       const std::string& key_str,
-                       const std::string& assignment);
+  std::expected<void, std::string> ParseAssignment(
+      const std::string& layer_name, const std::string& key_str,
+      const std::string& assignment);
 
-  bool ParseLayerAssignment(const std::string& layer_key_str,
-                            const std::string& key_str,
-                            const std::string& assignment);
+  std::expected<void, std::string> ParseLayerAssignment(
+      const std::string& layer_key_str, const std::string& key_str,
+      const std::string& assignment);
 
-  [[nodiscard]] bool ParseLine(const std::string& original_line);
+  [[nodiscard]] std::expected<void, std::string> ParseLine(
+      const std::string& original_line);
 
   Remapper* remapper_;
   // To keep track of which layers have been seen. Used to do one time actions,

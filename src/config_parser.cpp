@@ -16,6 +16,7 @@
 
 #include "config_parser.h"
 
+#include <expected>
 #include <format>
 #include <iostream>
 #include <map>
@@ -62,11 +63,18 @@ string StringTrim(const string& line) {
   return line.substr(start, end - start + 1);
 }
 
+struct PrefixedKey {
+  // E.g. "^", "~", or empty.
+  std::optional<char> prefix;
+  // Keycode.
+  int key;
+};
+
 // Splits a token like "^A", "~A" or "A" into prefix "^", "~", "" respectively,
 // with the suffix as "A".
-std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
+std::expected<PrefixedKey, std::string> SplitKeyPrefix(string name) {
   static const string prefixes = "~^";
-  char prefix = 0;
+  std::optional<char> prefix = std::nullopt;
   if (prefixes.find(name[0]) != std::string::npos) {
     prefix = name[0];
     name = name.substr(1);
@@ -74,9 +82,9 @@ std::pair<char, std::optional<int>> SplitKeyPrefix(string name) {
   const auto& keycode = StartsWith(name, "KEY_") ? NameToKeyCode(name)
                                                  : NameToKeyCode("KEY_" + name);
   if (!keycode.has_value()) {
-    std::cerr << "ERROR: Unknown key code " << name << std::endl;
+    return std::unexpected(std::format("Unknown key code '{}'.", name));
   }
-  return {prefix, keycode};
+  return PrefixedKey{prefix, keycode.value()};
 }
 
 std::string LayerNameFromKey(int keycode) {
@@ -92,12 +100,13 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
   int line_num = 0;
   for (const auto& line : lines) {
     ++line_num;
-    bool result = ParseLine(line);
+    auto result = ParseLine(line);
     if (!result) {
-      std::cerr << std::format("ERROR at line {}: {}", line_num, line)
+      std::cerr << std::format("ERROR: {}\n  At line #{}, '{}'", result.error(),
+                               line_num, line)
                 << std::endl;
     }
-    success &= result;
+    success &= result.has_value();
   }
   return success;
 }
@@ -105,15 +114,15 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
 // PRIVATE
 
 // Converts a string like "~D ^A" to actions.
-std::vector<Action> ConfigParser::AssignmentToActions(
-    const string& assignment) {
+std::expected<std::vector<Action>, std::string>
+ConfigParser::AssignmentToActions(const string& assignment) {
   const auto tokens = StringSplit(assignment, ' ');
   return AssignmentToActions(tokens);
 }
 
 // Converts a vector<string> like ["B", "^C"] into vector<Action>.
-std::vector<Action> ConfigParser::AssignmentToActions(
-    const std::vector<string>& tokens) {
+std::expected<std::vector<Action>, std::string>
+ConfigParser::AssignmentToActions(const std::vector<string>& tokens) {
   std::vector<Action> actions;
 
   for (const string& token : tokens) {
@@ -122,25 +131,26 @@ std::vector<Action> ConfigParser::AssignmentToActions(
       continue;
     }
     if (token.ends_with("ms")) {
+      int ms;
       // This raises std::invalid_argument if number is invalid.
-      int ms = std::stoi(token.substr(0, token.size() - 2));
+      try {
+        ms = std::stoi(token.substr(0, token.size() - 2));
+      } catch (std::invalid_argument&) {
+        return std::unexpected(
+            std::format("Could not parse waiting time {}.", token));
+      }
       if (ms <= 0 || ms > kMaxWaitMs) {
-        throw std::invalid_argument(
-            std::format("Out of range wait time {}ms", ms));
+        return std::unexpected(std::format("Out of range wait time {}ms", ms));
       }
       actions.push_back(ActionWait{ms});
       continue;
     }
-    const auto [right_prefix, right_key] = SplitKeyPrefix(token);
-    if (!right_key.has_value()) {
-      throw std::invalid_argument(
-          std::format("Invalid keycode in token {}.", token));
-    };
-    if (right_prefix == 0 || right_prefix == '^') {
-      actions.push_back(KeyPressEvent(*right_key));
+    ASSIGN_OR_RETURN(const auto key, SplitKeyPrefix(token));
+    if (!key.prefix.has_value() || key.prefix == '^') {
+      actions.push_back(KeyPressEvent(key.key));
     }
-    if (right_prefix == 0 || right_prefix == '~') {
-      actions.push_back(KeyReleaseEvent(*right_key));
+    if (!key.prefix.has_value() || key.prefix == '~') {
+      actions.push_back(KeyReleaseEvent(key.key));
     }
   }
   return actions;
@@ -148,80 +158,69 @@ std::vector<Action> ConfigParser::AssignmentToActions(
 
 // Given a key and string representing what it should do, adds relevant mappings
 // to remapper_.
-bool ConfigParser::ParseAssignment(const string& layer_name,
-                                   const string& key_str,
-                                   const string& assignment) {
-  const auto [left_prefix, left_key] = SplitKeyPrefix(key_str);
-  if (!left_key.has_value()) return false;
+std::expected<void, std::string> ConfigParser::ParseAssignment(
+    const string& layer_name, const string& key_str, const string& assignment) {
+  ASSIGN_OR_RETURN(const auto left_key, SplitKeyPrefix(key_str));
   if (layer_name == kDefaultLayerName &&
-      known_layers_.contains(LayerNameFromKey(left_key.value()))) {
-    std::cerr << "ERROR: Key assignments like KEY = ... must precede layer "
-                 "assignments KEY + OTHER_KEY = ..."
-              << std::endl;
-    return false;
+      known_layers_.contains(LayerNameFromKey(left_key.key))) {
+    return std::unexpected(
+        "ERROR: Key assignments like KEY = ... must precede layer assignments "
+        "KEY + OTHER_KEY = ...");
   }
 
-  try {
-    std::vector<string> tokens = StringSplit(assignment, ' ');
-    if (tokens.size() == 1 && tokens[0] == "*") {
-      tokens[0] = key_str;
-    }
-    // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
-    // And convert A = B C to [^A = B ^C, ~A = ~C].
-    if (left_prefix == 0) {
-      int n_tokens = tokens.size();
-      string last_token = tokens[n_tokens - 1];
-      if (last_token[0] == '^' || last_token[0] == '~') {
-        std::cerr << "ERROR: If left does not have a prefix (^ or ~), the "
-                     "last token of assignment must not have either."
-                  << std::endl;
-        return false;
-      }
-      // On activation, do everything, but only activate the final key.
-      tokens[n_tokens - 1] = "^" + last_token;
-      remapper_->AddMapping(layer_name, KeyPressEvent(*left_key),
-                            AssignmentToActions(tokens));
-      // On release, do nothing, and only release the final key.
-      remapper_->AddMapping(layer_name, KeyReleaseEvent(*left_key),
-                            AssignmentToActions({"~" + last_token}));
-      return true;
-    } else {
-      remapper_->AddMapping(layer_name,
-                            left_prefix == '~' ? KeyReleaseEvent(*left_key)
-                                               : KeyPressEvent(*left_key),
-                            AssignmentToActions(tokens));
-      return true;
-    }
-  } catch (const std::invalid_argument&) {
-    return false;
+  std::vector<string> tokens = StringSplit(assignment, ' ');
+  if (tokens.size() == 1 && tokens[0] == "*") {
+    tokens[0] = key_str;
   }
+  // For assignments like A = B, convert to [^A = ^B, ~A = ~B].
+  // And convert A = B C to [^A = B ^C, ~A = ~C].
+  if (!left_key.prefix.has_value()) {
+    int n_tokens = tokens.size();
+    string last_token = tokens[n_tokens - 1];
+    if (last_token[0] == '^' || last_token[0] == '~') {
+      return std::unexpected(
+          "ERROR: If left does not have a prefix (^ or ~), the last token of "
+          "assignment must not have either.");
+    }
+    tokens[n_tokens - 1] = "^" + last_token;
+    // On activation, do everything, but only activate the final key.
+    {
+      ASSIGN_OR_RETURN(const auto actions, AssignmentToActions(tokens));
+      remapper_->AddMapping(layer_name, KeyPressEvent(left_key.key), actions);
+    }
+    // On release, do nothing, and only release the final key.
+    {
+      ASSIGN_OR_RETURN(const auto actions,
+                       AssignmentToActions({"~" + last_token}));
+      remapper_->AddMapping(layer_name, KeyReleaseEvent(left_key.key), actions);
+    }
+  } else {
+    ASSIGN_OR_RETURN(const auto actions, AssignmentToActions(tokens));
+    remapper_->AddMapping(layer_name,
+                          left_key.prefix == '~' ? KeyReleaseEvent(left_key.key)
+                                                 : KeyPressEvent(left_key.key),
+                          actions);
+  }
+  return {};
 }
 
-bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
-                                        const string& key_str,
-                                        const string& assignment) {
-  const auto [layer_prefix, layer_key] = SplitKeyPrefix(layer_key_str);
-  if (layer_prefix != 0) {
-    std::cerr << "ERROR: Prefix (^ or ~) for layer keys is not supported yet."
-              << std::endl;
-    return false;
+std::expected<void, std::string> ConfigParser::ParseLayerAssignment(
+    const string& layer_key_str, const string& key_str,
+    const string& assignment) {
+  // TODO: Clean up implicit throw. Use error message below.
+  //  std::cerr << "ERROR: Could not parse layer key " << layer_key_str
+  //            << std::endl;
+  const auto layer_key = SplitKeyPrefix(layer_key_str).value();
+  if (layer_key.prefix.has_value()) {
+    return std::unexpected(
+        "Prefix (^ or ~) for layer keys is not supported yet.");
   }
-  if (!layer_key.has_value()) {
-    std::cerr << "ERROR: Could not parse layer key " << layer_key_str
-              << std::endl;
-    return false;
-  }
-  string layer_name = LayerNameFromKey(layer_key.value());
+  string layer_name = LayerNameFromKey(layer_key.key);
 
   // Add default to layer mapping.
   if (known_layers_.find(layer_name) == known_layers_.end()) {
-    try {
-      remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(*layer_key),
-                            {remapper_->ActionActivateState(layer_name)});
-    } catch (std::invalid_argument&) {
-      std::cerr << "ParseLayerAssignment: Failed" << std::endl;
-      return false;
-    }
+    remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(layer_key.key),
+                          {remapper_->ActionActivateState(layer_name)});
     remapper_->SetAllowOtherKeys(layer_name, false);
     known_layers_.insert(layer_name);
   }
@@ -229,40 +228,35 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   // Handle SHIFT + * = *.
   if (key_str == "*") {
     if (assignment != "*") {
-      std::cerr << "ERROR: Must be a * on the right side of for KEY + * = *"
-                << std::endl;
-      return false;
+      return std::unexpected(
+          "Must be a * on the right side of for KEY + * = *");
     }
     remapper_->SetAllowOtherKeys(layer_name, true);
-    return true;
+    return {};
   }
 
   // Handle DELETE + nothing = DELETE.
   if (key_str == kNothingToken) {
-    try {
-      remapper_->SetNullEventActions(layer_name,
-                                     AssignmentToActions(assignment));
-    } catch (const std::invalid_argument&) {
-      return false;
-    }
-    return true;
+    ASSIGN_OR_RETURN(const auto actions, AssignmentToActions(assignment));
+    remapper_->SetNullEventActions(layer_name, actions);
+    return {};
   }
 
   return ParseAssignment(layer_name, key_str, assignment);
 }
 
-[[nodiscard]] bool ConfigParser::ParseLine(const string& original_line) {
+std::expected<void, std::string> ConfigParser::ParseLine(
+    const string& original_line) {
   // Ignore comments and empty lines.
   string line = StringTrim(RemoveComment(original_line));
   if (line.empty()) {
-    return true;
+    return {};
   }
 
   // Split the config line into the key combination and the action.
   auto parts = StringSplit(line, '=');
   if (parts.size() != 2) {
-    std::cerr << "ERROR: Not of the form A = B" << std::endl;
-    return false;
+    return std::unexpected("ERROR: Not of the form A = B");
   }
 
   string key_combo = StringTrim(parts[0]);
@@ -270,15 +264,15 @@ bool ConfigParser::ParseLayerAssignment(const string& layer_key_str,
 
   // Split key combination by '+', e.g., "DEL + END"
   auto keys = StringSplit(key_combo, '+');
+
   if (keys.size() == 1) {
     return ParseAssignment(kDefaultLayerName, StringTrim(keys[0]), action);
   } else if (keys.size() == 2) {
     return ParseLayerAssignment(StringTrim(keys[0]), StringTrim(keys[1]),
                                 action);
   } else {
-    std::cerr << "ERROR Cannot have more than 1 '+' in line:" << original_line
-              << std::endl;
-    return false;
+    return std::unexpected(
+        std::format("Cannot have more than 1 '+' in line: {}", original_line));
   }
-  return true;
+  return {};
 }

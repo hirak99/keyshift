@@ -127,4 +127,33 @@ std::vector<std::pair<T, U>> Sorted(const std::unordered_map<T, U>& input) {
   return result;
 }
 
+// Convenience macro for std::except error handling.
+
+// Defines only active during static checking. Not compiled.
+#if __INTELLISENSE__
+// Avoid Visual Studio Code marking GCC defines as errors. See -
+// https://github.com/microsoft/vscode-cpptools/issues/11164#issuecomment-2115945518
+
+// Note: __FILE_NAME__ is the basename, __FILE__ is the full name that can leak
+// information. However this define is only active for static checking.
+#define __FILE_NAME__ __FILE__
+#endif
+
+// Similar to value() which throws exception, except that this propagates the
+// exception to the calling function.
+// E.g. -
+// std::except<void, std::string> test(float a) {
+//   ASSIGN_OR_RETURN(const float x, sqrt_or_error(a));
+//   std::cout << "Result: " << x << std::endl;
+//   return {};
+// }
+#define ASSIGN_OR_RETURN(result, result_as_expected)                \
+  const auto temp_##__LINE__ = result_as_expected;                  \
+  if (!temp_##__LINE__) {                                           \
+    return std::unexpected(std::string("(") + __FILE_NAME__ + ":" + \
+                           std::to_string(__LINE__) + ") " +        \
+                           temp_##__LINE__.error());                \
+  }                                                                 \
+  result = *temp_##__LINE__;
+
 #endif  // __ESSENTIALS_H
