@@ -162,8 +162,7 @@ ErrorStrOr<void> ConfigParser::ParseAssignment(const string& layer_name,
                                                const string& key_str,
                                                const string& assignment) {
   ASSIGN_OR_RETURN(const auto left_key, SplitKeyPrefix(key_str));
-  if (layer_name == kDefaultLayerName &&
-      known_layers_.contains(LayerNameFromKey(left_key.key))) {
+  if (layer_name == kDefaultLayerName && layer_keys_.contains(left_key.key)) {
     return std::unexpected(
         "Key assignments like KEY = ... must precede layer assignments "
         "KEY + OTHER_KEY = ...");
@@ -216,11 +215,11 @@ ErrorStrOr<void> ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   string layer_name = LayerNameFromKey(layer_key.key);
 
   // Add default to layer mapping.
-  if (known_layers_.find(layer_name) == known_layers_.end()) {
+  if (layer_keys_.find(layer_key.key) == layer_keys_.end()) {
     remapper_->AddMapping(kDefaultLayerName, KeyPressEvent(layer_key.key),
                           {remapper_->ActionActivateState(layer_name)});
     remapper_->SetAllowOtherKeys(layer_name, false);
-    known_layers_.insert(layer_name);
+    layer_keys_.insert(layer_key.key);
   }
 
   // Handle SHIFT + * = *.

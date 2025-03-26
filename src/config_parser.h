@@ -53,7 +53,6 @@ class ConfigParser {
   [[nodiscard]] ErrorStrOr<void> ParseLine(const std::string& original_line);
 
   Remapper* remapper_;
-  // To keep track of which layers have been seen. Used to do one time actions,
-  // such as disallow other keys.
-  std::set<std::string> known_layers_;
+  // To keep track of keys used to define layers.
+  std::set<int> layer_keys_;
 };
