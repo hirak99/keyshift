@@ -116,7 +116,7 @@ std::vector<std::pair<T, U>> Sorted(const std::unordered_map<T, U>& input,
   return result;
 }
 
-// Sorted version of a map, with specified sort order; just by the key.
+// Sorted version of a map, sorted by the key.
 template <typename T, typename U>
 std::vector<std::pair<T, U>> Sorted(const std::unordered_map<T, U>& input) {
   std::vector<std::pair<T, U>> result;
