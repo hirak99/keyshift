@@ -23,23 +23,45 @@ Once you are happy with a configuration, you can add it to your startup. Or, you
 
 ## Statement Reference
 
-- Available keycodes
+- Available keycodes -
   - You can use any keycode [/usr/include/linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h). You can omit the "KEY_" prefix.
   - As special tokens, you can use `*` and `nothing`. See descriptions below.
 
-- Basic remapping
-  - `^KEY1 = [TOKEN ...]` - The `^` indicates press of a key. On KEY1 press, tokens on the right will be performed.
-  - `~KEY1 = [TOKEN ...]` - The `~` indicates release of a key. On KEY1 release, tokens on the right will be performed.
-  - `KEY1 = [TOKEN ...] FINAL_TOKEN` - Equivalent to `^KEY1 = [TOKEN ...] ^FINAL_TOKEN`, `~KEY1 = ~FINAL_TOKEN`. Example: `A = B` will make the A key act exactly like B.
-  - `KEY1 = nothing` - Blocks the key. E.g. `DELETE = nothing`.
-  - `... = KEY1 50ms KEY2` - A number with suffix ms, such as `50ms`, indicates a desired pause in milli-seconds.
+- Lose syntax -
+  - _(Basic)_ `KEY = [ACTION ...]`
+    - `ACTION` can be one one of the following -
+      - `x` (or `KEY_x`) - Where `KEY_x` is any [key code](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) such as `KEY_F1`, indicates a press-and-release event.
+      - `^x` (or `^KEY_x`) - Indicates just a press event.
+      - `~x` (or `~KEY_x`) - Indicates just a release event.
+      - `[num]ms` - indicates a pause of `[num]` milliseconds.
+      - `nothing` - Blocks the key.
+  - _(Layering)_ `KEY + TOKEN = [ACTION ...] | nothing | *`
+    - `TOKEN` can be -
+      - `nothing` - Indicates action to be taken if the activation key is pressed and released, with no other key pressed. Normally the layer absorbs the key. So `CAPSLOCK + 1 = F1; CAPSLOCK + nothing = CAPSLOCK` will make Capslock to behave as itself, unless any other key is press within it.
+      - `x` (or `KEY_x`) - Any other specific key.
+      - `*` indicating any key - In this case it must be of the form `KEY + * = *`. This will allow all keys to pass thru.
+  - Implicit actions -
+    - If a key activates a layer, releasing it will deactivate the layer, and generate release action for any keys pressed (but not yet released) due actions when it was held.
+    - If a multiple layers are activated, keys will be modified through all layers.
 
-- Layering
-  - `KEY1 + KEY2 = [TOKEN ...]` - Only if KEY1 is held, KEY2 will activate the tokens.
-    - Note that by default the layer-activation key, i.e. KEY1 in this example, will now be suppressed. If you need to also register the activation key, you must specify that explicitly `^KEY1 = ^KEY1`.
+### Examples
+
+- Basic remapping -
+  - `^A = ~B` - The `^` indicates press of a key. On KEY_A press, instead a KEY_B press will be performed.
+  - `^A = ^B ~B` - The `~` indicates release of a key. On KEY_A press, a press and release of KEY_B will be performed.
+  - `A = B` - Shorthand for `^A = ^B; ~A = ~B`.
+  - `KEY1 = [ACTION ...] KEY_x` - Equivalent to `^KEY1 = [TOKEN ...] ^KEY_x`, `~KEY1 = ~KEY_x`. Example: `A = B` will make the A key act exactly like B.
+  - `A = nothing` - Blocks the key. Pressing A will no longer be registered.
+  - `A = ^H 50ms ~H 50ms I` - A number with suffix ms, such as `50ms`, indicates a desired pause in milli-seconds.
+
+- Layering -
+  - `A + B = [ACTIONS ...]` - Only if A is held, B will activate the actions.
+    - Note that by default the layer-activation key, i.e. A in this example, will now be suppressed. If you need to also register the activation key, you must specify that explicitly.
+        - `LEFTSHIFT + A = A` - Shift+A will result in "a".
+        - `^LEFTSHIFT = ^LEFTSHIFT; LEFTSHIFT + A = A` - Shift+A will result in "A" since now shift also registers as is.
   - `KEY1 + KEY2 = *` - Shorthand for `KEY1 + KEY2 = KEY2`. Allows the key KEY2 to be passed thru in this layer unaltered.
   - `KEY1 + * = *` - Allow all keys not explicitly remapped under KEY1 to pass thru as is.
-  - `KEY1 + nothing = [TOKEN ...]` - Specifies what should happen if nothing inside the layer is activated. E.g. `DELETE + 1 = F1; DELETE + nothing = DELETE` will ensure DELETE acts as itself unless 1 is pressed within it.
+  - `KEY1 + nothing = [ACTION ...]` - Specifies what should happen if nothing inside the layer is activated. E.g. `DELETE + 1 = F1; DELETE + nothing = DELETE` will ensure DELETE acts as itself unless 1 is pressed within it.
 
 ## How to find keycodes
 
@@ -158,5 +180,4 @@ If you lock yourself out due to a bad configuration, don't fret. There is a kill
 
 Don't worry if you modified those keys with a configuration, the combo acts on actual keys.
 
-You will see a std::runtime_error, which is normal in this case and confirms deactivation.
-
+You will notice the last `L` is not registered, and keyboard-remapper is terminated and deactivated from then on.
