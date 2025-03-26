@@ -18,6 +18,7 @@
 #define __ESSENTIALS_H
 
 #include <algorithm>
+#include <expected>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -128,6 +129,10 @@ std::vector<std::pair<T, U>> Sorted(const std::unordered_map<T, U>& input) {
 }
 
 // Convenience macro for std::except error handling.
+
+// Provides brevity in place of std::expected<..., std::string> for brevity.
+template <typename T>
+using ErrorStrOr = std::expected<T, std::string>;
 
 // Defines only active during static checking. Not compiled.
 #if __INTELLISENSE__

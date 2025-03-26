@@ -26,8 +26,8 @@ using Catch::Matchers::MessageMatches;
 
 // Helper to call parse, with the correct argc count.
 [[nodiscard]]
-std::expected<void, std::string> CallParse(
-    ArgumentParser& parser, const std::vector<std::string> args) {
+ErrorStrOr<void> CallParse(ArgumentParser& parser,
+                           const std::vector<std::string> args) {
   // Create an array of const char* and initialize it from the std::vector
   std::vector<const char*> argv(args.size() + 1);  // +1 for NULL terminator
 

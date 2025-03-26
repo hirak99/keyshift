@@ -70,9 +70,9 @@ struct PrefixedKey {
   int key;
 };
 
-// Splits a token like "^A", "~A" or "A" into prefix "^", "~", "" respectively,
-// with the suffix as "A".
-std::expected<PrefixedKey, std::string> SplitKeyPrefix(string name) {
+// Splits a token like "^A", "~A" or "A" into prefix "^", "~", nullopt
+// respectively, with the suffix as "A".
+ErrorStrOr<PrefixedKey> SplitKeyPrefix(string name) {
   static const string prefixes = "~^";
   std::optional<char> prefix = std::nullopt;
   if (prefixes.find(name[0]) != std::string::npos) {
@@ -100,7 +100,7 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
   int line_num = 0;
   for (const auto& line : lines) {
     ++line_num;
-    auto result = ParseLine(line);
+    const auto result = ParseLine(line);
     if (!result) {
       std::cerr << std::format("ERROR: {}\n  At line #{}, '{}'", result.error(),
                                line_num, line)
@@ -114,15 +114,15 @@ ConfigParser::ConfigParser(Remapper* remapper) { remapper_ = remapper; }
 // PRIVATE
 
 // Converts a string like "~D ^A" to actions.
-std::expected<std::vector<Action>, std::string>
-ConfigParser::AssignmentToActions(const string& assignment) {
+ErrorStrOr<std::vector<Action>> ConfigParser::AssignmentToActions(
+    const string& assignment) {
   const auto tokens = StringSplit(assignment, ' ');
   return AssignmentToActions(tokens);
 }
 
 // Converts a vector<string> like ["B", "^C"] into vector<Action>.
-std::expected<std::vector<Action>, std::string>
-ConfigParser::AssignmentToActions(const std::vector<string>& tokens) {
+ErrorStrOr<std::vector<Action>> ConfigParser::AssignmentToActions(
+    const std::vector<string>& tokens) {
   std::vector<Action> actions;
 
   for (const string& token : tokens) {
@@ -158,13 +158,14 @@ ConfigParser::AssignmentToActions(const std::vector<string>& tokens) {
 
 // Given a key and string representing what it should do, adds relevant mappings
 // to remapper_.
-std::expected<void, std::string> ConfigParser::ParseAssignment(
-    const string& layer_name, const string& key_str, const string& assignment) {
+ErrorStrOr<void> ConfigParser::ParseAssignment(const string& layer_name,
+                                               const string& key_str,
+                                               const string& assignment) {
   ASSIGN_OR_RETURN(const auto left_key, SplitKeyPrefix(key_str));
   if (layer_name == kDefaultLayerName &&
       known_layers_.contains(LayerNameFromKey(left_key.key))) {
     return std::unexpected(
-        "ERROR: Key assignments like KEY = ... must precede layer assignments "
+        "Key assignments like KEY = ... must precede layer assignments "
         "KEY + OTHER_KEY = ...");
   }
 
@@ -179,7 +180,7 @@ std::expected<void, std::string> ConfigParser::ParseAssignment(
     string last_token = tokens[n_tokens - 1];
     if (last_token[0] == '^' || last_token[0] == '~') {
       return std::unexpected(
-          "ERROR: If left does not have a prefix (^ or ~), the last token of "
+          "If left does not have a prefix (^ or ~), the last token of "
           "assignment must not have either.");
     }
     tokens[n_tokens - 1] = "^" + last_token;
@@ -204,12 +205,9 @@ std::expected<void, std::string> ConfigParser::ParseAssignment(
   return {};
 }
 
-std::expected<void, std::string> ConfigParser::ParseLayerAssignment(
-    const string& layer_key_str, const string& key_str,
-    const string& assignment) {
-  // TODO: Clean up implicit throw. Use error message below.
-  //  std::cerr << "ERROR: Could not parse layer key " << layer_key_str
-  //            << std::endl;
+ErrorStrOr<void> ConfigParser::ParseLayerAssignment(const string& layer_key_str,
+                                                    const string& key_str,
+                                                    const string& assignment) {
   const auto layer_key = SplitKeyPrefix(layer_key_str).value();
   if (layer_key.prefix.has_value()) {
     return std::unexpected(
@@ -245,8 +243,7 @@ std::expected<void, std::string> ConfigParser::ParseLayerAssignment(
   return ParseAssignment(layer_name, key_str, assignment);
 }
 
-std::expected<void, std::string> ConfigParser::ParseLine(
-    const string& original_line) {
+ErrorStrOr<void> ConfigParser::ParseLine(const string& original_line) {
   // Ignore comments and empty lines.
   string line = StringTrim(RemoveComment(original_line));
   if (line.empty()) {
@@ -256,7 +253,7 @@ std::expected<void, std::string> ConfigParser::ParseLine(
   // Split the config line into the key combination and the action.
   auto parts = StringSplit(line, '=');
   if (parts.size() != 2) {
-    return std::unexpected("ERROR: Not of the form A = B");
+    return std::unexpected("Not of the form A = B");
   }
 
   string key_combo = StringTrim(parts[0]);

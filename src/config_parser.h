@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <expected>
 #include <iostream>
 #include <map>
 #include <set>
@@ -24,6 +23,7 @@
 
 #include "keycode_lookup.h"
 #include "remap_operator.h"
+#include "utility/essentials.h"
 
 class ConfigParser {
  public:
@@ -36,22 +36,21 @@ class ConfigParser {
 
  private:
   // Converts a std::string like "~D ^A" to actions.
-  std::expected<std::vector<Action>, std::string> AssignmentToActions(
+  ErrorStrOr<std::vector<Action>> AssignmentToActions(
       const std::string& assignment);
 
-  std::expected<std::vector<Action>, std::string> AssignmentToActions(
+  ErrorStrOr<std::vector<Action>> AssignmentToActions(
       const std::vector<std::string>& tokens);
 
-  std::expected<void, std::string> ParseAssignment(
-      const std::string& layer_name, const std::string& key_str,
-      const std::string& assignment);
+  ErrorStrOr<void> ParseAssignment(const std::string& layer_name,
+                                   const std::string& key_str,
+                                   const std::string& assignment);
 
-  std::expected<void, std::string> ParseLayerAssignment(
-      const std::string& layer_key_str, const std::string& key_str,
-      const std::string& assignment);
+  ErrorStrOr<void> ParseLayerAssignment(const std::string& layer_key_str,
+                                        const std::string& key_str,
+                                        const std::string& assignment);
 
-  [[nodiscard]] std::expected<void, std::string> ParseLine(
-      const std::string& original_line);
+  [[nodiscard]] ErrorStrOr<void> ParseLine(const std::string& original_line);
 
   Remapper* remapper_;
   // To keep track of which layers have been seen. Used to do one time actions,

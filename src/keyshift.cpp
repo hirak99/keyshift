@@ -97,7 +97,7 @@ std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
   return parser;
 }
 
-std::expected<Remapper, std::string> GetRemapper(
+ErrorStrOr<Remapper> GetRemapper(
     const std::optional<std::string>& config,
     const std::optional<std::string>& config_file) {
   std::vector<std::string> lines;

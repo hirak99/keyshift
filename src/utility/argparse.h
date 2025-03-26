@@ -36,7 +36,6 @@
 #ifndef __ARGPARSE_H
 #define __ARGPARSE_H
 
-#include <expected>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -53,7 +52,7 @@ class ArgumentParser {
   void ShowHelp();
 
   [[nodiscard]]
-  std::expected<void, std::string> Parse(const int argc, const char** argv);
+  ErrorStrOr<void> Parse(const int argc, const char** argv);
 
   bool GetBool(const std::string& name);
   std::optional<std::string> GetString(const std::string& name);
