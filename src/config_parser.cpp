@@ -268,7 +268,8 @@ ErrorStrOr<void> ConfigParser::ParseLine(const string& original_line) {
                                 action);
   } else {
     return std::unexpected(
-        std::format("Cannot have more than 1 '+' in line: {}", original_line));
+        // In theorey we could have A + B + C = D, but it is not yet supported.
+        std::format("Cannot have more than 1 '+' before '='", original_line));
   }
   return {};
 }

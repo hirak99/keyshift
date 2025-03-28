@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef __CONFIG_PARSER_H
+#define __CONFIG_PARSER_H
 
 #include <iostream>
 #include <map>
@@ -56,3 +58,5 @@ class ConfigParser {
   // To keep track of keys used to define layers.
   std::set<int> layer_keys_;
 };
+
+#endif  //  __CONFIG_PARSER_H
