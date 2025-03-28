@@ -14,27 +14,29 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions -funroll-loops")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Get the Git commit ID.
-# Note: The version will be the PKGBUILD version if compiled in Arch.
-# This is because it Arch package uses a tagged release.
+# Note: The will be the PKGBUILD version if compiled in Arch. This is because it
+# Arch package uses a tagged release.
 execute_process(
-    COMMAND git rev-parse HEAD
-    OUTPUT_VARIABLE GIT_COMMIT_ID
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-execute_process(
-    COMMAND git status --porcelain
-    OUTPUT_VARIABLE GIT_STATUS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-# Check if it is dirty.
-if (GIT_STATUS)
-    # Dash indicates dirty.
-    set(GIT_COMMIT_ID "${GIT_COMMIT_ID}-")
-endif()
-# Commit time.
-execute_process(
-    COMMAND git log -1 --format=%cd
-    OUTPUT_VARIABLE GIT_COMMIT_TIME
+    COMMAND sh -c "
+        # Get the commit hash
+        COMMIT_HASH=\$(git rev-parse HEAD);
+
+        # Count the number of commits ahead of origin/main
+        PUSH_COUNT=\$(git rev-list --count HEAD);
+
+        # Check if there are any uncommitted changes
+        DIRTY_STATUS=\$(git status --porcelain);
+
+        # Check if there are any uncommitted changes, set DIRTY_STATUS to '-' if dirty
+        DIRTY_STATUS=\$(git status --porcelain | grep -q . && echo '-' || echo '');
+
+        # Combine into the final version string
+        VERSION=\"r\${PUSH_COUNT}.\${COMMIT_HASH}\${DIRTY_STATUS}\"
+
+        # Output the result
+        echo \$VERSION
+    "
+    OUTPUT_VARIABLE BUILD_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 # Create the version header file

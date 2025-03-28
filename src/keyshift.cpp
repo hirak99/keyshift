@@ -90,8 +90,7 @@ std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
   }
   const bool arg_version = parser.GetBool("version");
   if (arg_version) {
-    std::cout << "Commit id: " << GIT_COMMIT_ID << std::endl;
-    std::cout << "Commit time: " << GIT_COMMIT_TIME << std::endl;
+    std::cout << "Version: " << BUILD_VERSION << std::endl;
     return std::nullopt;
   }
   return parser;

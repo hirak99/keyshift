@@ -1,7 +1,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define GIT_COMMIT_ID "@GIT_COMMIT_ID@"
-#define GIT_COMMIT_TIME "@GIT_COMMIT_TIME@"
+#define BUILD_VERSION "@BUILD_VERSION@"
 
 #endif // VERSION_H
