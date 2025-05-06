@@ -64,7 +64,7 @@ std::optional<ArgumentParser> ParseArgs(const int argc, const char** argv) {
   ArgumentParser parser;
   parser.AddBool("help", "Show a short help.");
   parser.AddString(
-      "kbd", "Address of the -kbd device to remap in `/dev/input/by-path/`.");
+      "kbd", "Address of the -kbd device to remap in `/dev/input/by-id/`.");
   parser.AddString("config",
                    "Config as a semi-colon delimited strings, e.g. 'A=B;B=A'.");
   parser.AddString("config-file", "File with remapping configuration.");
@@ -129,7 +129,8 @@ void SignalHandler(const int signum) {
   kExitMainloopNow.store(true);
 }
 
-int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
+int MainLoop(InputDevice& device, VirtualDevice& out_device, Remapper& remapper,
+             bool echo_inputs) {
   // Set up handlers which will set kInterrupded on any error.
   std::signal(SIGINT, SignalHandler);
   std::signal(SIGTERM, SignalHandler);
@@ -165,7 +166,11 @@ int MainLoop(InputDevice& device, Remapper& remapper, bool echo_inputs) {
       default:
         // There is data to be read, and the read is no longer blocking.
         if (read(fd, &ie, sizeof(struct input_event)) > 0) [[likely]] {
-          if (ie.type != EV_KEY) continue;
+          if (ie.type != EV_KEY) {
+            // E.g. EV_REL for mouse operations.
+            out_device.PassThru(ie);
+            continue;
+          }
 
           if (echo_inputs) [[unlikely]] {
             std::cout << "In: ";
@@ -239,6 +244,10 @@ int main(const int argc, const char** argv) {
   }
   InputDevice device(arg_kbd.c_str());
   VirtualDevice out_device;
+  if (!out_device.IsOpen()) {
+    std::cerr << "ERROR: Unable to create a virtual device." << std::endl;
+    return EXIT_FAILURE;
+  }
 
   if (arg_dry_run) {
     DisableEcho();
@@ -267,5 +276,5 @@ int main(const int argc, const char** argv) {
   }
 
   // Control returns from MainLoop only if interrupted or killed.
-  return MainLoop(device, remapper, arg_dry_run);
+  return MainLoop(device, out_device, remapper, arg_dry_run);
 }

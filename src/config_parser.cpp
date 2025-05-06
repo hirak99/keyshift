@@ -79,8 +79,9 @@ ErrorStrOr<PrefixedKey> SplitKeyPrefix(string name) {
     prefix = name[0];
     name = name.substr(1);
   }
-  const auto& keycode = StartsWith(name, "KEY_") ? NameToKeyCode(name)
-                                                 : NameToKeyCode("KEY_" + name);
+  const auto& keycode = StartsWith(name, "KEY_") || StartsWith(name, "BTN_")
+                            ? NameToKeyCode(name)
+                            : NameToKeyCode("KEY_" + name);
   if (!keycode.has_value()) {
     return std::unexpected(std::format("Unknown key code '{}'.", name));
   }

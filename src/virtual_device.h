@@ -43,10 +43,26 @@ class VirtualDevice {
     setup.id.vendor = 0x549c;
     setup.id.product = 0xb248;
     setup.id.version = 1;
-    strcpy(setup.name, "Virtual Keyboard");
+    strcpy(setup.name, "Keyshift Virtual Keyboard & Mouse");
 
-    // Enable the necessary event types and keys
-    if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0) {
+    // Enable the event types and keys we want this device to either emulate or
+    // pass thru.
+    if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0 ||
+
+        // Mouse buttons.
+        ioctl(fd, UI_SET_KEYBIT, BTN_LEFT) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_MIDDLE) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_SIDE) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_EXTRA) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_FORWARD) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_BACK) < 0 ||
+        ioctl(fd, UI_SET_KEYBIT, BTN_TASK) < 0 ||
+
+        // Mouse motions.
+        ioctl(fd, UI_SET_EVBIT, EV_REL) < 0 ||
+        ioctl(fd, UI_SET_RELBIT, REL_X) < 0 ||
+        ioctl(fd, UI_SET_RELBIT, REL_Y) < 0) {
       perror("UI_SET_EVBIT failed");
       close(fd);
       return;
@@ -78,6 +94,13 @@ class VirtualDevice {
     file_descriptor_ = fd;
   }
 
+  void PassThru(const input_event& ie) const {
+    if (!IsOpen()) [[unlikely]] {
+      return;
+    }
+    write(file_descriptor_, &ie, sizeof(ie));
+  }
+
   ~VirtualDevice() {
     if (!IsOpen()) return;
     // Clean up and destroy the uinput device
@@ -100,14 +123,15 @@ class VirtualDevice {
 
  private:
   void SendEvent(unsigned int type, unsigned int code, int value) const {
-    if (!IsOpen()) return;
-    struct input_event ev;
-    memset(&ev, 0, sizeof(ev));
-    ev.type = type;
-    ev.code = code;
-    ev.value = value;
+    if (!IsOpen()) [[unlikely]]
+      return;
+    struct input_event ie;
+    memset(&ie, 0, sizeof(ie));
+    ie.type = type;
+    ie.code = code;
+    ie.value = value;
 
-    if (write(file_descriptor_, &ev, sizeof(ev)) < 0) {
+    if (write(file_descriptor_, &ie, sizeof(ie)) < 0) {
       perror("write failed");
     }
   }
