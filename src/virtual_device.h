@@ -61,6 +61,7 @@ class VirtualDevice {
 
         // Mouse motions.
         ioctl(fd, UI_SET_EVBIT, EV_REL) < 0 ||
+        ioctl(fd, UI_SET_RELBIT, REL_WHEEL) < 0 ||
         ioctl(fd, UI_SET_RELBIT, REL_X) < 0 ||
         ioctl(fd, UI_SET_RELBIT, REL_Y) < 0) {
       perror("UI_SET_EVBIT failed");
