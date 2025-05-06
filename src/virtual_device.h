@@ -26,6 +26,8 @@
 
 #include <iostream>
 
+#include "keycode_lookup.h"
+
 class VirtualDevice {
  public:
   VirtualDevice() {
@@ -47,19 +49,9 @@ class VirtualDevice {
 
     // Enable the event types and keys we want this device to either emulate or
     // pass thru.
-    if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0 ||
-
-        // Mouse buttons.
-        ioctl(fd, UI_SET_KEYBIT, BTN_LEFT) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_MIDDLE) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_SIDE) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_EXTRA) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_FORWARD) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_BACK) < 0 ||
-        ioctl(fd, UI_SET_KEYBIT, BTN_TASK) < 0 ||
-
-        // Mouse motions.
+    if (  // Allow keys.
+        ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0 ||
+        // Allow mouse motions.
         ioctl(fd, UI_SET_EVBIT, EV_REL) < 0 ||
         ioctl(fd, UI_SET_RELBIT, REL_WHEEL) < 0 ||
         ioctl(fd, UI_SET_RELBIT, REL_X) < 0 ||
@@ -71,7 +63,8 @@ class VirtualDevice {
 
     // Enable the device to send all possible keys.
     // So far it looks like KEY_MICMUTE is the highest with value 248.
-    for (int keycode = KEY_ESC; keycode <= 255; ++keycode) {
+    for (const auto& pair : kKeyCodeNames) {
+      const int keycode = pair.second;
       if (ioctl(fd, UI_SET_KEYBIT, keycode) < 0) {
         std::cerr << "Error setting key bit for keycode " << keycode
                   << std::endl;
