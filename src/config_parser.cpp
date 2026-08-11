@@ -34,7 +34,7 @@ using std::string;
 const string kDefaultLayerName = "";
 
 // Any wait larger than this will not be allowed.
-const int kMaxWaitMs = 1000;
+const int kMaxWaitMs = 3600000;  // 1 hour
 
 // When on left, sets a default assignment e.g. "DELETE + nothing = DELETE".
 // When on right, blocks a key e.g. "DELETE = nothing".
