@@ -240,6 +240,24 @@ ErrorStrOr<void> ConfigParser::ParseLayerAssignment(const string& layer_key_str,
     return {};
   }
 
+  // Handle DELETE + 250ms = D.
+  if (key_str.ends_with("ms")) {
+    int ms;
+    try {
+      ms = std::stoi(key_str.substr(0, key_str.size() - 2));
+    } catch (std::invalid_argument&) {
+      return std::unexpected(
+          std::format("Could not parse timeout value {}.", key_str));
+    }
+    if (ms <= 0 || ms > kMaxWaitMs) {
+      return std::unexpected(
+          std::format("Out of range timeout {}ms", ms));
+    }
+    ASSIGN_OR_RETURN(const auto actions, AssignmentToActions(assignment));
+    remapper_->SetTimeoutActions(layer_name, ms, actions);
+    return {};
+  }
+
   return ParseAssignment(layer_name, key_str, assignment);
 }
 

@@ -92,6 +92,14 @@ void Remapper::SetNullEventActions(const std::string& state_name,
   keyboard_state.null_event_actions = actions;
 }
 
+void Remapper::SetTimeoutActions(const std::string& state_name,
+                                 int milli_seconds,
+                                 const std::vector<Action> actions) {
+  auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
+  keyboard_state.timeout_after_ms = milli_seconds;
+  keyboard_state.timeout_actions = actions;
+}
+
 void Remapper::SetAllowOtherKeys(const std::string& state_name,
                                  bool allow_other_keys) {
   auto& keyboard_state = all_states_[StateNameToIndex(state_name)];
@@ -107,6 +115,10 @@ void Remapper::Process(const int key_code_int, const int value) {
   currently_processing_ = key_event;
 
   ProcessCombos(key_event);
+
+  // Check timeout BEFORE deactivation — the layer must still be active.
+  CheckTimeout();
+
   // Check if key_event is in activated keyboard_state stack.
   if (DeactivateLayerByKey(key_event)) [[unlikely]] {
     return;
@@ -159,6 +171,10 @@ void Remapper::DumpConfig(std::ostream& os) const {
     if (!state.null_event_actions.empty()) {
       os << "  On nothing:" << std::endl;
       ShowActions(state.null_event_actions);
+    }
+    if (state.timeout_after_ms > 0) {
+      os << "  On timeout: " << state.timeout_after_ms << "ms" << std::endl;
+      ShowActions(state.timeout_actions);
     }
   }
 }
@@ -355,7 +371,8 @@ void Remapper::ProcessActions(const std::vector<Action>& actions) {
         auto* new_state = &all_states_[layer_change.layer_index];
         if (new_state->activate()) {
           active_layers_.push_back(LayerActivation{
-              event_seq_num_++, currently_processing_, new_state});
+              event_seq_num_++, currently_processing_, new_state,
+              std::chrono::steady_clock::now()});
         }
       } else {
         std::cerr << "WARNING: Invalid keyboard_state code. This is "
@@ -378,5 +395,23 @@ void Remapper::ProcessCombos(const KeyEvent& key_event) {
     }
   } else [[likely]] {
     combo_kill_progress_ = 0;
+  }
+}
+
+// Check if the currently active layer has a timeout that has elapsed.
+void Remapper::CheckTimeout() {
+  if (active_layers_.empty()) return;
+  auto& layer = active_layers_.back();
+  auto& state = *layer.this_state;
+  if (state.timeout_after_ms <= 0 || state.timeout_fired) return;
+
+  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                     std::chrono::steady_clock::now() - layer.activation_time)
+                     .count();
+  if (elapsed >= state.timeout_after_ms) {
+    state.timeout_fired = true;
+    // A timeout counts as an event, so null event is no longer applicable.
+    state.null_event_applicable = false;
+    ProcessActions(state.timeout_actions);
   }
 }

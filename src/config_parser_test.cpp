@@ -17,6 +17,8 @@
 #include "config_parser.h"
 
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
+#include <thread>
 
 #include "remap_operator.h"
 #include "test_utils.h"
@@ -418,4 +420,131 @@ SCENARIO("Rpeating key should be releasable after layer activation") {
                               "Out: T KEY_B",
                               "Out: R KEY_B",
                           });
+}
+
+// Test timeout-based layer activation: A + 250ms = D
+SCENARIO("Layer timeout") {
+  Remapper remapper;
+  ConfigParser config_parser(&remapper);
+
+  GIVEN("Config with timeout") {
+    REQUIRE(config_parser.Parse({"A + 1 = F1",
+                                 "A + 5ms = D",
+                                 "A + nothing = X"}));
+
+    THEN("Dump shows timeout") {
+      CHECK(GetRemapperConfigDump(remapper) == R"(State #0
+  Other keys: Allow
+  On: (KEY_A Press)
+    Layer Change: 1
+State #1
+  Other keys: Block
+  On: (KEY_1 Release)
+    Key: (KEY_F1 Release)
+  On: (KEY_1 Press)
+    Key: (KEY_F1 Press)
+  On nothing:
+    Key: (KEY_X Press)
+    Key: (KEY_X Release)
+  On timeout: 5ms
+    Key: (KEY_D Press)
+    Key: (KEY_D Release)
+)");
+    }
+  }
+
+  GIVEN("Timeout fires on hold") {
+    REQUIRE(config_parser.Parse({"A + 5ms = D", "A + nothing = X"}));
+
+    THEN("Holding A past timeout emits D, then null event fires X") {
+      // Set up callback to capture outcomes.
+      std::vector<string> outcomes;
+      remapper.SetCallback([&outcomes](int keycode, int press) {
+        std::ostringstream oss;
+        oss << "Out: " << (press == 1 ? "P " : "R ") << KeyCodeToName(keycode);
+        outcomes.push_back(oss.str());
+      });
+
+      // Press A, wait for timeout, release.
+      remapper.Process(KEY_A, 1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.Process(KEY_A, 0);
+
+      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",
+                                       "Out: P KEY_X", "Out: R KEY_X"});
+    }
+  }
+
+  GIVEN("Timeout with nothing on right") {
+    REQUIRE(config_parser.Parse({"A + 5ms = nothing", "A + nothing = X"}));
+
+    THEN("Timeout does nothing, null event fires on release") {
+      std::vector<string> outcomes;
+      remapper.SetCallback([&outcomes](int keycode, int press) {
+        std::ostringstream oss;
+        oss << "Out: " << (press == 1 ? "P " : "R ") << KeyCodeToName(keycode);
+        outcomes.push_back(oss.str());
+      });
+
+      remapper.Process(KEY_A, 1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.Process(KEY_A, 0);
+
+      CHECK(outcomes == vector<string>{"Out: P KEY_X", "Out: R KEY_X"});
+    }
+  }
+
+  GIVEN("Combo before timeout cancels timeout") {
+    REQUIRE(config_parser.Parse({"A + 5ms = D", "A + 1 = F1"}));
+
+    THEN("Pressing 1 before timeout fires F1, not D") {
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_1, 1},
+                            {KEY_1, 0},
+                            {KEY_A, 0},
+                        }) == vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+    }
+  }
+
+  GIVEN("Full config: combo, timeout, tap") {
+    REQUIRE(config_parser.Parse({"A + 1 = F1",
+                                 "A + 5ms = D",
+                                 "A + nothing = X"}));
+
+    THEN("Combo works (no timeout)") {
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_1, 1},
+                            {KEY_1, 0},
+                            {KEY_A, 0},
+                        }) == vector<string>{"Out: P KEY_F1", "Out: R KEY_F1"});
+    }
+
+    THEN("Tap works (release before timeout)") {
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_A, 0},
+                        }) == vector<string>{"Out: P KEY_X", "Out: R KEY_X"});
+    }
+
+    THEN("Timeout fires when held past threshold") {
+      std::vector<string> outcomes;
+      remapper.SetCallback([&outcomes](int keycode, int press) {
+        std::ostringstream oss;
+        oss << "Out: " << (press == 1 ? "P " : "R ") << KeyCodeToName(keycode);
+        outcomes.push_back(oss.str());
+      });
+
+      remapper.Process(KEY_A, 1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.Process(KEY_A, 0);
+
+      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",
+                                       "Out: P KEY_X", "Out: R KEY_X"});
+    }
+  }
 }

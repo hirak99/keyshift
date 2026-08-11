@@ -26,6 +26,7 @@
 // - Need to handle repeats. 1 is press. 0 is release. And repeat is code 2.
 
 #include <cstddef>
+#include <chrono>
 #include <functional>
 #include <optional>
 #include <stack>
@@ -124,10 +125,15 @@ struct KeyboardState {
   // If no interesting event such as keypress occurs while in this state, null
   // events are activated.
   std::vector<Action> null_event_actions;
+  // If the layer is held for more than timeout_after_ms_ without any key press,
+  // timeout_actions are fired. 0 means no timeout.
+  int timeout_after_ms = 0;
+  std::vector<Action> timeout_actions;
 
   // Following are internal state, maintained by the remapper.
 
   bool null_event_applicable;
+  bool timeout_fired = false;
 
   // Called before activation. Activation is ignored if returns false.
   [[nodiscard]] bool activate() {
@@ -140,6 +146,7 @@ struct KeyboardState {
     // std::cerr << "Activated" << this << "\n";
     is_active_ = true;
     null_event_applicable = true;
+    timeout_fired = false;
     return true;
   }
   // Called on deactivation.
@@ -174,6 +181,10 @@ class Remapper {
   void SetNullEventActions(const std::string& state_name,
                            const std::vector<Action> actions);
 
+  void SetTimeoutActions(const std::string& state_name,
+                         int milli_seconds,
+                         const std::vector<Action> actions);
+
   void SetAllowOtherKeys(const std::string& state_name, bool allow_other_keys);
 
   // Returns an action to activate a state. Can be part of actions in
@@ -206,6 +217,9 @@ class Remapper {
 
   void ProcessCombos(const KeyEvent& key_event);
 
+  // Check if the currently active layer has a timeout that has elapsed.
+  void CheckTimeout();
+
   // TODO: Optimization to keep the active state updated in a variable?
   inline KeyboardState& active_state() {
     return active_layers_.size() > 0 ? *active_layers_.back().this_state
@@ -217,6 +231,7 @@ class Remapper {
     int event_seq_num;         // When the layer was activated.
     const KeyEvent key_event;  // key_code that activated this layer.
     KeyboardState* this_state = nullptr;
+    std::chrono::steady_clock::time_point activation_time;
   };
 
   // Do not use this directly, use StateNameToIndex().
