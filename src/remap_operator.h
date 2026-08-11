@@ -221,8 +221,10 @@ class Remapper {
 
   void ProcessCombos(const KeyEvent& key_event);
 
-  // Check if the currently active layer has a timeout that has elapsed.
-  void CheckTimeout();
+  // Handle timeout on the currently active layer: if the elapsed time since
+  // activation exceeds the layer's timeout and actions haven't already fired,
+  // emit the timeout actions and mark them as fired.
+  void HandleTimeout();
 
   // TODO: Optimization to keep the active state updated in a variable?
   inline KeyboardState& active_state() {

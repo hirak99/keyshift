@@ -116,8 +116,8 @@ void Remapper::Process(const int key_code_int, const int value) {
 
   ProcessCombos(key_event);
 
-  // Check timeout BEFORE deactivation — the layer must still be active.
-  CheckTimeout();
+  // Handle timeout BEFORE deactivation — the layer must still be active.
+  HandleTimeout();
 
   // Check if key_event is in activated keyboard_state stack.
   if (DeactivateLayerByKey(key_event)) [[unlikely]] {
@@ -406,8 +406,10 @@ void Remapper::ProcessCombos(const KeyEvent& key_event) {
   }
 }
 
-// Check if the currently active layer has a timeout that has elapsed.
-void Remapper::CheckTimeout() {
+// Handle timeout on the currently active layer: if the elapsed time since
+// activation exceeds the layer's timeout and actions haven't already fired,
+// emit the timeout actions and mark them as fired.
+void Remapper::HandleTimeout() {
   if (active_layers_.empty()) return;
   auto& layer = active_layers_.back();
   auto& state = *layer.this_state;
