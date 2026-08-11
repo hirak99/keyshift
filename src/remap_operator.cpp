@@ -420,6 +420,7 @@ void Remapper::HandleTimeout() {
                      .count();
   if (elapsed >= state.timeout_after_ms) {
     state.timeout_fired = true;
+    state.null_event_applicable = false;  // Timeout consumed the activation.
     ProcessActions(state.timeout_actions);
   }
 }

@@ -21,7 +21,7 @@
 #include "remap_operator.h"
 #include "test_utils.h"
 
-std::string GetRemapperConfigDump(const Remapper& remapper) {
+std::string GetRemapperConfigDump(const Remapper &remapper) {
   std::ostringstream oss;
   remapper.DumpConfig(oss);
   return oss.str();
@@ -106,7 +106,7 @@ State #4
     Key: (KEY_DELETE Release)
 )";
 
-std::vector<string> SplitLines(const string& str) {
+std::vector<string> SplitLines(const string &str) {
   std::vector<string> lines;
   string line;
   std::istringstream line_stream(str);
@@ -425,9 +425,8 @@ SCENARIO("Layer timeout") {
   GIVEN("Config with timeout") {
     Remapper remapper;
     ConfigParser config_parser(&remapper);
-    REQUIRE(config_parser.Parse({"A + 1 = F1",
-                                 "A + 250ms = D",
-                                 "A + nothing = X"}));
+    REQUIRE(config_parser.Parse(
+        {"A + 1 = F1", "A + 250ms = D", "A + nothing = X"}));
 
     THEN("Dump shows timeout") {
       CHECK(GetRemapperConfigDump(remapper) == R"(State #0
@@ -455,7 +454,7 @@ State #1
     ConfigParser config_parser(&remapper);
     REQUIRE(config_parser.Parse({"A + 250ms = D", "A + nothing = X"}));
 
-    THEN("Holding A past timeout emits D, then null event fires X") {
+    THEN("Holding A past timeout emits D, null event suppressed") {
       std::vector<string> outcomes;
       remapper.SetCallback([&outcomes](int keycode, int press) {
         std::ostringstream oss;
@@ -467,8 +466,7 @@ State #1
       remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
-      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",
-                                       "Out: P KEY_X", "Out: R KEY_X"});
+      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D"});
     }
   }
 
@@ -477,7 +475,7 @@ State #1
     ConfigParser config_parser(&remapper);
     REQUIRE(config_parser.Parse({"A + 250ms = nothing", "A + nothing = X"}));
 
-    THEN("Timeout does nothing, null event fires on release") {
+    THEN("Timeout does nothing, null event suppressed on release") {
       std::vector<string> outcomes;
       remapper.SetCallback([&outcomes](int keycode, int press) {
         std::ostringstream oss;
@@ -489,7 +487,7 @@ State #1
       remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
-      CHECK(outcomes == vector<string>{"Out: P KEY_X", "Out: R KEY_X"});
+      CHECK(outcomes == vector<string>{});
     }
   }
 
@@ -512,9 +510,8 @@ State #1
   GIVEN("Full config: combo, timeout, tap") {
     Remapper remapper;
     ConfigParser config_parser(&remapper);
-    REQUIRE(config_parser.Parse({"A + 1 = F1",
-                                 "A + 250ms = D",
-                                 "A + nothing = X"}));
+    REQUIRE(config_parser.Parse(
+        {"A + 1 = F1", "A + 250ms = D", "A + nothing = X"}));
 
     THEN("Combo works (no timeout)") {
       CHECK(GetOutcomes(remapper, false,
@@ -546,8 +543,36 @@ State #1
       remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
-      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",
-                                       "Out: P KEY_X", "Out: R KEY_X"});
+      CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D"});
+    }
+  }
+
+  GIVEN("Tap-through with silent hold: A + nothing = A; A + 250ms = nothing") {
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
+    REQUIRE(config_parser.Parse({"A + 250ms = nothing", "A + nothing = A"}));
+
+    THEN("Tap A emits A") {
+      CHECK(GetOutcomes(remapper, false,
+                        {
+                            {KEY_A, 1},
+                            {KEY_A, 0},
+                        }) == vector<string>{"Out: P KEY_A", "Out: R KEY_A"});
+    }
+
+    THEN("Hold A past timeout emits nothing") {
+      std::vector<string> outcomes;
+      remapper.SetCallback([&outcomes](int keycode, int press) {
+        std::ostringstream oss;
+        oss << "Out: " << (press == 1 ? "P " : "R ") << KeyCodeToName(keycode);
+        outcomes.push_back(oss.str());
+      });
+
+      remapper.Process(KEY_A, 1);
+      remapper.AdvanceTime(300);
+      remapper.Process(KEY_A, 0);
+
+      CHECK(outcomes == vector<string>{});
     }
   }
 }
