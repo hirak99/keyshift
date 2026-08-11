@@ -40,6 +40,27 @@ const int kMaxWaitMs = 1000;
 // When on right, blocks a key e.g. "DELETE = nothing".
 const string kNothingToken = "nothing";
 
+// Returns true if the string looks like a duration (e.g. "250ms").
+bool LooksLikeDuration(const string& s) {
+  return s.size() >= 3 && s.ends_with("ms") &&
+         std::isdigit(s[s.size() - 3]);
+}
+
+// Parse a duration string (e.g. "250ms") into milliseconds.
+ErrorStrOr<int> ParseDurationMs(const string& s, const string& label) {
+  int ms;
+  try {
+    ms = std::stoi(s.substr(0, s.size() - 2));
+  } catch (std::invalid_argument&) {
+    return std::unexpected(
+        std::format("Could not parse {} time {}.", label, s));
+  }
+  if (ms <= 0 || ms > kMaxWaitMs) {
+    return std::unexpected(std::format("Out of range {} time {}ms", label, ms));
+  }
+  return ms;
+}
+
 // Utility functions.
 
 string RemoveComment(string line) {
@@ -131,18 +152,8 @@ ErrorStrOr<std::vector<Action>> ConfigParser::AssignmentToActions(
         token == "~" + kNothingToken) {
       continue;
     }
-    if (token.ends_with("ms")) {
-      int ms;
-      // This raises std::invalid_argument if number is invalid.
-      try {
-        ms = std::stoi(token.substr(0, token.size() - 2));
-      } catch (std::invalid_argument&) {
-        return std::unexpected(
-            std::format("Could not parse waiting time {}.", token));
-      }
-      if (ms <= 0 || ms > kMaxWaitMs) {
-        return std::unexpected(std::format("Out of range wait time {}ms", ms));
-      }
+    if (LooksLikeDuration(token)) {
+      ASSIGN_OR_RETURN(const auto ms, ParseDurationMs(token, "waiting"));
       actions.push_back(ActionWait{ms});
       continue;
     }
@@ -241,18 +252,8 @@ ErrorStrOr<void> ConfigParser::ParseLayerAssignment(const string& layer_key_str,
   }
 
   // Handle DELETE + 250ms = D.
-  if (key_str.ends_with("ms")) {
-    int ms;
-    try {
-      ms = std::stoi(key_str.substr(0, key_str.size() - 2));
-    } catch (std::invalid_argument&) {
-      return std::unexpected(
-          std::format("Could not parse timeout value {}.", key_str));
-    }
-    if (ms <= 0 || ms > kMaxWaitMs) {
-      return std::unexpected(
-          std::format("Out of range timeout {}ms", ms));
-    }
+  if (LooksLikeDuration(key_str)) {
+    ASSIGN_OR_RETURN(const auto ms, ParseDurationMs(key_str, "timeout"));
     ASSIGN_OR_RETURN(const auto actions, AssignmentToActions(assignment));
     remapper_->SetTimeoutActions(layer_name, ms, actions);
     return {};
