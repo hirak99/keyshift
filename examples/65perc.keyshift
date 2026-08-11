@@ -62,6 +62,8 @@ RIGHTCTRL + * = *  // Let anything else pass thru.
 DELETE + BACKSPACE = PRINT
 DELETE + BACKSLASH = PAUSE
 DELETE + nothing = DELETE
+// Cancel the delete key if held for long without pressing anything else.
+DELETE + 750ms = nothing
 
 ^LEFTSHIFT = ^LEFTSHIFT
 LEFTSHIFT + ESC = GRAVE

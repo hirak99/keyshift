@@ -38,6 +38,7 @@ Once you are happy with a configuration, you can add it to your startup. Or, you
   - _(Layering)_ `KEY + TOKEN = [ACTION ...] | nothing | *`
     - `TOKEN` can be -
       - `nothing` - Indicates action to be taken if the activation key is pressed and released, with no other key pressed. Normally the layer absorbs the key. So `CAPSLOCK + 1 = F1; CAPSLOCK + nothing = CAPSLOCK` will make Capslock to behave as itself, unless any other key is press within it.
+      - `[num]ms` - A timeout: if the activation key is held for `[num]` milliseconds without any other key press, the right-hand actions are triggered. Supports `nothing` on the right to suppress the timeout. Example: `DELETE + 500ms = VOLUMEUP` fires Volume Up after 500ms; `DELETE + 500ms = nothing` does nothing after 500ms. Combos fired before the timeout cancel it. Can be combined with `nothing` — e.g. `DELETE + nothing = DELETE; DELETE + 500ms = nothing` makes DEL a tap-through on release, with a silent 500ms hold.
       - `x` (or `KEY_x`) - Any other specific key.
       - `*` indicating any key - In this case it must be of the form `KEY + * = *`. This will allow all keys to pass thru.
   - Implicit actions -
@@ -159,6 +160,19 @@ DELETE + END =  VOLUMEUP
 
 // Acts as DELETE if nothing is pressed before DELETE is released.
 DELETE + nothing = DELETE
+```
+
+- **Hold DEL for 500ms to mute, tap for normal DEL.**
+
+```
+// Tap: acts as DELETE on release.
+DELETE + nothing = DELETE
+
+// Hold for 500ms: fires MUTE once.
+DELETE + 500ms = MUTE
+
+// Combo still works (irrespective of hold time).
+DELETE + END = VOLUMEUP
 ```
 
 - **Snap Tap**
