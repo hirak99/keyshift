@@ -17,8 +17,6 @@
 #include "config_parser.h"
 
 #include <catch2/catch_test_macros.hpp>
-#include <chrono>
-#include <thread>
 
 #include "remap_operator.h"
 #include "test_utils.h"
@@ -424,12 +422,11 @@ SCENARIO("Rpeating key should be releasable after layer activation") {
 
 // Test timeout-based layer activation: A + 250ms = D
 SCENARIO("Layer timeout") {
-  Remapper remapper;
-  ConfigParser config_parser(&remapper);
-
   GIVEN("Config with timeout") {
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
     REQUIRE(config_parser.Parse({"A + 1 = F1",
-                                 "A + 5ms = D",
+                                 "A + 250ms = D",
                                  "A + nothing = X"}));
 
     THEN("Dump shows timeout") {
@@ -446,7 +443,7 @@ State #1
   On nothing:
     Key: (KEY_X Press)
     Key: (KEY_X Release)
-  On timeout: 5ms
+  On timeout: 250ms
     Key: (KEY_D Press)
     Key: (KEY_D Release)
 )");
@@ -454,10 +451,11 @@ State #1
   }
 
   GIVEN("Timeout fires on hold") {
-    REQUIRE(config_parser.Parse({"A + 5ms = D", "A + nothing = X"}));
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
+    REQUIRE(config_parser.Parse({"A + 250ms = D", "A + nothing = X"}));
 
     THEN("Holding A past timeout emits D, then null event fires X") {
-      // Set up callback to capture outcomes.
       std::vector<string> outcomes;
       remapper.SetCallback([&outcomes](int keycode, int press) {
         std::ostringstream oss;
@@ -465,9 +463,8 @@ State #1
         outcomes.push_back(oss.str());
       });
 
-      // Press A, wait for timeout, release.
       remapper.Process(KEY_A, 1);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
       CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",
@@ -476,7 +473,9 @@ State #1
   }
 
   GIVEN("Timeout with nothing on right") {
-    REQUIRE(config_parser.Parse({"A + 5ms = nothing", "A + nothing = X"}));
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
+    REQUIRE(config_parser.Parse({"A + 250ms = nothing", "A + nothing = X"}));
 
     THEN("Timeout does nothing, null event fires on release") {
       std::vector<string> outcomes;
@@ -487,7 +486,7 @@ State #1
       });
 
       remapper.Process(KEY_A, 1);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
       CHECK(outcomes == vector<string>{"Out: P KEY_X", "Out: R KEY_X"});
@@ -495,7 +494,9 @@ State #1
   }
 
   GIVEN("Combo before timeout cancels timeout") {
-    REQUIRE(config_parser.Parse({"A + 5ms = D", "A + 1 = F1"}));
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
+    REQUIRE(config_parser.Parse({"A + 250ms = D", "A + 1 = F1"}));
 
     THEN("Pressing 1 before timeout fires F1, not D") {
       CHECK(GetOutcomes(remapper, false,
@@ -509,8 +510,10 @@ State #1
   }
 
   GIVEN("Full config: combo, timeout, tap") {
+    Remapper remapper;
+    ConfigParser config_parser(&remapper);
     REQUIRE(config_parser.Parse({"A + 1 = F1",
-                                 "A + 5ms = D",
+                                 "A + 250ms = D",
                                  "A + nothing = X"}));
 
     THEN("Combo works (no timeout)") {
@@ -540,7 +543,7 @@ State #1
       });
 
       remapper.Process(KEY_A, 1);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      remapper.AdvanceTime(300);
       remapper.Process(KEY_A, 0);
 
       CHECK(outcomes == vector<string>{"Out: P KEY_D", "Out: R KEY_D",

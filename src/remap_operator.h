@@ -196,6 +196,10 @@ class Remapper {
   // Prints the existing config to terminal.
   void DumpConfig(std::ostream& os = std::cout) const;
 
+  // Test-only: advance the internal simulated clock by `ms` milliseconds.
+  // Enables deterministic timeout testing without wall-clock sleeps.
+  void AdvanceTime(int ms);
+
  private:
   // Finds index of keyboard_state name. If it doesn't exist, adds it.
   int StateNameToIndex(const std::string& state_name);
@@ -268,6 +272,13 @@ class Remapper {
 
   // The original key event being processed. Set on process().
   KeyEvent currently_processing_;
+
+  // Simulated clock for testing. When set, now_fn_ returns this instead of
+  // steady_clock::now(). AdvanceTime() moves it forward.
+  std::optional<std::chrono::steady_clock::time_point> simulated_now_;
+  inline std::chrono::steady_clock::time_point now() {
+    return simulated_now_.value_or(std::chrono::steady_clock::now());
+  }
 };
 
 #endif  // __REMAP_OPERATOR_H

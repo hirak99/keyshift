@@ -127,9 +127,18 @@ void Remapper::Process(const int key_code_int, const int value) {
   const auto& actions = ExpandToActions(key_event);
 
   if (!actions.empty()) {
-    // Since a key was pressed, null event will not be triggered on
-    // deactivation.
-    active_state().null_event_applicable = false;
+    // Only suppress null event if we're actually emitting key events,
+    // not just changing layers.
+    bool has_key_event = false;
+    for (const auto& action : actions) {
+      if (std::holds_alternative<KeyEvent>(action)) {
+        has_key_event = true;
+        break;
+      }
+    }
+    if (has_key_event) {
+      active_state().null_event_applicable = false;
+    }
 
     ProcessActions(actions);
   }
@@ -371,8 +380,7 @@ void Remapper::ProcessActions(const std::vector<Action>& actions) {
         auto* new_state = &all_states_[layer_change.layer_index];
         if (new_state->activate()) {
           active_layers_.push_back(LayerActivation{
-              event_seq_num_++, currently_processing_, new_state,
-              std::chrono::steady_clock::now()});
+              event_seq_num_++, currently_processing_, new_state, now()});
         }
       } else {
         std::cerr << "WARNING: Invalid keyboard_state code. This is "
@@ -406,12 +414,19 @@ void Remapper::CheckTimeout() {
   if (state.timeout_after_ms <= 0 || state.timeout_fired) return;
 
   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     std::chrono::steady_clock::now() - layer.activation_time)
+                     now() - layer.activation_time)
                      .count();
   if (elapsed >= state.timeout_after_ms) {
     state.timeout_fired = true;
-    // A timeout counts as an event, so null event is no longer applicable.
-    state.null_event_applicable = false;
     ProcessActions(state.timeout_actions);
+  }
+}
+
+void Remapper::AdvanceTime(int ms) {
+  if (simulated_now_.has_value()) {
+    *simulated_now_ += std::chrono::milliseconds(ms);
+  } else {
+    simulated_now_ = std::chrono::steady_clock::now() +
+                     std::chrono::milliseconds(ms);
   }
 }
