@@ -144,6 +144,10 @@ using ErrorStrOr = std::expected<T, std::string>;
 #define __FILE_NAME__ __FILE__
 #endif
 
+// Indirection so __LINE__ expands before ## concatenation.
+#define CONCAT(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a##b
+
 // Similar to value() which throws exception, except that this propagates the
 // exception to the calling function.
 // E.g. -
@@ -152,13 +156,13 @@ using ErrorStrOr = std::expected<T, std::string>;
 //   std::cout << "Result: " << x << std::endl;
 //   return {};
 // }
-#define ASSIGN_OR_RETURN(result, result_as_expected)                \
-  const auto temp_##__LINE__ = result_as_expected;                  \
-  if (!temp_##__LINE__) {                                           \
-    return std::unexpected(std::string("(") + __FILE_NAME__ + ":" + \
-                           std::to_string(__LINE__) + ") " +        \
-                           temp_##__LINE__.error());                \
-  }                                                                 \
-  result = *temp_##__LINE__;
+#define ASSIGN_OR_RETURN(result, result_as_expected)                        \
+  const auto CONCAT(temp_, __LINE__) = result_as_expected;                  \
+  if (!CONCAT(temp_, __LINE__)) {                                           \
+    return std::unexpected(std::string("(") + __FILE_NAME__ + ":" +         \
+                           std::to_string(__LINE__) + ") " +                \
+                           CONCAT(temp_, __LINE__).error());                \
+  }                                                                         \
+  result = *CONCAT(temp_, __LINE__);
 
 #endif  // __ESSENTIALS_H
